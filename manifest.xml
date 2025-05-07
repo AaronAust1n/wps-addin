@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns="http://schemas.wps.cn/officespace/manifest">
+    <name>AI助手</name>
+    <appVersion>1.0.0</appVersion>
+    <icon>https://example.com/icon.png</icon>
+    <description>一款集成多种AI功能的WPS加载项</description>
+    <providerName>AI助手开发团队</providerName>
+    <defaultSize width="350" height="600"/>
+    <wpsApplication>
+        <word>true</word>
+    </wpsApplication>
+    <permissions>
+        <permission>ReadWriteDocument</permission>
+        <permission>DialogApi</permission>
+        <permission>ActiveViewChanged</permission>
+    </permissions>
+    <entry>
+        <startPage>index.html</startPage>
+    </entry>
+    <ribbon>
+        <tab id="AI助手">
+            <group id="AIFunctions" label="AI功能">
+                <control id="btnContinueText" type="button" 
+                    label="文本续写" 
+                    imageMso="TextBoxInsert" 
+                    size="large" 
+                    onAction="onBtnContinueTextClick"/>
+                <control id="btnProofreadText" type="button" 
+                    label="文本校对" 
+                    imageMso="ReviewerReviewItemPrevious" 
+                    size="large" 
+                    onAction="onBtnProofreadTextClick"/>
+                <control id="btnPolishText" type="button" 
+                    label="文本润色" 
+                    imageMso="StylesChangeStyles" 
+                    size="large" 
+                    onAction="onBtnPolishTextClick"/>
+                <control id="btnSummarizeText" type="button" 
+                    label="文本摘要" 
+                    imageMso="OutlinePromote" 
+                    size="large" 
+                    onAction="onBtnSummarizeTextClick"/>
+                <control id="btnSummarizeDoc" type="button" 
+                    label="全文总结" 
+                    imageMso="DocumentMap" 
+                    size="large" 
+                    onAction="onBtnSummarizeDocClick"/>
+            </group>
+            <group id="AISettings" label="设置">
+                <control id="btnSettings" type="button" 
+                    label="API设置" 
+                    imageMso="ServerProperties" 
+                    size="large" 
+                    onAction="onBtnSettingsClick"/>
+                <control id="btnHelp" type="button" 
+                    label="帮助" 
+                    imageMso="Help" 
+                    size="large" 
+                    onAction="onBtnHelpClick"/>
+            </group>
+        </tab>
+    </ribbon>
+</manifest> 

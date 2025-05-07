@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customUI xmlns="http://schemas.wps.cn/officespace/2009/textcustomui" onLoad="ribbonOnLoad">
+    <ribbon startFromScratch="false">
+        <tabs>
+            <tab id="AI助手" label="AI助手">
+                <group id="AIFunctions" label="AI功能">
+                    <button id="btnContinueText" label="文本续写" onAction="onBtnContinueTextClick" imageMso="TextBoxInsert" size="large"/>
+                    <button id="btnProofreadText" label="文本校对" onAction="onBtnProofreadTextClick" imageMso="ReviewerReviewItemPrevious" size="large"/>
+                    <button id="btnPolishText" label="文本润色" onAction="onBtnPolishTextClick" imageMso="StylesChangeStyles" size="large"/>
+                    <button id="btnSummarizeText" label="文本摘要" onAction="onBtnSummarizeTextClick" imageMso="OutlinePromote" size="large"/>
+                    <button id="btnSummarizeDoc" label="全文总结" onAction="onBtnSummarizeDocClick" imageMso="DocumentMap" size="large"/>
+                </group>
+                <group id="AISettings" label="设置">
+                    <button id="btnSettings" label="API设置" onAction="onBtnSettingsClick" imageMso="ServerProperties" size="large"/>
+                    <button id="btnHelp" label="帮助" onAction="onBtnHelpClick" imageMso="Help" size="large"/>
+                </group>
+            </tab>
+        </tabs>
+    </ribbon>
+</customUI> 

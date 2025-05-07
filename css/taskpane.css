@@ -1,0 +1,145 @@
+/* 任务窗格样式 */
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+.taskpane-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.taskpane-header {
+    padding: 12px 16px;
+    background-color: #2b79cf;
+    color: white;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.taskpane-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+}
+
+.taskpane-content {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.taskpane-footer {
+    padding: 8px 16px;
+    border-top: 1px solid #e0e0e0;
+    background-color: #f5f5f5;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+}
+
+/* 任务窗格内的区域 */
+.section {
+    margin-bottom: 20px;
+    padding: 16px;
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+}
+
+.section-title {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #2b79cf;
+}
+
+/* 文本显示区域 */
+.text-display {
+    padding: 12px;
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    min-height: 80px;
+    max-height: 200px;
+    overflow-y: auto;
+    word-break: break-word;
+}
+
+.text-display.placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+/* 选项表单 */
+.options-form {
+    padding-top: 8px;
+}
+
+/* 动作按钮区域 */
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+/* 消息框 */
+.message-box {
+    padding: 16px;
+    margin-bottom: 20px;
+    background-color: #e8f4fd;
+    border: 1px solid #b8e2fb;
+    border-radius: 4px;
+    color: #0c5172;
+}
+
+/* 功能项列表 */
+.features-list {
+    margin-top: 20px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 10px;
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.feature-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-color: #2b79cf;
+}
+
+.feature-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-right: 12px;
+}
+
+.feature-info {
+    flex: 1;
+}
+
+.feature-info h3 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    color: #2b79cf;
+}
+
+.feature-info p {
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+} 

@@ -1,0 +1,26 @@
+{
+  "name": "wps-ai-assistant",
+  "version": "1.0.0",
+  "description": "AI助手WPS加载项",
+  "main": "main.js",
+  "scripts": {
+    "start": "wpsjs debug",
+    "build": "wpsjs publish",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "wps",
+    "addon",
+    "ai",
+    "assistant"
+  ],
+  "author": "AI助手开发团队",
+  "license": "MIT",
+  "devDependencies": {
+    "wps-jsapi": "^1.0.0",
+    "wpsjs": "^1.0.0"
+  },
+  "dependencies": {
+    "requirejs": "^2.3.6"
+  }
+} 

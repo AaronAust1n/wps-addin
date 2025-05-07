@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API设置 - AI助手</title>
+    <link rel="stylesheet" href="../css/common.css">
+    <style>
+        body {
+            padding: 20px;
+        }
+        
+        .dialog-title {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 18px;
+            color: #2b79cf;
+        }
+        
+        .section {
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            margin-bottom: 12px;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .dialog-footer {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .model-section {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .notification {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .notification.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .notification.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h2 class="dialog-title">API设置</h2>
+    
+    <div id="notification" class="notification"></div>
+    
+    <div class="section">
+        <h3 class="section-title">基本设置</h3>
+        <div class="form-group">
+            <label for="apiUrl">API地址</label>
+            <input type="text" id="apiUrl" class="input-field" placeholder="输入API基础URL，如：https://api.example.com/ai">
+        </div>
+        
+        <div class="form-group">
+            <label for="apiKey">API密钥</label>
+            <input type="password" id="apiKey" class="input-field" placeholder="输入API密钥">
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3 class="section-title">模型设置</h3>
+        
+        <div class="model-section">
+            <div class="form-group">
+                <label for="continuationModel">文本续写模型</label>
+                <input type="text" id="continuationModel" class="input-field" placeholder="输入模型名称">
+            </div>
+        </div>
+        
+        <div class="model-section">
+            <div class="form-group">
+                <label for="proofreadingModel">文本校对模型</label>
+                <input type="text" id="proofreadingModel" class="input-field" placeholder="输入模型名称">
+            </div>
+        </div>
+        
+        <div class="model-section">
+            <div class="form-group">
+                <label for="polishingModel">文本润色模型</label>
+                <input type="text" id="polishingModel" class="input-field" placeholder="输入模型名称">
+            </div>
+        </div>
+        
+        <div class="model-section">
+            <div class="form-group">
+                <label for="summarizationModel">文本摘要模型</label>
+                <input type="text" id="summarizationModel" class="input-field" placeholder="输入模型名称">
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3 class="section-title">高级选项</h3>
+        <div class="form-group">
+            <label for="maxTokens">最大生成Token数</label>
+            <input type="number" id="maxTokens" class="input-field" min="100" max="10000" step="100">
+        </div>
+        
+        <div class="form-group">
+            <label for="temperature">默认创造性 (temperature)</label>
+            <input type="range" id="temperature" class="range-field" min="0" max="10" step="1">
+            <div class="range-labels">
+                <span>0.0</span>
+                <span>0.5</span>
+                <span>1.0</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dialog-footer">
+        <button id="btnReset" class="btn btn-secondary">恢复默认</button>
+        <button id="btnCancel" class="btn btn-secondary">取消</button>
+        <button id="btnSave" class="btn btn-primary">保存</button>
+    </div>
+    
+    <script>
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const apiUrlInput = document.getElementById('apiUrl');
+            const apiKeyInput = document.getElementById('apiKey');
+            const continuationModelInput = document.getElementById('continuationModel');
+            const proofreadingModelInput = document.getElementById('proofreadingModel');
+            const polishingModelInput = document.getElementById('polishingModel');
+            const summarizationModelInput = document.getElementById('summarizationModel');
+            const maxTokensInput = document.getElementById('maxTokens');
+            const temperatureInput = document.getElementById('temperature');
+            const btnReset = document.getElementById('btnReset');
+            const btnCancel = document.getElementById('btnCancel');
+            const btnSave = document.getElementById('btnSave');
+            const notification = document.getElementById('notification');
+            
+            // 加载当前配置
+            loadConfig();
+            
+            // 保存按钮点击事件
+            btnSave.addEventListener('click', function() {
+                saveConfig();
+            });
+            
+            // 取消按钮点击事件
+            btnCancel.addEventListener('click', function() {
+                closeDialog();
+            });
+            
+            // 重置按钮点击事件
+            btnReset.addEventListener('click', function() {
+                if (confirm('确定要恢复默认设置吗？这将覆盖所有当前设置！')) {
+                    resetConfig();
+                }
+            });
+            
+            // 加载配置
+            function loadConfig() {
+                try {
+                    // 获取父窗口的配置
+                    const config = window.opener.aiConfig || getDefaultConfig();
+                    
+                    // 填充表单
+                    apiUrlInput.value = config.apiUrl || '';
+                    apiKeyInput.value = config.apiKey || '';
+                    continuationModelInput.value = config.models.continuationModel || '';
+                    proofreadingModelInput.value = config.models.proofreadingModel || '';
+                    polishingModelInput.value = config.models.polishingModel || '';
+                    summarizationModelInput.value = config.models.summarizationModel || '';
+                    maxTokensInput.value = config.options.maxTokens || 2000;
+                    temperatureInput.value = Math.round((config.options.temperature || 0.7) * 10);
+                } catch (error) {
+                    console.error('加载配置失败：', error);
+                    showNotification('加载配置失败：' + error.message, 'error');
+                }
+            }
+            
+            // 保存配置
+            function saveConfig() {
+                try {
+                    // 构建配置对象
+                    const config = {
+                        apiUrl: apiUrlInput.value.trim(),
+                        apiKey: apiKeyInput.value.trim(),
+                        models: {
+                            continuationModel: continuationModelInput.value.trim(),
+                            proofreadingModel: proofreadingModelInput.value.trim(),
+                            polishingModel: polishingModelInput.value.trim(),
+                            summarizationModel: summarizationModelInput.value.trim()
+                        },
+                        options: {
+                            maxTokens: parseInt(maxTokensInput.value) || 2000,
+                            temperature: parseFloat(temperatureInput.value) / 10 || 0.7
+                        }
+                    };
+                    
+                    // 保存到父窗口
+                    const result = window.opener.saveConfig(config);
+                    
+                    if (result) {
+                        showNotification('设置保存成功！', 'success');
+                        setTimeout(closeDialog, 1500);
+                    } else {
+                        showNotification('设置保存失败！', 'error');
+                    }
+                } catch (error) {
+                    console.error('保存配置失败：', error);
+                    showNotification('保存配置失败：' + error.message, 'error');
+                }
+            }
+            
+            // 重置配置
+            function resetConfig() {
+                try {
+                    // 重置父窗口配置
+                    const result = window.opener.resetConfig();
+                    
+                    if (result) {
+                        // 重新加载配置
+                        loadConfig();
+                        showNotification('设置已重置为默认值！', 'success');
+                    } else {
+                        showNotification('重置设置失败！', 'error');
+                    }
+                } catch (error) {
+                    console.error('重置配置失败：', error);
+                    showNotification('重置配置失败：' + error.message, 'error');
+                }
+            }
+            
+            // 关闭对话框
+            function closeDialog() {
+                window.close();
+            }
+            
+            // 显示通知
+            function showNotification(message, type) {
+                notification.textContent = message;
+                notification.className = 'notification ' + type;
+                notification.style.display = 'block';
+                
+                // 自动隐藏
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 3000);
+            }
+            
+            // 获取默认配置
+            function getDefaultConfig() {
+                return {
+                    apiUrl: 'https://api.example.com/ai',
+                    apiKey: '',
+                    models: {
+                        continuationModel: 'gpt-3.5-turbo',
+                        proofreadingModel: 'gpt-3.5-turbo',
+                        polishingModel: 'gpt-3.5-turbo',
+                        summarizationModel: 'gpt-3.5-turbo'
+                    },
+                    options: {
+                        maxTokens: 2000,
+                        temperature: 0.7
+                    }
+                };
+            }
+        });
+    </script>
+</body>
+</html> 
