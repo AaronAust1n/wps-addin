@@ -27,9 +27,6 @@ build/
 .vite/
 coverage/
 
-# IDE相关
-.idea/
-.vscode/
 
 # 日志文件
 npm-debug.log*
@@ -51,20 +48,10 @@ backup/
 dist/
 build/
 
-# 临时缓存文件
-.cache/
-.vite/
-coverage/
-
 # IDE相关
 .idea/
 .vscode/
 
-# 日志文件
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
 
 # 依赖锁文件（如不希望锁定依赖时可忽略）
 # package-lock.json
