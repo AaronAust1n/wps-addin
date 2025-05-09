@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用帮助 - AI助手</title>
+    <link rel="stylesheet" href="../css/common.css">
+    <style>
+        body {
+            padding: 20px;
+        }
+        
+        .dialog-title {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 18px;
+            color: #2b79cf;
+        }
+        
+        .help-content {
+            margin-bottom: 30px;
+        }
+        
+        .help-section {
+            margin-bottom: 20px;
+        }
+        
+        .help-section-title {
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .help-section-content {
+            line-height: 1.6;
+        }
+        
+        .feature-help {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .feature-title {
+            font-weight: 600;
+            color: #2b79cf;
+            margin-bottom: 5px;
+        }
+        
+        .dialog-footer {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .version-info {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h2 class="dialog-title">使用帮助</h2>
+    
+    <div class="help-content">
+        <div class="help-section">
+            <h3 class="help-section-title">关于AI助手</h3>
+            <div class="help-section-content">
+                <p>AI助手是一款基于人工智能技术的WPS文字插件，旨在帮助用户提高文档编辑效率。插件集成了多种AI功能，包括文本续写、文本校对、文本润色、文本摘要和全文总结等。</p>
+            </div>
+        </div>
+        
+        <div class="help-section">
+            <h3 class="help-section-title">功能使用指南</h3>
+            <div class="help-section-content">
+                <div class="feature-help">
+                    <div class="feature-title">文本续写</div>
+                    <p>基于已有内容智能续写，帮助您快速完成文档。</p>
+                    <ol>
+                        <li>在文档中选中一段文本作为续写的基础</li>
+                        <li>点击功能区中的"文本续写"按钮</li>
+                        <li>在任务窗格中设置续写选项（长度、风格等）</li>
+                        <li>点击"生成续写"按钮</li>
+                        <li>生成结果后，可以点击"插入文档"将内容插入到当前位置</li>
+                    </ol>
+                </div>
+                
+                <div class="feature-help">
+                    <div class="feature-title">文本校对</div>
+                    <p>检查并修正文档中的错误，包括拼写、语法和语义错误。</p>
+                    <ol>
+                        <li>选中需要校对的文本</li>
+                        <li>点击功能区中的"文本校对"按钮</li>
+                        <li>在任务窗格中选择校对选项</li>
+                        <li>点击"开始校对"按钮</li>
+                        <li>对于检测到的错误，可以选择应用单个修改或全部应用</li>
+                    </ol>
+                </div>
+                
+                <div class="feature-help">
+                    <div class="feature-title">文本润色</div>
+                    <p>改进文档的表达和流畅度，使文章更加专业。</p>
+                    <ol>
+                        <li>选中需要润色的文本</li>
+                        <li>点击功能区中的"文本润色"按钮</li>
+                        <li>在任务窗格中选择语气风格和调整程度</li>
+                        <li>点击"开始润色"按钮</li>
+                        <li>生成结果后，可以点击"应用到文档"将润色后的内容替换原文</li>
+                    </ol>
+                </div>
+                
+                <div class="feature-help">
+                    <div class="feature-title">文本摘要</div>
+                    <p>为选定内容生成简洁摘要，帮助理解核心内容。</p>
+                    <ol>
+                        <li>选中需要生成摘要的文本</li>
+                        <li>点击功能区中的"文本摘要"按钮</li>
+                        <li>在任务窗格中选择摘要长度和格式</li>
+                        <li>点击"生成摘要"按钮</li>
+                        <li>生成结果后，可以选择插入文档或复制摘要</li>
+                    </ol>
+                </div>
+                
+                <div class="feature-help">
+                    <div class="feature-title">全文总结</div>
+                    <p>分析整个文档并生成总结，适用于较长文档。</p>
+                    <ol>
+                        <li>点击功能区中的"全文总结"按钮</li>
+                        <li>在任务窗格中选择摘要选项（长度、格式、重点）</li>
+                        <li>点击"生成全文摘要"按钮</li>
+                        <li>生成结果后，可以选择添加到文档末尾或复制摘要</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        
+        <div class="help-section">
+            <h3 class="help-section-title">API设置说明</h3>
+            <div class="help-section-content">
+                <p>AI助手需要配置API连接信息才能正常工作。点击功能区中的"API设置"按钮，进入设置页面：</p>
+                <ul>
+                    <li><strong>API地址</strong>：输入您的AI服务API基础URL</li>
+                    <li><strong>API密钥</strong>：输入访问API所需的认证密钥</li>
+                    <li><strong>模型设置</strong>：可为不同功能配置不同的AI模型</li>
+                    <li><strong>高级选项</strong>：调整生成文本的最大长度和创造性等参数</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dialog-footer">
+        <button class="btn btn-primary" onclick="window.close()">关闭</button>
+    </div>
+    
+    <div class="version-info">
+        <p>AI助手 v1.0.0</p>
+        <p>© 2023 AI助手团队</p>
+    </div>
+</body>
+</html> 
