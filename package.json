@@ -1,12 +1,15 @@
 {
   "name": "WPS-AI-Assistant",
+  "addonType": "wps",
   "version": "1.0.0",
-  "description": "AI助手WPS加载项",
-  "main": "main.js",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "start": "wpsjs debug",
-    "build": "wpsjs publish",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite --port 3889",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
+    "format": "prettier --write src/"
   },
   "keywords": [
     "wps",
@@ -17,10 +20,22 @@
   "author": "AI助手开发团队",
   "license": "MIT",
   "devDependencies": {
-    "wps-jsapi": "^1.0.0",
-    "wpsjs": "^1.0.0"
+    "@rushstack/eslint-patch": "^1.8.0",
+    "@vitejs/plugin-vue": "^5.2.3",
+    "@vue/compiler-sfc": "^3.5.13",
+    "@vue/eslint-config-prettier": "^9.0.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.23.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.8.3",
+    "vite": "^5.4.19",
+    "vue": "^3.5.13",
+    "wps-jsapi-declare": "latest",
+    "wpsjs": "latest"
   },
   "dependencies": {
-    "requirejs": "^2.3.6"
+    "axios": "^1.7.2",
+    "core-js": "^3.37.1",
+    "vue-router": "^4.3.3"
   }
 } 

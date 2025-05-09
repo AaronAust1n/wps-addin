@@ -2,58 +2,12 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WPS AI助手</title>
-    <link rel="stylesheet" href="css/common.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>WPS AI助手</h1>
-        </header>
-        <main>
-            <div class="welcome-message">
-                <p>欢迎使用WPS AI助手，这是一款集成多种人工智能功能的WPS文字插件。</p>
-                <p>您可以使用功能区上的"AI助手"选项卡来访问各种AI功能。</p>
-            </div>
-            <div class="feature-list">
-                <h2>主要功能</h2>
-                <ul>
-                    <li>
-                        <strong>文本续写</strong>
-                        <p>根据上下文智能续写文档内容</p>
-                    </li>
-                    <li>
-                        <strong>文本校对</strong>
-                        <p>检查并修正文档中的错误，包括拼写、语法和语义错误</p>
-                    </li>
-                    <li>
-                        <strong>文本润色</strong>
-                        <p>改进文档的表达和流畅度，使文章更加专业</p>
-                    </li>
-                    <li>
-                        <strong>文本摘要</strong>
-                        <p>为选定内容生成简洁摘要，帮助理解核心内容</p>
-                    </li>
-                    <li>
-                        <strong>全文总结</strong>
-                        <p>分析整个文档并生成总结，适用于较长文档</p>
-                    </li>
-                </ul>
-            </div>
-        </main>
-        <footer>
-            <p>版权所有 © AI助手开发团队</p>
-        </footer>
-    </div>
-
-    <!-- 直接使用script标签加载脚本 -->
-    <script src="js/ribbon.js"></script>
-    <script src="js/aiServices.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/settings.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/systemIntegration.js"></script>
-    <script src="main.js"></script>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html> 
