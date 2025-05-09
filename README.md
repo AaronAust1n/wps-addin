@@ -24,9 +24,10 @@ WPS AI助手是一款集成了多种人工智能功能的WPS文字插件，旨�
 
 ```
 wps-addin/
+├── ribbon/              # 功能区定义
+│   └── ribbon.xml       # 功能区XML定义
 ├── public/              # 静态资源
-│   ├── images/          # 图标和图片资源
-│   └── ribbon.xml       # 功能区定义
+│   └── images/          # 图标和图片资源
 ├── src/                 # 源代码
 │   ├── assets/          # 静态资源
 │   ├── components/      # Vue组件
@@ -76,7 +77,7 @@ AI助手加载项需要配置AI服务API才能正常工作。用户可以通过�
 
 ### 添加新功能
 
-1. 在public/ribbon.xml中添加新的按钮
+1. 在ribbon/ribbon.xml中添加新的按钮
 2. 在src/components/ribbon.js中实现对应的事件处理函数
 3. 创建新的Vue组件处理UI逻辑
 4. 在router中添加新的路由
@@ -85,9 +86,16 @@ AI助手加载项需要配置AI服务API才能正常工作。用户可以通过�
 
 如果插件未显示在WPS中，请检查：
 
-1. manifest.xml是否包含正确的配置
-2. ribbon.xml是否放置在public目录下
+1. manifest.xml是否包含正确的配置，确保`<isToolbar>true</isToolbar>`属性存在
+2. ribbon.xml是否放置在ribbon目录下，且在vite.config.js中正确配置
 3. 确保src/components/ribbon.js中的OnAddinLoad函数正确导出
+4. 确保在App.vue中正确初始化了window.ribbon对象
+
+### 调试技巧
+
+1. 使用console.log在ribbon.js中添加日志，可以在WPS开发者工具中查看
+2. 确保在vite.config.js中设置了正确的端口
+3. 开发时确保WPS可以访问到开发服务器
 
 ## 许可协议
 
