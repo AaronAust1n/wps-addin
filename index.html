@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WPS AI助手</title>
     <link rel="stylesheet" href="css/common.css">
-    <script src="https://unpkg.com/requirejs@2.3.6/require.js"></script>
 </head>
 <body>
     <div class="container">
@@ -48,10 +47,13 @@
         </footer>
     </div>
 
-    <script>
-        require(['main.js'], function() {
-            console.log('加载项初始化完成');
-        });
-    </script>
+    <!-- 直接使用script标签加载脚本 -->
+    <script src="js/ribbon.js"></script>
+    <script src="js/aiServices.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/systemIntegration.js"></script>
+    <script src="main.js"></script>
 </body>
 </html> 

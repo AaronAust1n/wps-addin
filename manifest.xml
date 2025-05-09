@@ -2,7 +2,7 @@
 <manifest xmlns="http://schemas.wps.cn/officespace/manifest">
     <name>WPS-AI-Assistant</name>
     <appVersion>1.0.0</appVersion>
-    <icon>https://example.com/icon.png</icon>
+    <icon>./images/icon.png</icon>
     <description>一款集成多种AI功能的WPS加载项</description>
     <providerName>AI助手开发团队</providerName>
     <defaultSize width="350" height="600"/>

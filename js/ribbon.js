@@ -3,6 +3,11 @@
  * 处理ribbon.xml中定义的按钮点击事件和功能区加载事件
  */
 
+// 获取WPS对象
+function getWpsApp() {
+    return typeof wps !== 'undefined' ? wps : WPS;
+}
+
 // 功能区加载事件处理函数
 window.ribbonOnLoad = function(ribbonUI) {
     // 保存ribbonUI对象，以便后续使用
@@ -17,7 +22,7 @@ window.onBtnContinueTextClick = function(control) {
         // 获取当前选中的文本
         const selectedText = getSelectedText();
         if (!selectedText) {
-            wps.alert("请先选择一段文本作为续写的基础");
+            getWpsApp().alert("请先选择一段文本作为续写的基础");
             return;
         }
         
@@ -27,7 +32,7 @@ window.onBtnContinueTextClick = function(control) {
         });
     } catch (error) {
         console.error("文本续写处理失败：", error);
-        wps.alert("处理失败：" + error.message);
+        getWpsApp().alert("处理失败：" + error.message);
     }
 };
 
@@ -38,7 +43,7 @@ window.onBtnProofreadTextClick = function(control) {
         // 获取当前选中的文本
         const selectedText = getSelectedText();
         if (!selectedText) {
-            wps.alert("请先选择需要校对的文本");
+            getWpsApp().alert("请先选择需要校对的文本");
             return;
         }
         
@@ -48,7 +53,7 @@ window.onBtnProofreadTextClick = function(control) {
         });
     } catch (error) {
         console.error("文本校对处理失败：", error);
-        wps.alert("处理失败：" + error.message);
+        getWpsApp().alert("处理失败：" + error.message);
     }
 };
 
@@ -59,7 +64,7 @@ window.onBtnPolishTextClick = function(control) {
         // 获取当前选中的文本
         const selectedText = getSelectedText();
         if (!selectedText) {
-            wps.alert("请先选择需要润色的文本");
+            getWpsApp().alert("请先选择需要润色的文本");
             return;
         }
         
@@ -69,7 +74,7 @@ window.onBtnPolishTextClick = function(control) {
         });
     } catch (error) {
         console.error("文本润色处理失败：", error);
-        wps.alert("处理失败：" + error.message);
+        getWpsApp().alert("处理失败：" + error.message);
     }
 };
 
@@ -80,7 +85,7 @@ window.onBtnSummarizeTextClick = function(control) {
         // 获取当前选中的文本
         const selectedText = getSelectedText();
         if (!selectedText) {
-            wps.alert("请先选择需要生成摘要的文本");
+            getWpsApp().alert("请先选择需要生成摘要的文本");
             return;
         }
         
@@ -90,7 +95,7 @@ window.onBtnSummarizeTextClick = function(control) {
         });
     } catch (error) {
         console.error("文本摘要处理失败：", error);
-        wps.alert("处理失败：" + error.message);
+        getWpsApp().alert("处理失败：" + error.message);
     }
 };
 
@@ -101,7 +106,7 @@ window.onBtnSummarizeDocClick = function(control) {
         // 获取整个文档的内容
         const docContent = getDocumentContent();
         if (!docContent) {
-            wps.alert("无法获取文档内容或文档为空");
+            getWpsApp().alert("无法获取文档内容或文档为空");
             return;
         }
         
@@ -111,7 +116,7 @@ window.onBtnSummarizeDocClick = function(control) {
         });
     } catch (error) {
         console.error("全文总结处理失败：", error);
-        wps.alert("处理失败：" + error.message);
+        getWpsApp().alert("处理失败：" + error.message);
     }
 };
 
@@ -123,7 +128,7 @@ window.onBtnSettingsClick = function(control) {
         showDialog("settings", "API设置");
     } catch (error) {
         console.error("设置对话框显示失败：", error);
-        wps.alert("显示设置失败：" + error.message);
+        getWpsApp().alert("显示设置失败：" + error.message);
     }
 };
 
@@ -135,7 +140,7 @@ window.onBtnHelpClick = function(control) {
         showDialog("help", "使用帮助");
     } catch (error) {
         console.error("帮助对话框显示失败：", error);
-        wps.alert("显示帮助失败：" + error.message);
+        getWpsApp().alert("显示帮助失败：" + error.message);
     }
 };
 
@@ -143,7 +148,8 @@ window.onBtnHelpClick = function(control) {
 function getSelectedText() {
     try {
         // 获取当前活动文档
-        const doc = wps.WpsApplication().ActiveDocument;
+        const wpsApp = getWpsApp();
+        const doc = wpsApp.WpsApplication().ActiveDocument;
         if (!doc) {
             return "";
         }
@@ -165,7 +171,8 @@ function getSelectedText() {
 function getDocumentContent() {
     try {
         // 获取当前活动文档
-        const doc = wps.WpsApplication().ActiveDocument;
+        const wpsApp = getWpsApp();
+        const doc = wpsApp.WpsApplication().ActiveDocument;
         if (!doc) {
             return "";
         }

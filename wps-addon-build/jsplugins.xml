@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<jsplugins>
-    <plugin name="WPS-AI-Assistant" version="1.0.0" url="http://your-server-url/wps-addin/">
-        <description>一款集成多种AI功能的WPS加载项</description>
-        <application>wps</application>
-    </plugin>
-</jsplugins> 
