@@ -1,0 +1,30 @@
+HelloWps
+node_modules
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.development
+.env.test
+.env.production
+
+
+# Next.js
+.next
+
+# Nuxt
+.nuxt
+
+# Vite
+.vite
+
+# Tailwind
+tailwind.config.js
+
+.DS_Store
+
+# Bun
+.bun
+
+# Bun
