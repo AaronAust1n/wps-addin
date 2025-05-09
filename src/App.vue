@@ -5,18 +5,17 @@
 <style scoped></style>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import ribbon from './components/ribbon.js'
+
 export default {
   setup() {
-    const message = ref('你好，WPS AI助手')
     onMounted(() => {
       window.ribbon = ribbon
+      console.log('WPS AI助手应用已加载')
     })
 
-    return {
-      message
-    }
+    return {}
   }
 }
 </script> 

@@ -7,18 +7,26 @@ const WPS_Enum = {
 
 // 获取URL路径
 function GetUrlPath() {
-  let e = document.location.toString()
-  return -1 != (e = decodeURI(e)).indexOf('/') && (e = e.substring(0, e.lastIndexOf('/'))), e
+  // 在本地网页的情况下获取路径
+  if (window.location.protocol === 'file:') {
+    const path = window.location.href;
+    // 删除文件名以获取根路径
+    return path.substring(0, path.lastIndexOf('/'));
+  }
+
+  // 在非本地网页的情况下获取根路径
+  const { protocol, hostname, port } = window.location;
+  const portPart = port ? `:${port}` : '';
+  return `${protocol}//${hostname}${portPart}`;
 }
 
 // 获取路由哈希
 function GetRouterHash() {
-  const hash = window.location.hash
-  if (hash) {
-    // 从哈希中去掉可能包含的路由信息，只保留#号前面的部分
-    return hash.split('#')[0]
+  if (window.location.protocol === 'file:') {
+    return '';
   }
-  return ''
+
+  return '/#'
 }
 
 // 格式化AI响应文本

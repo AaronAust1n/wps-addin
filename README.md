@@ -12,65 +12,57 @@ WPS AI助手是一款集成了多种人工智能功能的WPS文字插件，旨�
 
 ## 技术架构
 
-本插件基于WPS加载项开发框架开发，主要使用以下技术：
+本插件基于Vue.js和WPS加载项开发框架开发，主要使用以下技术：
 
+- Vue.js 3
 - JavaScript/HTML/CSS
 - WPS加载项API
-- Office JS API
-- Fetch API
+- Vite构建工具
+- Axios HTTP客户端
 
 ## 目录结构
 
 ```
 wps-addin/
-├── ribbon/               # 功能区配置
-│   └── ribbon.xml        # 功能区定义
-├── js/                   # JavaScript模块
-│   ├── ribbon.js         # 功能区事件处理
-│   ├── aiServices.js     # AI服务API
-│   ├── ui.js             # UI相关模块
-│   ├── settings.js       # 配置管理模块
-│   └── utils.js          # 工具函数
-├── css/                  # 样式文件
-│   ├── common.css        # 公共样式
-│   └── taskpane.css      # 任务窗格样式
-├── taskpanes/            # 任务窗格HTML
-│   ├── default.html      # 默认任务窗格
-│   ├── continueText.html # 文本续写任务窗格
-│   └── ...               # 其他功能任务窗格
-├── dialogs/              # 对话框HTML
-│   ├── settings.html     # 设置对话框
-│   └── help.html         # 帮助对话框
-└── main.js               # 主入口文件
+├── public/              # 静态资源
+│   ├── images/          # 图标和图片资源
+│   └── ribbon.xml       # 功能区定义
+├── src/                 # 源代码
+│   ├── assets/          # 静态资源
+│   ├── components/      # Vue组件
+│   │   ├── js/          # JavaScript模块
+│   │   │   ├── util.js  # 工具函数
+│   │   │   └── ...      # 其他工具
+│   │   ├── TaskPane.vue # 任务窗格组件
+│   │   ├── Dialog.vue   # 对话框组件
+│   │   └── ribbon.js    # 功能区事件处理
+│   ├── router/          # Vue路由
+│   ├── App.vue          # 主组件
+│   └── main.js          # 入口文件
+├── index.html           # HTML模板
+├── manifest.xml         # 加载项清单
+├── vite.config.js       # Vite配置
+└── package.json         # 项目配置
 ```
 
 ## 安装方法
 
 ### 开发环境
 
-1. 克隆仓库到本地
-2. 配置WPS支持本地加载项
+1. 安装依赖：`npm install`
+2. 启动开发服务器：`npm run dev`
+3. 配置WPS支持本地加载项
    - 打开WPS文字
    - 前往"开发工具"选项卡
    - 点击"WPS加载项"
    - 点击"浏览"，选择本项目的根目录
-3. 重启WPS文字，即可在功能区看到"AI助手"选项卡
+4. 重启WPS文字，即可在功能区看到"AI助手"选项卡
 
 ### 生产环境
 
-#### 方法一：使用publish模式部署
-
-1. 安装wpsjs工具包：`npm install -g wpsjs`
-2. 打包加载项：`wpsjs publish`
-3. 将生成的wps-addon-build目录下的文件部署到服务器
-4. 将wps-addon-publish目录下的publish.html文件部署到服务器
-5. 用户访问publish.html页面，点击安装按钮
-
-#### 方法二：使用jsplugins.xml模式部署
-
-1. 配置jsplugins.xml文件，指定加载项位置
-2. 为用户WPS配置JSPluginsServer，指向jsplugins.xml文件
-3. 用户启动WPS时，自动加载插件
+1. 构建项目：`npm run build`
+2. 将生成的dist目录部署到Web服务器
+3. 在WPS中添加加载项，指向部署好的URL
 
 ## API配置
 
@@ -79,40 +71,23 @@ AI助手加载项需要配置AI服务API才能正常工作。用户可以通过�
 - API地址：AI服务的基础URL
 - API密钥：访问API所需的认证密钥
 - 模型配置：可为不同功能配置不同的AI模型
-- 高级选项：调整生成文本的最大长度、创造性等参数
 
 ## 开发指南
 
 ### 添加新功能
 
-1. 在ribbon.xml中添加新的按钮
-2. 在ribbon.js中实现对应的事件处理函数
-3. 在aiServices.js中添加新的API调用方法
-4. 创建新的任务窗格HTML文件
+1. 在public/ribbon.xml中添加新的按钮
+2. 在src/components/ribbon.js中实现对应的事件处理函数
+3. 创建新的Vue组件处理UI逻辑
+4. 在router中添加新的路由
 
-### 自定义AI模型
+### 常见问题排查
 
-可以通过修改settings.js中的默认配置来自定义AI模型：
+如果插件未显示在WPS中，请检查：
 
-```javascript
-function getDefaultConfig() {
-    return {
-        apiUrl: "https://api.example.com/ai",
-        apiKey: "",
-        models: {
-            continuationModel: "your-model-name",
-            // 其他模型...
-        },
-        // 其他配置...
-    };
-}
-```
-
-## 注意事项
-
-- 插件依赖于网络连接，确保用户能够访问配置的API服务
-- API密钥不会在网络之外传输，仅存储在用户本地
-- 对于敏感文档，建议用户使用私有部署的AI服务
+1. manifest.xml是否包含正确的配置
+2. ribbon.xml是否放置在public目录下
+3. 确保src/components/ribbon.js中的OnAddinLoad函数正确导出
 
 ## 许可协议
 

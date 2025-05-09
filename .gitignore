@@ -10,17 +10,6 @@ node_modules
 .env.production
 
 
-# Next.js
-.next
-
-# Nuxt
-.nuxt
-
-# Vite
-.vite
-
-# Tailwind
-tailwind.config.js
 
 .DS_Store
 
@@ -28,3 +17,34 @@ tailwind.config.js
 .bun
 
 # Bun
+
+# 建议忽略以下与Vue相关的常见文件和目录：
+
+# 构建输出目录（如使用Vite或Vue CLI时）
+dist/
+build/
+
+# 临时缓存文件
+.cache/
+.vite/
+coverage/
+
+# IDE相关
+.idea/
+.vscode/
+
+# 日志文件
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 依赖锁文件（如不希望锁定依赖时可忽略）
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# 其他常见忽略项
+*.local
+*.sublime-project
+*.sublime-workspace
