@@ -1,175 +1,61 @@
-按钮点击: btnContinueText
-​ 准备处理文本续写功能...
-​ 文本续写功能开始执行
-​ 检查API配置...
-​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 选中文本为空或仅包含空白字符
-​ 选中文本检查: 无选中文本
-​ 获取段落失败: TypeError: selection.Paragraphs is not a function
-    at getCurrentParagraph (src/components/ribbo…747037006955:161:35)
-    at handleContinueText (src/components/ribbo…747037006955:608:25)
-    at Object.OnAction (src/components/ribbo…=1747037006955:42:7)
+WPS AI助手应用已加载
+ribbon.js:46 按钮点击: btnSettings
+ribbon.js:70 准备打开设置对话框...
+ribbon.js:585 打开设置对话框
+ribbon.js:595 设置对话框已创建
+ribbon.js:46 按钮点击: btnContinueText
+ribbon.js:50 准备处理文本续写功能...
+ribbon.js:623 文本续写功能开始执行
+ribbon.js:114 检查API配置...
+ribbon.js:86 尝试读取API配置...
+ribbon.js:101 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+ribbon.js:132 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+ribbon.js:151 选中文本为空或仅包含空白字符
+ribbon.js:640 选中文本检查: 无选中文本
+ribbon.js:180 无法通过Paragraphs获取段落，尝试替代方法: TypeError: selection.Paragraphs is not a function
+    at getCurrentParagraph (ribbon.js:173:37)
+    at handleContinueText (ribbon.js:644:25)
+    at Object.OnAction (ribbon.js:51:7)
     at <anonymous>:1:22
-getCurrentParagraph @ src/components/ribbo…t=1747037006955:182
-handleContinueText @ src/components/ribbo…t=1747037006955:608
-OnAction @ src/components/ribbo…?t=1747037006955:42
-(anonymous) @ VM480:1
-​ 获取段落: 失败
-​ 没有选中文本也没有段落内容
-handleContinueText @ src/components/ribbo…t=1747037006955:612
-OnAction @ src/components/ribbo…?t=1747037006955:42
-(anonymous) @ VM480:1
-​ 文本续写功能异常: TypeError: window.Application.Alert is not a function
-    at handleContinueText (src/components/ribbo…747037006955:613:28)
-    at Object.OnAction (src/components/ribbo…=1747037006955:42:7)
-    at <anonymous>:1:22
-handleContinueText @ src/components/ribbo…t=1747037006955:626
-OnAction @ src/components/ribbo…?t=1747037006955:42
-(anonymous) @ VM480:1
-src/components/ribbo…t=1747037006955:627 Uncaught (in promise) TypeError: window.Application.Alert is not a function
-    at handleContinueText (src/components/ribbo…747037006955:627:24)
-    at Object.OnAction (src/components/ribbo…=1747037006955:42:7)
-    at <anonymous>:1:22
-handleContinueText @ src/components/ribbo…t=1747037006955:627
-OnAction @ src/components/ribbo…?t=1747037006955:42
-(anonymous) @ VM480:1
-​ 按钮点击: btnContinueText
-​ 准备处理文本续写功能...
-​ 文本续写功能开始执行
-​ 检查API配置...
-​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 选中文本为空或仅包含空白字符
-​ 选中文本检查: 无选中文本
-​ 获取段落失败: TypeError: selection.Paragraphs is not a function
-    at getCurrentParagraph (src/components/ribbo…747037006955:161:35)
-    at handleContinueText (src/components/ribbo…747037006955:608:25)
-    at Object.OnAction (src/components/ribbo…=1747037006955:42:7)
-    at <anonymous>:1:22
-getCurrentParagraph @ src/components/ribbo…t=1747037006955:182
-handleContinueText @ src/components/ribbo…t=1747037006955:608
-OnAction @ src/components/ribbo…?t=1747037006955:42
-(anonymous) @ VM481:1
-​ 获取段落: 失败
-​ 没有选中文本也没有段落内容
-handleContinueText @ src/components/ribbo…t=1747037006955:612
-OnAction @ src/components/ribbo…?t=1747037006955:42
-(anonymous) @ VM481:1
-​ 文本续写功能异常: TypeError: window.Application.Alert is not a function
-    at handleContinueText (src/components/ribbo…747037006955:613:28)
-    at Object.OnAction (src/components/ribbo…=1747037006955:42:7)
-    at <anonymous>:1:22
-handleContinueText @ src/components/ribbo…t=1747037006955:626
-OnAction @ src/components/ribbo…?t=1747037006955:42
-(anonymous) @ VM481:1
-src/components/ribbo…t=1747037006955:627 Uncaught (in promise) TypeError: window.Application.Alert is not a function
-    at handleContinueText (src/components/ribbo…747037006955:627:24)
-    at Object.OnAction (src/components/ribbo…=1747037006955:42:7)
-    at <anonymous>:1:22
-handleContinueText @ src/components/ribbo…t=1747037006955:627
-OnAction @ src/components/ribbo…?t=1747037006955:42
-(anonymous) @ VM481:1
-​ 按钮点击: btnProofreadText
-​ 准备处理文本校对功能...
-​ 文本校对功能开始执行
-​ 检查API配置...
-​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 选中文本为空或仅包含空白字符
-​ 选中文本检查: 无选中文本
-​ 获取段落失败: TypeError: selection.Paragraphs is not a function
-    at getCurrentParagraph (src/components/ribbo…747037006955:161:35)
-    at handleProofreadText (src/components/ribbo…747037006955:654:25)
-    at Object.OnAction (src/components/ribbo…=1747037006955:46:7)
-    at <anonymous>:1:22
-getCurrentParagraph @ src/components/ribbo…t=1747037006955:182
-handleProofreadText @ src/components/ribbo…t=1747037006955:654
-OnAction @ src/components/ribbo…?t=1747037006955:46
-(anonymous) @ VM482:1
-​ 获取段落: 失败
-​ 没有选中文本也没有段落内容
-handleProofreadText @ src/components/ribbo…t=1747037006955:658
-OnAction @ src/components/ribbo…?t=1747037006955:46
-(anonymous) @ VM482:1
-​ 文本校对功能异常: TypeError: window.Application.Alert is not a function
-    at handleProofreadText (src/components/ribbo…747037006955:659:28)
-    at Object.OnAction (src/components/ribbo…=1747037006955:46:7)
-    at <anonymous>:1:22
-handleProofreadText @ src/components/ribbo…t=1747037006955:672
-OnAction @ src/components/ribbo…?t=1747037006955:46
-(anonymous) @ VM482:1
-src/components/ribbo…t=1747037006955:673 Uncaught (in promise) TypeError: window.Application.Alert is not a function
-    at handleProofreadText (src/components/ribbo…747037006955:673:24)
-    at Object.OnAction (src/components/ribbo…=1747037006955:46:7)
-    at <anonymous>:1:22
-handleProofreadText @ src/components/ribbo…t=1747037006955:673
-OnAction @ src/components/ribbo…?t=1747037006955:46
-(anonymous) @ VM482:1
-​ 按钮点击: btnPolishText
-​ 准备处理文本润色功能...
-​ 文本润色功能开始执行
-​ 检查API配置...
-​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 选中文本为空或仅包含空白字符
-​ 选中文本检查: 无选中文本
-​ 获取段落失败: TypeError: selection.Paragraphs is not a function
-    at getCurrentParagraph (src/components/ribbo…747037006955:161:35)
-    at handlePolishText (src/components/ribbo…747037006955:700:25)
-    at Object.OnAction (src/components/ribbo…=1747037006955:50:7)
-    at <anonymous>:1:22
-getCurrentParagraph @ src/components/ribbo…t=1747037006955:182
-handlePolishText @ src/components/ribbo…t=1747037006955:700
-OnAction @ src/components/ribbo…?t=1747037006955:50
-(anonymous) @ VM483:1
-​ 获取段落: 失败
-​ 没有选中文本也没有段落内容
-handlePolishText @ src/components/ribbo…t=1747037006955:704
-OnAction @ src/components/ribbo…?t=1747037006955:50
-(anonymous) @ VM483:1
-​ 文本润色功能异常: TypeError: window.Application.Alert is not a function
-    at handlePolishText (src/components/ribbo…747037006955:705:28)
-    at Object.OnAction (src/components/ribbo…=1747037006955:50:7)
-    at <anonymous>:1:22
-handlePolishText @ src/components/ribbo…t=1747037006955:718
-OnAction @ src/components/ribbo…?t=1747037006955:50
-(anonymous) @ VM483:1
-src/components/ribbo…t=1747037006955:719 Uncaught (in promise) TypeError: window.Application.Alert is not a function
-    at handlePolishText (src/components/ribbo…747037006955:719:24)
-    at Object.OnAction (src/components/ribbo…=1747037006955:50:7)
-    at <anonymous>:1:22
-handlePolishText @ src/components/ribbo…t=1747037006955:719
-OnAction @ src/components/ribbo…?t=1747037006955:50
-(anonymous) @ VM483:1
-​ 按钮点击: btnSummarizeText
-​ 未知按钮ID: btnSummarizeText
-OnAction @ src/components/ribbo…?t=1747037006955:69
-(anonymous) @ VM484:1
-​ 按钮点击: btnSummarizeDoc
-​ 准备处理全文总结功能...
-​ 全文总结功能被触发
-​ 检查API配置...
-​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 尝试创建全文总结侧边栏
-​ 侧边栏URL: http://127.0.0.1:3889/#/summary
-​ 创建侧边栏失败: Error: An exception occurred during the jsapi EXECUTE call.
-    at createTaskpane (src/components/ribbo…747037006955:222:41)
-    at handleSummarizeDoc (src/components/ribbo…747037006955:534:22)
-    at Object.OnAction (src/components/ribbo…=1747037006955:58:7)
-    at <anonymous>:1:22
-createTaskpane @ src/components/ribbo…t=1747037006955:229
-handleSummarizeDoc @ src/components/ribbo…t=1747037006955:534
-OnAction @ src/components/ribbo…?t=1747037006955:58
-(anonymous) @ VM485:1
-​ 全文总结功能出错: TypeError: window.Application.Alert is not a function
-    at createTaskpane (src/components/ribbo…747037006955:230:24)
-    at handleSummarizeDoc (src/components/ribbo…747037006955:534:22)
-    at Object.OnAction (src/components/ribbo…=1747037006955:58:7)
-    at <anonymous>:1:22
+getCurrentParagraph @ ribbon.js:180
+handleContinueText @ ribbon.js:644
+OnAction @ ribbon.js:51
+(anonymous) @ VM509:1
+ribbon.js:194 通过替代方法获取段落文本
+ribbon.js:645 获取段落: 成功
+ribbon.js:654 使用段落进行续写，长度: 2483
+ribbon.js:303 开始处理段落: continue, 文本长度: 2483
+ribbon.js:309 加载对话框已显示 成功
+ribbon.js:312 加载API配置
+ribbon.js:86 尝试读取API配置...
+ribbon.js:101 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+ribbon.js:323 API配置已更新 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct', specificModel: '未指定'}
+ribbon.js:331 调用API: continue, 开始时间: 2025-05-12T08:56:37.867Z
+ribbon.js:337 文本续写API调用完成，结果长度: 615
+ribbon.js:233 插入文本失败: TypeError: selection.Collapse is not a function
+    at insertTextAtCursor (ribbon.js:229:15)
+    at processText (ribbon.js:388:25)
+    at async handleContinueText (ribbon.js:655:7)
+insertTextAtCursor @ ribbon.js:233
+processText @ ribbon.js:388
+await in processText (async)
+handleContinueText @ ribbon.js:655
+OnAction @ ribbon.js:51
+(anonymous) @ VM509:1
+ribbon.js:428 continue处理出错: {type: 'document_error', message: '文档操作失败', details: 'window.Application.Alert is not a function', originalError: TypeError: window.Application.Alert is not a function
+    at insertTextAtCursor (http://127.0.0.1:3…}
+processText @ ribbon.js:428
+await in processText (async)
+handleContinueText @ ribbon.js:655
+OnAction @ ribbon.js:51
+(anonymous) @ VM509:1
+ribbon.js:662 文本续写功能异常: TypeError: window.Application.CloseDialog is not a function
+    at closeDialog (ribbon.js:288:24)
+    at processText (ribbon.js:432:7)
+    at async handleContinueText (ribbon.js:655:7)
+handleContinueText @ ribbon.js:662
+await in handleContinueText (async)
+OnAction @ ribbon.js:51
+(anonymous) @ VM509:1
+ribbon.js:663 Uncaught (in promise) TypeError: window.Application.Alert is not a function
+    at handleContinueText (ribbon.js:663:24)
