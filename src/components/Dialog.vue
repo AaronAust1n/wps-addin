@@ -1,9 +1,11 @@
 <template>
   <div class="dialog-container">
     <div class="dialog-header">
-      <h2>WPS AI助手 - 设置</h2>
+      <h2>WPS AI助手 - {{ isHelp ? '帮助' : '设置' }}</h2>
     </div>
-    <div class="dialog-content">
+    
+    <!-- 设置内容 -->
+    <div v-if="!isHelp" class="dialog-content">
       <div class="form-group">
         <label for="apiUrl">API 地址 <span class="required">*</span></label>
         <input type="text" id="apiUrl" v-model="config.apiUrl" class="full-border-input" placeholder="请输入AI服务API地址，例如: https://api.openai.com">
@@ -134,16 +136,87 @@
           </div>
         </div>
       </div>
+      <div class="dialog-footer">
+        <button @click="saveConfig" class="btn-primary">保存</button>
+        <button @click="closeDialog" class="btn-secondary">取消</button>
+      </div>
     </div>
-    <div class="dialog-footer">
-      <button @click="saveConfig" class="btn-primary">保存</button>
-      <button @click="closeDialog" class="btn-secondary">取消</button>
+    
+    <!-- 帮助内容 -->
+    <div v-if="isHelp" class="dialog-content">
+      <div class="help-section">
+        <h3>主要功能</h3>
+        <ul>
+          <li>
+            <strong>文本续写</strong>：根据选中的文本或光标所在段落，智能续写内容。
+          </li>
+          <li>
+            <strong>文本校对</strong>：检查并修正选中文本或光标所在段落中的错误。
+          </li>
+          <li>
+            <strong>文本润色</strong>：优化选中文本或光标所在段落的表达，使其更加专业流畅。
+          </li>
+          <li>
+            <strong>文档问答</strong>：基于当前文档内容回答问题，支持选取部分内容或全文。
+          </li>
+          <li>
+            <strong>全文总结</strong>：为整个文档或选中内容生成摘要。
+          </li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h3>使用方法</h3>
+        <ol>
+          <li>首先点击"设置"按钮配置AI接口信息</li>
+          <li>文本操作（续写/校对/润色）：
+            <ul>
+              <li>选择需要处理的文本（或定位光标到段落中）</li>
+              <li>点击对应功能按钮</li>
+              <li>处理完成后，修改结果会显示在原文后</li>
+              <li>按Enter接受修改，删除旧内容</li>
+            </ul>
+          </li>
+          <li>文档问答：
+            <ul>
+              <li>点击"文档问答"按钮，打开侧边栏</li>
+              <li>在输入框中输入问题，按回车或点击"提问"</li>
+              <li>AI将基于文档内容回答问题</li>
+            </ul>
+          </li>
+          <li>全文总结：
+            <ul>
+              <li>点击"全文总结"按钮，打开侧边栏</li>
+              <li>如有选中内容，将生成该内容的摘要；否则生成全文摘要</li>
+              <li>点击"重新生成"可刷新摘要结果</li>
+            </ul>
+          </li>
+        </ol>
+      </div>
+      <div class="help-section">
+        <h3>常见问题</h3>
+        <div class="qa-item">
+          <div class="question">API设置无法保存？</div>
+          <div class="answer">请确保填写了必要的API地址，如使用自定义模型需填写模型名称。</div>
+        </div>
+        <div class="qa-item">
+          <div class="question">功能按钮点击无反应？</div>
+          <div class="answer">请先完成API设置，确保API连通性正常。</div>
+        </div>
+        <div class="qa-item">
+          <div class="question">处理结果不正确？</div>
+          <div class="answer">尝试使用不同的模型，或提供更多上下文信息。</div>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button @click="closeDialog" class="btn-close">关闭</button>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import apiClient from './js/api.js'
 
 export default {
@@ -166,6 +239,13 @@ export default {
       }
     })
     
+    const route = useRoute();
+    const isHelp = computed(() => {
+      const result = route.path === '/help';
+      console.log(`计算isHelp: 路径=${route.path}, 结果=${result}`);
+      return result;
+    });
+    
     const advancedOpen = ref(false)
     const testStatus = ref('') // 'success' or 'error'
     const testMessage = ref('')
@@ -174,7 +254,21 @@ export default {
       advancedOpen.value = !advancedOpen.value
     }
 
+    // 监视路由变化
+    watch(() => route.path, (newPath) => {
+      console.log('路由路径变化:', newPath);
+    });
+
     onMounted(() => {
+      console.log('Dialog组件挂载, 当前路由完整信息:', {
+        path: route.path,
+        fullPath: route.fullPath,
+        name: route.name,
+        params: route.params,
+        query: route.query
+      });
+      console.log('是否显示帮助:', isHelp.value);
+      
       // 从WPS本地存储加载配置
       if (window.Application && window.Application.PluginStorage) {
         const configStr = window.Application.PluginStorage.getItem('aiConfig')
@@ -187,10 +281,15 @@ export default {
               models: { ...config.value.models, ...savedConfig.models },
               options: { ...config.value.options, ...savedConfig.options }
             }
+            console.log('成功加载配置:', config.value);
           } catch (e) {
             console.error('配置加载失败', e)
           }
+        } else {
+          console.log('未找到已保存的配置');
         }
+      } else {
+        console.warn('PluginStorage不可用');
       }
     })
 
@@ -239,34 +338,68 @@ export default {
     }
 
     const saveConfig = () => {
+      console.log('开始保存配置...', config.value);
+      
       // 保存前检查必填项
       if (!config.value.apiUrl) {
+        console.warn('API地址为空，中止保存');
         window.Application.Alert('请填写API地址')
         return
       }
       
       // 检查自定义模型名称
       if (config.value.models.defaultModel === 'custom' && !config.value.models.customModel) {
+        console.warn('自定义模型名称为空，中止保存');
         window.Application.Alert('请填写自定义模型名称')
         return
       }
       
-      // 如果选择了自定义模型，更新实际的默认模型值为自定义模型名称
+      // 深度复制配置对象，避免引用问题
       const actualConfig = JSON.parse(JSON.stringify(config.value))
+      console.log('配置对象深度复制完成');
+      
+      // 正确处理自定义模型
       if (actualConfig.models.defaultModel === 'custom') {
-        actualConfig.models.defaultModel = actualConfig.models.customModel
+        console.log('检测到自定义模型', {
+          defaultModel: actualConfig.models.defaultModel,
+          customModel: actualConfig.models.customModel
+        });
+        
+        // 保存自定义模型值作为默认模型
+        const customModelValue = actualConfig.models.customModel;
+        actualConfig.models.defaultModel = customModelValue;
+        
+        console.log('自定义模型已设置为默认模型', {
+          defaultModel: actualConfig.models.defaultModel,
+          customModel: actualConfig.models.customModel
+        });
       }
       
       // 保存配置到WPS本地存储
       if (window.Application && window.Application.PluginStorage) {
         try {
-          window.Application.PluginStorage.setItem('aiConfig', JSON.stringify(actualConfig))
+          const configStr = JSON.stringify(actualConfig);
+          console.log('准备保存配置:', configStr);
+          
+          window.Application.PluginStorage.setItem('aiConfig', configStr);
+          console.log('配置已保存到本地存储');
+          
+          // 立即读取保存的配置进行验证
+          const savedConfigStr = window.Application.PluginStorage.getItem('aiConfig');
+          if (savedConfigStr) {
+            const savedConfig = JSON.parse(savedConfigStr);
+            console.log('验证保存的配置:', savedConfig);
+          }
+          
           window.Application.Alert('配置已保存')
           closeDialog()
         } catch (e) {
           console.error('配置保存失败', e)
           window.Application.Alert('配置保存失败: ' + e.message)
         }
+      } else {
+        console.error('PluginStorage不可用，无法保存配置');
+        window.Application.Alert('无法访问存储，配置保存失败')
       }
     }
 
@@ -281,6 +414,7 @@ export default {
       advancedOpen,
       testStatus,
       testMessage,
+      isHelp,
       toggleAdvanced,
       testConnection,
       saveConfig,
@@ -401,6 +535,11 @@ button {
   margin-left: 0;
 }
 
+.btn-close {
+  background-color: #2b579a;
+  color: white;
+}
+
 .test-connection-group {
   margin-bottom: 15px;
   display: flex;
@@ -418,5 +557,41 @@ button {
 
 .error {
   color: #f44336;
+}
+
+/* 帮助页面样式 */
+.help-section {
+  margin-bottom: 20px;
+}
+
+.help-section h3 {
+  color: #2b579a;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+  margin-top: 0;
+}
+
+.qa-item {
+  margin-bottom: 15px;
+}
+
+.question {
+  font-weight: bold;
+  color: #2b579a;
+  margin-bottom: 5px;
+}
+
+.answer {
+  line-height: 1.5;
+}
+
+ul, ol {
+  padding-left: 20px;
+  margin-top: 5px;
+}
+
+li {
+  margin-bottom: 5px;
+  line-height: 1.5;
 }
 </style> 
