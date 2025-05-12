@@ -22,6 +22,11 @@ const router = createRouter({
       path: '/loading',
       name: '加载中',
       component: () => import('../components/Loading.vue')
+    },
+    {
+      path: '/copilot',
+      name: 'Copilot侧边栏',
+      component: () => import('../components/Copilot.vue')
     }
   ]
 })

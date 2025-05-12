@@ -228,6 +228,8 @@ export default {
       }
       
       validating.value = true
+      console.log('开始验证API连接:', config.value.apiUrl)
+      
       const loadingId = window.Application.ShowDialog(
         window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/loading',
         'WPS AI助手 - 验证中...',
@@ -247,29 +249,72 @@ export default {
           timeout: 10000 // 10秒超时，仅用于验证
         })
         
-        // 发送简单请求验证连接
+        // 构建请求参数
         const model = config.value.models?.defaultModel || "gpt-3.5-turbo"
-        const response = await testClient.post('/v1/chat/completions', {
+        const requestData = {
           model: model,
           messages: [
             { role: 'system', content: '请回复"连接成功"以验证API连接。' },
             { role: 'user', content: '验证连接' }
           ],
           max_tokens: 10
-        })
+        }
+        
+        console.log('发送API验证请求:', JSON.stringify(requestData))
+        
+        // 发送简单请求验证连接
+        const response = await testClient.post('/v1/chat/completions', requestData)
+        
+        console.log('收到API响应:', response.status, JSON.stringify(response.data).substring(0, 200) + '...')
         
         window.Application.CloseDialog(loadingId)
-        window.Application.Alert('API连接验证成功!')
+        
+        let successMessage = 'API连接验证成功!'
+        if (response.data && response.data.choices && response.data.choices.length > 0) {
+          successMessage += '\n\n模型响应: ' + response.data.choices[0].message.content
+          successMessage += '\n\n模型名称: ' + model
+          if (response.data.model) {
+            successMessage += ' (服务器使用: ' + response.data.model + ')'
+          }
+          if (response.data.usage) {
+            successMessage += '\n令牌使用: ' + response.data.usage.total_tokens + ' 个'
+          }
+        }
+        
+        window.Application.Alert(successMessage)
       } catch (e) {
+        console.error('API验证失败:', e)
+        
         window.Application.CloseDialog(loadingId)
+        
         let errorMsg = 'API连接验证失败'
         if (e.response) {
+          console.error('服务器响应:', e.response.status, JSON.stringify(e.response.data))
           errorMsg += ': ' + (e.response.data?.error?.message || e.response.statusText || '服务器返回错误')
+          errorMsg += '\n\n状态码: ' + e.response.status
+          if (e.response.data?.error?.type) {
+            errorMsg += '\n错误类型: ' + e.response.data.error.type
+          }
+          
+          // 添加常见错误的解释
+          if (e.response.status === 401) {
+            errorMsg += '\n\n可能原因: API密钥无效或已过期'
+          } else if (e.response.status === 404) {
+            errorMsg += '\n\n可能原因: API地址不正确或接口路径错误'
+          } else if (e.response.status === 429) {
+            errorMsg += '\n\n可能原因: 超出API速率限制或配额'
+          } else if (e.response.data?.error?.message?.includes('model')) {
+            errorMsg += '\n\n可能原因: 模型名称无效或不可用'
+          }
         } else if (e.request) {
+          console.error('请求发送但无响应')
           errorMsg += ': 无法连接到服务器，请检查API地址和网络连接'
+          errorMsg += '\n\n可能原因: \n1. API地址格式错误\n2. 服务器未运行或不可达\n3. 网络连接问题'
         } else {
+          console.error('请求初始化失败:', e.message)
           errorMsg += ': ' + e.message
         }
+        
         window.Application.Alert(errorMsg)
       } finally {
         validating.value = false

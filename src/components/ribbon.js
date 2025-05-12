@@ -3,22 +3,29 @@ import apiClient from './js/api.js'
 
 // 这个函数在整个wps加载项中是第一个执行的
 function OnAddinLoad(ribbonUI) {
-  if (typeof window.Application.ribbonUI != 'object') {
-    window.Application.ribbonUI = ribbonUI
-  }
+  console.log('WPS AI助手加载项正在加载...')
+  try {
+    if (typeof window.Application.ribbonUI != 'object') {
+      window.Application.ribbonUI = ribbonUI
+    }
 
-  if (typeof window.Application.Enum != 'object') {
-    // 如果没有内置枚举值
-    window.Application.Enum = Util.WPS_Enum
-  }
+    if (typeof window.Application.Enum != 'object') {
+      // 如果没有内置枚举值
+      window.Application.Enum = Util.WPS_Enum
+    }
 
-  window.Util = Util
-  window.Application.PluginStorage.setItem('EnableFlag', true) // 设置插件启用标记
-  console.log('WPS AI助手加载项已加载')
-  return true
+    window.Util = Util
+    window.Application.PluginStorage.setItem('EnableFlag', true) // 设置插件启用标记
+    console.log('WPS AI助手加载项已加载成功')
+    return true
+  } catch (e) {
+    console.error('加载项初始化失败:', e)
+    return false
+  }
 }
 
 function OnAction(control) {
+  console.log('接收到按钮点击事件:', control.Id)
   const eleId = control.Id
   switch (eleId) {
     case 'btnContinueText':
@@ -43,6 +50,7 @@ function OnAction(control) {
       handleHelp()
       break
     default:
+      console.warn('未处理的按钮ID:', eleId)
       break
   }
   return true
@@ -143,7 +151,10 @@ function insertTextAtCursor(text) {
 
 // 显示Copilot风格的侧边栏
 function showCopilotPanel(title, prompt, operation, selectedText = '') {
-  if (!window.Application) return
+  if (!window.Application) {
+    console.error('无法访问WPS Application对象')
+    return
+  }
 
   // 确保数据不为空
   if (!selectedText || selectedText.trim() === '') {
@@ -153,8 +164,10 @@ function showCopilotPanel(title, prompt, operation, selectedText = '') {
 
   console.log('显示侧边栏', title, operation, selectedText.substring(0, 50) + '...')
 
-  // 创建一个隐藏的HTML元素来存储临时数据
+  // 创建一个唯一的数据ID
   const tempDataId = 'ai_copilot_temp_data_' + Date.now()
+  
+  // 准备数据
   const tempData = {
     title: title,
     prompt: prompt,
@@ -167,52 +180,53 @@ function showCopilotPanel(title, prompt, operation, selectedText = '') {
   // 保存临时数据到浏览器存储
   sessionStorage.setItem(tempDataId, JSON.stringify(tempData))
   
+  // 构建侧边栏URL
+  const copilotUrl = `${Util.GetUrlPath()}${Util.GetRouterHash()}/copilot?id=${tempDataId}`
+  
   // 打开Copilot侧边栏
-  let tsId = window.Application.PluginStorage.getItem('copilot_panel_id')
-  if (!tsId) {
-    try {
-      let tskpane = window.Application.CreateTaskPane(Util.GetUrlPath() + Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+  try {
+    // 尝试获取现有侧边栏ID
+    let tsId = window.Application.PluginStorage.getItem('copilot_panel_id')
+    
+    if (!tsId) {
+      // 如果没有现有ID，创建新的任务窗格
+      let tskpane = window.Application.CreateTaskPane(copilotUrl)
       if (tskpane) {
         let id = tskpane.ID
         window.Application.PluginStorage.setItem('copilot_panel_id', id)
         tskpane.Visible = true
-        console.log('创建新的侧边栏成功')
+        console.log('创建新的侧边栏成功, ID:', id)
       } else {
         throw new Error('无法创建任务面板')
       }
-    } catch (e) {
-      console.error('创建任务面板失败:', e)
-      window.Application.Alert('创建任务面板失败: ' + e.message)
-      return
-    }
-  } else {
-    try {
-      let tskpane = window.Application.GetTaskPane(tsId)
-      if (tskpane) {
-        tskpane.Navigate(Util.GetUrlPath() + Util.GetRouterHash() + '/copilot?id=' + tempDataId)
-        tskpane.Visible = true
-        console.log('使用现有侧边栏成功')
-      } else {
-        throw new Error('无法获取任务面板')
-      }
-    } catch (e) {
-      console.error('获取任务面板失败:', e)
-      // 如果获取已有窗格失败，创建新的
+    } else {
+      // 如果有现有ID，尝试重用
       try {
-        let tskpane = window.Application.CreateTaskPane(Util.GetUrlPath() + Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+        let tskpane = window.Application.GetTaskPane(tsId)
+        if (tskpane) {
+          tskpane.Navigate(copilotUrl)
+          tskpane.Visible = true
+          console.log('导航到现有侧边栏成功')
+        } else {
+          throw new Error('无法获取现有任务面板')
+        }
+      } catch (e) {
+        console.error('导航到现有侧边栏失败:', e)
+        // 如果重用失败，创建新的窗格
+        let tskpane = window.Application.CreateTaskPane(copilotUrl)
         if (tskpane) {
           let id = tskpane.ID
           window.Application.PluginStorage.setItem('copilot_panel_id', id)
           tskpane.Visible = true
-          console.log('创建新的侧边栏成功(备选)')
+          console.log('创建新的侧边栏成功(备选), ID:', id)
         } else {
           throw new Error('无法创建任务面板(备选)')
         }
-      } catch (innerE) {
-        console.error('创建任务面板失败(备选):', innerE)
-        window.Application.Alert('任务面板创建失败: ' + innerE.message)
       }
     }
+  } catch (e) {
+    console.error('侧边栏创建失败:', e)
+    window.Application.Alert('侧边栏创建失败: ' + e.message)
   }
 }
 
@@ -297,34 +311,37 @@ function handleContinueText() {
           selection.InsertAfter('\n' + result)
           
           // 显示提示
-          window.Application.Alert('续写完成，按Enter接受修改，原文本会被删除')
+          window.Application.Alert('续写完成，按Enter键确认接受修改')
           
-          // 使用setTimeout监听键盘Enter事件，避免使用复杂的API事件
-          let enterPressed = false;
-          const enterListener = function(e) {
-            if (e.keyCode === 13 && !enterPressed) { // Enter键
-              enterPressed = true;
-              document.removeEventListener('keydown', enterListener);
-              
-              try {
-                // 获取原始文本范围
-                const originalRange = window.Application.ActiveDocument.Range(originalStartPosition, originalEndPosition)
-                // 删除原始文本
-                originalRange.Delete()
-              } catch (e) {
-                console.error('删除原始文本失败:', e)
-                window.Application.Alert('删除原始文本失败: ' + e.message)
+          // 使用WPS ApiEvent
+          if (window.Application.ApiEvent) {
+            const enterHandler = function(param) {
+              // 如果按下的是Enter键
+              if (param.KeyCode === 13) {
+                try {
+                  // 获取原始文本范围
+                  const originalRange = window.Application.ActiveDocument.Range(originalStartPosition, originalEndPosition)
+                  // 删除原始文本
+                  originalRange.Delete()
+                  
+                  // 移除事件监听
+                  window.Application.ApiEvent.RemoveApiEventListener('KeyDown', enterHandler)
+                  
+                  // 返回true表示已处理该事件
+                  return true
+                } catch (e) {
+                  console.error('删除原始文本失败:', e)
+                  window.Application.Alert('删除原始文本失败: ' + e.message)
+                }
               }
+              return false
             }
-          };
-          
-          // 添加键盘监听
-          document.addEventListener('keydown', enterListener);
-          
-          // 30秒后自动移除监听器（避免长时间占用）
-          setTimeout(() => {
-            document.removeEventListener('keydown', enterListener);
-          }, 30000);
+            
+            // 添加键盘事件监听
+            window.Application.ApiEvent.AddApiEventListener('KeyDown', enterHandler)
+          } else {
+            console.warn('ApiEvent不可用，无法添加键盘事件监听')
+          }
           
         } catch (e) {
           console.error('应用结果失败:', e)
@@ -399,34 +416,37 @@ function handleProofreadText() {
           selection.InsertAfter('\n' + result)
           
           // 显示提示
-          window.Application.Alert('校对完成，按Enter接受修改，原文本会被删除')
+          window.Application.Alert('校对完成，按Enter键确认接受修改')
           
-          // 使用setTimeout监听键盘Enter事件，避免使用复杂的API事件
-          let enterPressed = false;
-          const enterListener = function(e) {
-            if (e.keyCode === 13 && !enterPressed) { // Enter键
-              enterPressed = true;
-              document.removeEventListener('keydown', enterListener);
-              
-              try {
-                // 获取原始文本范围
-                const originalRange = window.Application.ActiveDocument.Range(originalStartPosition, originalEndPosition)
-                // 删除原始文本
-                originalRange.Delete()
-              } catch (e) {
-                console.error('删除原始文本失败:', e)
-                window.Application.Alert('删除原始文本失败: ' + e.message)
+          // 使用WPS ApiEvent
+          if (window.Application.ApiEvent) {
+            const enterHandler = function(param) {
+              // 如果按下的是Enter键
+              if (param.KeyCode === 13) {
+                try {
+                  // 获取原始文本范围
+                  const originalRange = window.Application.ActiveDocument.Range(originalStartPosition, originalEndPosition)
+                  // 删除原始文本
+                  originalRange.Delete()
+                  
+                  // 移除事件监听
+                  window.Application.ApiEvent.RemoveApiEventListener('KeyDown', enterHandler)
+                  
+                  // 返回true表示已处理该事件
+                  return true
+                } catch (e) {
+                  console.error('删除原始文本失败:', e)
+                  window.Application.Alert('删除原始文本失败: ' + e.message)
+                }
               }
+              return false
             }
-          };
-          
-          // 添加键盘监听
-          document.addEventListener('keydown', enterListener);
-          
-          // 30秒后自动移除监听器（避免长时间占用）
-          setTimeout(() => {
-            document.removeEventListener('keydown', enterListener);
-          }, 30000);
+            
+            // 添加键盘事件监听
+            window.Application.ApiEvent.AddApiEventListener('KeyDown', enterHandler)
+          } else {
+            console.warn('ApiEvent不可用，无法添加键盘事件监听')
+          }
           
         } catch (e) {
           console.error('应用结果失败:', e)
@@ -501,34 +521,37 @@ function handlePolishText() {
           selection.InsertAfter('\n' + result)
           
           // 显示提示
-          window.Application.Alert('润色完成，按Enter接受修改，原文本会被删除')
+          window.Application.Alert('润色完成，按Enter键确认接受修改')
           
-          // 使用setTimeout监听键盘Enter事件，避免使用复杂的API事件
-          let enterPressed = false;
-          const enterListener = function(e) {
-            if (e.keyCode === 13 && !enterPressed) { // Enter键
-              enterPressed = true;
-              document.removeEventListener('keydown', enterListener);
-              
-              try {
-                // 获取原始文本范围
-                const originalRange = window.Application.ActiveDocument.Range(originalStartPosition, originalEndPosition)
-                // 删除原始文本
-                originalRange.Delete()
-              } catch (e) {
-                console.error('删除原始文本失败:', e)
-                window.Application.Alert('删除原始文本失败: ' + e.message)
+          // 使用WPS ApiEvent
+          if (window.Application.ApiEvent) {
+            const enterHandler = function(param) {
+              // 如果按下的是Enter键
+              if (param.KeyCode === 13) {
+                try {
+                  // 获取原始文本范围
+                  const originalRange = window.Application.ActiveDocument.Range(originalStartPosition, originalEndPosition)
+                  // 删除原始文本
+                  originalRange.Delete()
+                  
+                  // 移除事件监听
+                  window.Application.ApiEvent.RemoveApiEventListener('KeyDown', enterHandler)
+                  
+                  // 返回true表示已处理该事件
+                  return true
+                } catch (e) {
+                  console.error('删除原始文本失败:', e)
+                  window.Application.Alert('删除原始文本失败: ' + e.message)
+                }
               }
+              return false
             }
-          };
-          
-          // 添加键盘监听
-          document.addEventListener('keydown', enterListener);
-          
-          // 30秒后自动移除监听器（避免长时间占用）
-          setTimeout(() => {
-            document.removeEventListener('keydown', enterListener);
-          }, 30000);
+            
+            // 添加键盘事件监听
+            window.Application.ApiEvent.AddApiEventListener('KeyDown', enterHandler)
+          } else {
+            console.warn('ApiEvent不可用，无法添加键盘事件监听')
+          }
           
         } catch (e) {
           console.error('应用结果失败:', e)
@@ -568,7 +591,10 @@ function handleSummarizeText() {
     return
   }
   
-  if (!docText) return;
+  if (!docText) {
+    window.Application.Alert('无法获取文档内容')
+    return
+  }
   
   // 创建一个任务面板来显示文档问答界面
   showCopilotPanel(
@@ -609,8 +635,12 @@ function handleSummarizeDoc() {
     return
   }
   
-  if (!docText) return;
+  if (!docText) {
+    window.Application.Alert('无法获取文档内容')
+    return
+  }
   
+  // 初始化侧边栏面板
   showCopilotPanel(
     title, 
     prompt,
@@ -645,7 +675,7 @@ function GetImage(control) {
     case 'btnPolishText':
       return 'images/text_polish.svg'
     case 'btnSummarizeText':
-      return 'images/text_summarize.svg'
+      return 'images/docqa.svg'
     case 'btnSummarizeDoc':
       return 'images/doc_summarize.svg'
     case 'btnSettings':
@@ -670,11 +700,14 @@ function OnGetLabel(control) {
 }
 
 // 这些函数是给wps客户端调用的
-export default {
+window.ribbon = {
   OnAddinLoad,
   OnAction,
   GetImage,
   OnGetEnabled,
   OnGetVisible,
   OnGetLabel
-} 
+}
+
+// 这些函数是给wps客户端调用的
+export default window.ribbon 
