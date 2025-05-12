@@ -211,15 +211,80 @@ function handleContinueText() {
   
   if (!checkConfigured()) return
   
-  const selectedText = getSelectedText()
-  if (!selectedText) return
-
-  showCopilotPanel(
-    '文本续写', 
-    '我将根据您选择的文本内容，智能续写后续内容。请确认以下是您希望续写的文本：',
-    'continuation',
-    selectedText
-  )
+  let selectedText = '';
+  try {
+    const selection = window.Application.ActiveDocument.Range
+    if (selection && selection.Text.trim()) {
+      // 有选中文本
+      selectedText = selection.Text
+    } else {
+      // 没有选中文本，获取光标所在段落
+      const currentParagraph = window.Application.ActiveDocument.Range.Paragraphs.Item(1);
+      if (currentParagraph) {
+        selectedText = currentParagraph.Range.Text;
+      } else {
+        window.Application.Alert('无法获取当前段落文本')
+        return
+      }
+    }
+  } catch (e) {
+    console.error('获取文本失败:', e)
+    window.Application.Alert('获取文本失败: ' + e.message)
+    return
+  }
+  
+  // 显示加载对话框
+  const loadingId = showLoadingDialog('正在续写文本...')
+  
+  // 更新API客户端配置
+  const config = getConfig()
+  apiClient.updateConfig(config)
+  
+  // 调用API续写文本
+  apiClient.continueText(selectedText)
+    .then(result => {
+      closeDialog(loadingId)
+      if (result) {
+        try {
+          const selection = window.Application.ActiveDocument.Range
+          // 记录原始文本位置
+          const originalStartPosition = selection.Start
+          const originalEndPosition = selection.End
+          
+          // 在光标位置插入修改后内容
+          selection.InsertAfter('\n' + result)
+          
+          // 创建一个确认按钮事件
+          const doc = window.Application.ActiveDocument
+          const customEvent = doc.Application.CreateEventListener('DocumentNew', function() {
+            try {
+              // 获取原始文本范围
+              const originalRange = doc.Range(originalStartPosition, originalEndPosition)
+              // 删除原始文本
+              originalRange.Delete()
+              // 移除事件监听器
+              doc.Application.RemoveEventListener('DocumentNew', customEvent)
+            } catch (e) {
+              console.error('删除原始文本失败:', e)
+            }
+          })
+          
+          // 添加事件监听器
+          doc.Application.AddEventListener('DocumentNew', customEvent)
+          
+          // 显示提示
+          window.Application.Alert('续写完成，按Enter确认接受修改')
+        } catch (e) {
+          console.error('应用结果失败:', e)
+          window.Application.Alert('应用结果失败: ' + e.message)
+        }
+      }
+    })
+    .catch(e => {
+      closeDialog(loadingId)
+      console.error('续写请求失败:', e)
+      window.Application.Alert('续写请求失败: ' + e.message)
+    })
 }
 
 // 文本校对功能
@@ -232,15 +297,80 @@ function handleProofreadText() {
   
   if (!checkConfigured()) return
   
-  const selectedText = getSelectedText()
-  if (!selectedText) return
-
-  showCopilotPanel(
-    '文本校对', 
-    '我将检查并修正选中文本中的错误，包括拼写、语法和标点符号等问题。请确认以下是您希望校对的文本：',
-    'proofreading',
-    selectedText
-  )
+  let selectedText = '';
+  try {
+    const selection = window.Application.ActiveDocument.Range
+    if (selection && selection.Text.trim()) {
+      // 有选中文本
+      selectedText = selection.Text
+    } else {
+      // 没有选中文本，获取光标所在段落
+      const currentParagraph = window.Application.ActiveDocument.Range.Paragraphs.Item(1);
+      if (currentParagraph) {
+        selectedText = currentParagraph.Range.Text;
+      } else {
+        window.Application.Alert('无法获取当前段落文本')
+        return
+      }
+    }
+  } catch (e) {
+    console.error('获取文本失败:', e)
+    window.Application.Alert('获取文本失败: ' + e.message)
+    return
+  }
+  
+  // 显示加载对话框
+  const loadingId = showLoadingDialog('正在校对文本...')
+  
+  // 更新API客户端配置
+  const config = getConfig()
+  apiClient.updateConfig(config)
+  
+  // 调用API校对文本
+  apiClient.proofreadText(selectedText)
+    .then(result => {
+      closeDialog(loadingId)
+      if (result) {
+        try {
+          const selection = window.Application.ActiveDocument.Range
+          // 记录原始文本位置
+          const originalStartPosition = selection.Start
+          const originalEndPosition = selection.End
+          
+          // 在光标位置插入修改后内容
+          selection.InsertAfter('\n' + result)
+          
+          // 创建一个确认按钮事件
+          const doc = window.Application.ActiveDocument
+          const customEvent = doc.Application.CreateEventListener('DocumentNew', function() {
+            try {
+              // 获取原始文本范围
+              const originalRange = doc.Range(originalStartPosition, originalEndPosition)
+              // 删除原始文本
+              originalRange.Delete()
+              // 移除事件监听器
+              doc.Application.RemoveEventListener('DocumentNew', customEvent)
+            } catch (e) {
+              console.error('删除原始文本失败:', e)
+            }
+          })
+          
+          // 添加事件监听器
+          doc.Application.AddEventListener('DocumentNew', customEvent)
+          
+          // 显示提示
+          window.Application.Alert('校对完成，按Enter确认接受修改')
+        } catch (e) {
+          console.error('应用结果失败:', e)
+          window.Application.Alert('应用结果失败: ' + e.message)
+        }
+      }
+    })
+    .catch(e => {
+      closeDialog(loadingId)
+      console.error('校对请求失败:', e)
+      window.Application.Alert('校对请求失败: ' + e.message)
+    })
 }
 
 // 文本润色功能
@@ -253,15 +383,80 @@ function handlePolishText() {
   
   if (!checkConfigured()) return
   
-  const selectedText = getSelectedText()
-  if (!selectedText) return
-
-  showCopilotPanel(
-    '文本润色', 
-    '我将改进您选中的文本，使表达更加优雅、专业和流畅，但保持原有意思不变。请确认以下是您希望润色的文本：',
-    'polishing',
-    selectedText
-  )
+  let selectedText = '';
+  try {
+    const selection = window.Application.ActiveDocument.Range
+    if (selection && selection.Text.trim()) {
+      // 有选中文本
+      selectedText = selection.Text
+    } else {
+      // 没有选中文本，获取光标所在段落
+      const currentParagraph = window.Application.ActiveDocument.Range.Paragraphs.Item(1);
+      if (currentParagraph) {
+        selectedText = currentParagraph.Range.Text;
+      } else {
+        window.Application.Alert('无法获取当前段落文本')
+        return
+      }
+    }
+  } catch (e) {
+    console.error('获取文本失败:', e)
+    window.Application.Alert('获取文本失败: ' + e.message)
+    return
+  }
+  
+  // 显示加载对话框
+  const loadingId = showLoadingDialog('正在润色文本...')
+  
+  // 更新API客户端配置
+  const config = getConfig()
+  apiClient.updateConfig(config)
+  
+  // 调用API润色文本
+  apiClient.polishText(selectedText)
+    .then(result => {
+      closeDialog(loadingId)
+      if (result) {
+        try {
+          const selection = window.Application.ActiveDocument.Range
+          // 记录原始文本位置
+          const originalStartPosition = selection.Start
+          const originalEndPosition = selection.End
+          
+          // 在光标位置插入修改后内容
+          selection.InsertAfter('\n' + result)
+          
+          // 创建一个确认按钮事件
+          const doc = window.Application.ActiveDocument
+          const customEvent = doc.Application.CreateEventListener('DocumentNew', function() {
+            try {
+              // 获取原始文本范围
+              const originalRange = doc.Range(originalStartPosition, originalEndPosition)
+              // 删除原始文本
+              originalRange.Delete()
+              // 移除事件监听器
+              doc.Application.RemoveEventListener('DocumentNew', customEvent)
+            } catch (e) {
+              console.error('删除原始文本失败:', e)
+            }
+          })
+          
+          // 添加事件监听器
+          doc.Application.AddEventListener('DocumentNew', customEvent)
+          
+          // 显示提示
+          window.Application.Alert('润色完成，按Enter确认接受修改')
+        } catch (e) {
+          console.error('应用结果失败:', e)
+          window.Application.Alert('应用结果失败: ' + e.message)
+        }
+      }
+    })
+    .catch(e => {
+      closeDialog(loadingId)
+      console.error('润色请求失败:', e)
+      window.Application.Alert('润色请求失败: ' + e.message)
+    })
 }
 
 // 文本摘要功能
@@ -274,14 +469,29 @@ function handleSummarizeText() {
   
   if (!checkConfigured()) return
   
-  const selectedText = getSelectedText()
-  if (!selectedText) return
-
+  // 获取文档文本，如果有选中文本则使用选中文本
+  let docText = '';
+  let selectedText = '';
+  try {
+    const selection = window.Application.ActiveDocument.Range
+    if (selection && selection.Text.trim()) {
+      selectedText = selection.Text;
+    }
+    docText = selectedText || getDocumentText();
+  } catch (e) {
+    console.error('获取文本失败:', e)
+    window.Application.Alert('获取文本失败: ' + e.message)
+    return
+  }
+  
+  if (!docText) return;
+  
+  // 创建一个任务面板来显示文档问答界面
   showCopilotPanel(
-    '文本摘要', 
-    '我将为您选中的文本生成简洁、准确的摘要，突出核心内容和关键点。请确认以下是您希望摘要的文本：',
-    'summarization',
-    selectedText
+    '文档问答', 
+    '我可以回答关于此文档的问题。请在下方输入您的问题：',
+    'docQA',
+    docText
   )
 }
 
@@ -295,12 +505,31 @@ function handleSummarizeDoc() {
   
   if (!checkConfigured()) return
   
-  const docText = getDocumentText()
-  if (!docText) return
-
+  // 获取文档文本，如果有选中文本则使用选中文本
+  let docText = '';
+  let selectedText = '';
+  let title = '全文总结';
+  let prompt = '我将为整个文档生成全面、结构化的总结，包括主要观点、论据和结论。';
+  
+  try {
+    const selection = window.Application.ActiveDocument.Range
+    if (selection && selection.Text.trim()) {
+      selectedText = selection.Text;
+      title = '文本摘要';
+      prompt = '我将为您选中的文本生成简洁、准确的摘要，突出核心内容和关键点。';
+    }
+    docText = selectedText || getDocumentText();
+  } catch (e) {
+    console.error('获取文本失败:', e)
+    window.Application.Alert('获取文本失败: ' + e.message)
+    return
+  }
+  
+  if (!docText) return;
+  
   showCopilotPanel(
-    '全文总结', 
-    '我将为整个文档生成全面、结构化的总结，包括主要观点、论据和结论。',
+    title, 
+    prompt,
     'documentSummarization',
     docText
   )

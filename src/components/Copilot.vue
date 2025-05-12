@@ -14,7 +14,7 @@
       </div>
       
       <!-- 用户输入的内容 -->
-      <div class="message user-message" v-if="selectedText && showPrompt">
+      <div class="message user-message" v-if="selectedText && showPrompt && operation !== 'docQA'">
         <div class="message-avatar">用户</div>
         <div class="message-content">
           <div class="text-preview">
@@ -27,6 +27,18 @@
             <button @click="regenerate" class="btn-action">重新生成</button>
             <button @click="executeAIOperation" class="btn-primary">确认生成</button>
           </div>
+        </div>
+      </div>
+      
+      <!-- 对话历史 -->
+      <div v-for="(msg, index) in conversationHistory" :key="index" v-if="!showPrompt || operation === 'docQA'">
+        <div class="message user-message" v-if="msg.role === 'user'">
+          <div class="message-avatar">用户</div>
+          <div class="message-content">{{ msg.content }}</div>
+        </div>
+        <div class="message assistant-message" v-else-if="msg.role === 'assistant'">
+          <div class="message-avatar">AI助手</div>
+          <div class="message-content" v-html="msg.content.replace(/\n/g, '<br>')"></div>
         </div>
       </div>
       
@@ -60,8 +72,8 @@
       </div>
     </div>
     
-    <!-- 新的用户输入区域 -->
-    <div class="copilot-footer" v-if="assistantResponse && !loading">
+    <!-- 用户输入区域 -->
+    <div class="copilot-footer">
       <div class="input-container">
         <input 
           type="text" 
@@ -201,6 +213,12 @@ export default {
           case 'documentSummarization':
             result = await apiClient.summarizeDocument(selectedText.value)
             break
+          case 'docQA':
+            // 文档问答不需要立即执行，等待用户输入问题
+            userInput.value = ''
+            // 设置提示信息
+            prompt.value = '请输入您想问的关于文档的问题：'
+            return // 不需要设置assistantResponse
           default:
             throw new Error('未知操作类型')
         }
@@ -251,6 +269,10 @@ export default {
                 selection.InsertAfter('\n\n## 文档总结\n\n' + assistantResponse.value + '\n')
               }
               break
+            case 'docQA':
+              // 文档问答不执行自动应用，由用户复制粘贴
+              window.Application.Alert('可以通过复制按钮复制内容')
+              return
             default:
               // 其他操作是替换选中文本
               if (selection) {
@@ -305,14 +327,22 @@ export default {
       error.value = ''
       
       try {
-        // 构建完整的对话历史
-        const messages = [
-          { role: 'system', content: `你是WPS AI助手，一个专业的文档处理助手。用户之前要求你${title.value}，你已经生成了相应内容，现在用户有新的指令或问题。` },
-          ...conversationHistory.value
-        ]
+        let result = '';
         
-        // 调用API进行对话
-        const result = await apiClient.chat(messages)
+        // 根据操作类型决定如何处理消息
+        if (operation.value === 'docQA') {
+          // 文档问答
+          result = await apiClient.documentQA(selectedText.value, message);
+        } else {
+          // 构建完整的对话历史
+          const messages = [
+            { role: 'system', content: `你是WPS AI助手，一个专业的文档处理助手。用户之前要求你${title.value}，你已经生成了相应内容，现在用户有新的指令或问题。` },
+            ...conversationHistory.value
+          ]
+          
+          // 调用API进行对话
+          result = await apiClient.chat(messages)
+        }
         
         // 更新响应和对话历史
         assistantResponse.value = result

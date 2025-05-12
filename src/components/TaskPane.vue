@@ -22,8 +22,8 @@
         </div>
         <div class="function-item" @click="handleSummarize">
           <div class="icon">📋</div>
-          <div class="title">文本摘要</div>
-          <div class="description">为选定内容生成简洁摘要</div>
+          <div class="title">文档问答</div>
+          <div class="description">基于文档内容回答您的问题</div>
         </div>
         <div class="function-item" @click="handleSummarizeDoc">
           <div class="icon">📚</div>
@@ -209,59 +209,125 @@ export default {
     const handleSummarize = async () => {
       if (!checkConfigured()) return
       
-      const selectedText = getSelectedText()
-      if (!selectedText) return
-      
-      statusMessage.value = '生成文本摘要...'
-      
+      // 获取文档文本，如果有选中文本则使用选中文本
+      let docText = '';
+      let selectedText = '';
       try {
-        // 更新API客户端配置
-        const config = getConfig()
-        apiClient.updateConfig(config)
-        
-        // 调用API生成摘要
-        const result = await apiClient.summarizeText(selectedText)
-        
-        // 询问用户是否替换选中文本
-        if (result) {
-          if (window.Application.Confirm('摘要生成成功，是否替换选中文本？\n\n' + result)) {
-            replaceSelectedText(result)
-          }
-          statusMessage.value = '文本摘要生成完成'
+        const selection = window.Application.ActiveDocument.Range
+        if (selection && selection.Text.trim()) {
+          selectedText = selection.Text;
         }
+        docText = selectedText || getDocumentText();
       } catch (e) {
-        statusMessage.value = '操作失败: ' + e.message
+        console.error('获取文本失败:', e)
+        window.Application.Alert('获取文本失败: ' + e.message)
+        return
+      }
+      
+      if (!docText) return;
+      
+      // 使用Ribbon.js中定义的showCopilotPanel函数
+      if (window.Util) {
+        // 调用Ribbon.js中定义的showCopilotPanel函数
+        const tempDataId = 'ai_copilot_temp_data_' + Date.now()
+        const tempData = {
+          title: '文档问答',
+          prompt: '我可以回答关于此文档的问题。请在下方输入您的问题：',
+          operation: 'docQA',
+          selectedText: docText,
+          config: getConfig()
+        }
+        
+        // 保存临时数据到浏览器存储
+        sessionStorage.setItem(tempDataId, JSON.stringify(tempData))
+        
+        // 打开Copilot侧边栏
+        let tsId = window.Application.PluginStorage.getItem('copilot_panel_id')
+        if (!tsId) {
+          let tskpane = window.Application.CreateTaskPane(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+          let id = tskpane.ID
+          window.Application.PluginStorage.setItem('copilot_panel_id', id)
+          tskpane.Visible = true
+        } else {
+          try {
+            let tskpane = window.Application.GetTaskPane(tsId)
+            tskpane.Navigate(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+            tskpane.Visible = true
+          } catch (e) {
+            // 如果获取已有窗格失败，创建新的
+            let tskpane = window.Application.CreateTaskPane(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+            let id = tskpane.ID
+            window.Application.PluginStorage.setItem('copilot_panel_id', id)
+            tskpane.Visible = true
+          }
+        }
+      } else {
+        window.Application.Alert('无法加载Copilot面板')
       }
     }
 
     const handleSummarizeDoc = async () => {
       if (!checkConfigured()) return
       
-      const docText = getDocumentText()
-      if (!docText) return
-      
-      statusMessage.value = '生成全文总结...'
+      // 获取文档文本，如果有选中文本则使用选中文本
+      let docText = '';
+      let selectedText = '';
+      let title = '全文总结';
+      let prompt = '我将为整个文档生成全面、结构化的总结，包括主要观点、论据和结论。';
       
       try {
-        // 更新API客户端配置
-        const config = getConfig()
-        apiClient.updateConfig(config)
-        
-        // 调用API生成全文总结
-        const result = await apiClient.summarizeDocument(docText)
-        
-        // 询问用户是如何处理结果
-        if (result) {
-          if (window.Application.Confirm('全文总结生成成功，是否插入到文档末尾？\n\n' + result)) {
-            // 插入到文档末尾
-            const selection = window.Application.ActiveDocument.Range
-            selection.Collapse(false) // 折叠到末尾
-            selection.InsertBefore('\n\n## 文档总结\n\n' + result + '\n')
-          }
-          statusMessage.value = '全文总结生成完成'
+        const selection = window.Application.ActiveDocument.Range
+        if (selection && selection.Text.trim()) {
+          selectedText = selection.Text;
+          title = '文本摘要';
+          prompt = '我将为您选中的文本生成简洁、准确的摘要，突出核心内容和关键点。';
         }
+        docText = selectedText || getDocumentText();
       } catch (e) {
-        statusMessage.value = '操作失败: ' + e.message
+        console.error('获取文本失败:', e)
+        window.Application.Alert('获取文本失败: ' + e.message)
+        return
+      }
+      
+      if (!docText) return;
+      
+      // 使用Ribbon.js中定义的showCopilotPanel函数
+      if (window.Util) {
+        // 调用Ribbon.js中定义的showCopilotPanel函数
+        const tempDataId = 'ai_copilot_temp_data_' + Date.now()
+        const tempData = {
+          title: title,
+          prompt: prompt,
+          operation: 'documentSummarization',
+          selectedText: docText,
+          config: getConfig()
+        }
+        
+        // 保存临时数据到浏览器存储
+        sessionStorage.setItem(tempDataId, JSON.stringify(tempData))
+        
+        // 打开Copilot侧边栏
+        let tsId = window.Application.PluginStorage.getItem('copilot_panel_id')
+        if (!tsId) {
+          let tskpane = window.Application.CreateTaskPane(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+          let id = tskpane.ID
+          window.Application.PluginStorage.setItem('copilot_panel_id', id)
+          tskpane.Visible = true
+        } else {
+          try {
+            let tskpane = window.Application.GetTaskPane(tsId)
+            tskpane.Navigate(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+            tskpane.Visible = true
+          } catch (e) {
+            // 如果获取已有窗格失败，创建新的
+            let tskpane = window.Application.CreateTaskPane(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+            let id = tskpane.ID
+            window.Application.PluginStorage.setItem('copilot_panel_id', id)
+            tskpane.Visible = true
+          }
+        }
+      } else {
+        window.Application.Alert('无法加载Copilot面板')
       }
     }
 

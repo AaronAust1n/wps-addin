@@ -162,6 +162,56 @@ class AIAPIClient {
   }
 
   /**
+   * 执行文档问答
+   * @param {string} text - 文档文本
+   * @param {string} question - 用户问题
+   * @returns {Promise<string>} - 回答结果
+   */
+  async documentQA(text, question) {
+    const model = this.config.models?.summarizationModel || this.config.models?.defaultModel
+    const data = {
+      model: model,
+      messages: [
+        { role: 'system', content: '你是一个专业的文档问答助手，请基于用户提供的文档内容回答问题。只回答文档中包含的内容，如果无法从文档中找到答案，请明确指出。' },
+        { role: 'user', content: `文档内容：\n${text}\n\n问题：${question}` }
+      ],
+      max_tokens: this.config.options?.maxTokens || 2000,
+      temperature: this.config.options?.temperature || 0.3
+    }
+
+    try {
+      const response = await this.axios.post('/v1/chat/completions', data)
+      return response.data.choices[0].message.content
+    } catch (error) {
+      console.error('文档问答请求失败:', error)
+      throw new Error(this.formatErrorMessage(error))
+    }
+  }
+
+  /**
+   * 执行一般聊天对话
+   * @param {Array} messages - 消息数组
+   * @returns {Promise<string>} - 回复内容
+   */
+  async chat(messages) {
+    const model = this.config.models?.defaultModel
+    const data = {
+      model: model,
+      messages: messages,
+      max_tokens: this.config.options?.maxTokens || 2000,
+      temperature: this.config.options?.temperature || 0.7
+    }
+
+    try {
+      const response = await this.axios.post('/v1/chat/completions', data)
+      return response.data.choices[0].message.content
+    } catch (error) {
+      console.error('聊天请求失败:', error)
+      throw new Error(this.formatErrorMessage(error))
+    }
+  }
+
+  /**
    * 格式化错误信息
    * @param {Error} error - 错误对象
    * @returns {string} - 格式化后的错误信息
