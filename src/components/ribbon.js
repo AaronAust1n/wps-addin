@@ -226,12 +226,43 @@ function getDocumentText() {
 function insertTextAtCursor(text) {
   try {
     const selection = window.Application.ActiveDocument.Range
-    selection.Collapse() // 确保光标折叠（不是选区）
-    selection.InsertAfter(text)
-      return true
+    
+    // 检查Collapse方法是否存在
+    if (typeof selection.Collapse === 'function') {
+      selection.Collapse() // 确保光标折叠（不是选区）
+    } else {
+      console.warn('Selection.Collapse方法不可用，尝试替代方法');
+    }
+    
+    // 检查InsertAfter方法是否存在
+    if (typeof selection.InsertAfter === 'function') {
+      selection.InsertAfter(text)
+    } else {
+      console.warn('Selection.InsertAfter方法不可用，尝试替代方法');
+      
+      // 尝试TypeText方法
+      if (window.Application.ActiveDocument.Application && 
+          window.Application.ActiveDocument.Application.Selection &&
+          typeof window.Application.ActiveDocument.Application.Selection.TypeText === 'function') {
+        window.Application.ActiveDocument.Application.Selection.TypeText(text);
+        console.log('使用TypeText方法插入文本');
+      } else {
+        // 尝试直接设置Text属性
+        try {
+          selection.Text = selection.Text + text;
+          console.log('使用Text属性设置文本');
+        } catch (textError) {
+          throw new Error('所有文本插入方法都失败: ' + textError.message);
+        }
+      }
+    }
+    
+    return true
   } catch (e) {
     console.error('插入文本失败:', e)
-    window.Application.Alert('插入文本失败: ' + e.message)
+    
+    // 不要使用Alert，它可能已经出错
+    console.error('插入文本失败: ' + e.message)
     return false
   }
 }
@@ -270,22 +301,113 @@ function createTaskpane(url, width = 300) {
 
 // 显示加载对话框
 function showLoadingDialog(message) {
-  if (window.Application) {
-    return window.Application.ShowDialog(
-      Util.GetUrlPath() + Util.GetRouterHash() + '/loading',
-      message || 'WPS AI助手 - 正在处理',
-      300,
-      150,
-      false
-    )
+  try {
+    if (window.Application) {
+      // 检查ShowDialog方法是否可用
+      if (typeof window.Application.ShowDialog === 'function') {
+        const dialogId = window.Application.ShowDialog(
+          Util.GetUrlPath() + Util.GetRouterHash() + '/loading',
+          message || 'WPS AI助手 - 正在处理',
+          300,
+          150,
+          false
+        );
+        console.log('加载对话框已创建，ID:', dialogId);
+        return dialogId;
+      } else {
+        console.warn('ShowDialog方法不可用，尝试替代方法');
+        
+        // 使用DOM创建一个模拟对话框
+        const dialogDiv = document.createElement('div');
+        dialogDiv.id = 'wps-loading-dialog-' + new Date().getTime();
+        dialogDiv.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: white;
+          border: 1px solid #ccc;
+          padding: 20px;
+          box-shadow: 0 0 10px rgba(0,0,0,0.3);
+          z-index: 10000;
+          border-radius: 4px;
+          min-width: 250px;
+          text-align: center;
+        `;
+        
+        const titleElement = document.createElement('h3');
+        titleElement.textContent = message || 'WPS AI助手 - 正在处理';
+        titleElement.style.margin = '0 0 15px 0';
+        
+        const loadingElement = document.createElement('div');
+        loadingElement.innerHTML = '<div style="width: 40px; height: 40px; margin: 0 auto; border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>';
+        loadingElement.style.margin = '10px 0';
+        
+        // 添加CSS动画
+        const style = document.createElement('style');
+        style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+        document.head.appendChild(style);
+        
+        dialogDiv.appendChild(titleElement);
+        dialogDiv.appendChild(loadingElement);
+        document.body.appendChild(dialogDiv);
+        
+        console.log('已创建DOM模拟对话框');
+        return dialogDiv.id;
+      }
+    }
+    console.warn('window.Application不可用，无法创建对话框');
+    return null;
+  } catch (e) {
+    console.error('创建加载对话框失败:', e);
+    return null;
   }
-  return null
 }
 
 // 关闭对话框
 function closeDialog(dialogId) {
-  if (window.Application && dialogId) {
-    window.Application.CloseDialog(dialogId)
+  try {
+    if (!dialogId) {
+      console.warn('未提供对话框ID，无法关闭');
+      return;
+    }
+    
+    if (window.Application && dialogId) {
+      // 检查CloseDialog方法是否存在
+      if (typeof window.Application.CloseDialog === 'function') {
+        window.Application.CloseDialog(dialogId);
+        console.log('对话框已通过CloseDialog关闭');
+      } else {
+        console.warn('CloseDialog方法不可用，尝试DOM移除方法');
+        
+        // 检查是否是DOM元素ID
+        if (typeof dialogId === 'string' && dialogId.startsWith('wps-loading-dialog-')) {
+          const dialogElement = document.getElementById(dialogId);
+          if (dialogElement) {
+            dialogElement.remove();
+            console.log('已移除DOM模拟对话框');
+          } else {
+            console.warn('未找到ID为', dialogId, '的DOM对话框');
+          }
+        } else {
+          console.warn('无法识别的对话框ID类型:', dialogId);
+        }
+      }
+    }
+  } catch (e) {
+    console.error('关闭对话框失败:', e);
+    // 尝试DOM方法关闭
+    try {
+      if (typeof dialogId === 'string') {
+        const element = document.getElementById(dialogId);
+        if (element) {
+          element.remove();
+          console.log('通过DOM方法关闭对话框');
+        }
+      }
+    } catch (domError) {
+      console.error('所有关闭对话框方法都失败:', domError);
+    }
   }
 }
 
@@ -413,24 +535,48 @@ async function processText(action, text, actionSource = 'selection') {
       }
     }
     
-    // 5. 关闭加载对话框并显示成功消息
-    if (loadingDialog) {
-      closeDialog(loadingDialog);
-      console.log('加载对话框已关闭');
+    // 5. 安全地关闭加载对话框并显示成功消息
+    try {
+      if (loadingDialog) {
+        closeDialog(loadingDialog);
+        console.log('加载对话框已关闭');
+      }
+      
+      // 使用安全的Alert提示方式
+      try {
+        window.Application.Alert(`${getActionName(action)}完成！请按Enter接受修改。`);
+      } catch (alertError) {
+        console.warn('无法显示成功提示:', alertError);
+        console.log(`${getActionName(action)}完成！请按Enter接受修改。`);
+        
+        // 尝试使用原生alert
+        try {
+          alert(`${getActionName(action)}完成！请按Enter接受修改。`);
+        } catch (e) {
+          console.error('所有提示方法都失败:', e);
+        }
+      }
+      
+      console.log(`${action}处理完成, 结束时间:`, new Date().toISOString());
+    } catch (finalError) {
+      console.error('关闭对话框或显示成功消息时出错:', finalError);
+      // 不要让这个错误影响处理结果
     }
-    
-    window.Application.Alert(`${getActionName(action)}完成！请按Enter接受修改。`);
-    console.log(`${action}处理完成, 结束时间:`, new Date().toISOString());
     
     return true; // 处理成功
   } catch (e) {
     // 6. 错误处理：区分不同类型的错误
     console.error(`${action}处理出错:`, e);
     
-    // 关闭加载对话框
-    if (loadingDialog) {
-      closeDialog(loadingDialog);
-      console.log('出错后加载对话框已关闭');
+    // 安全地关闭加载对话框
+    try {
+      if (loadingDialog) {
+        closeDialog(loadingDialog);
+        console.log('出错后加载对话框已关闭');
+      }
+    } catch (dialogError) {
+      console.error('关闭对话框时出错:', dialogError);
+      // 继续执行，不要让对话框关闭错误影响流程
     }
     
     // 根据错误类型显示不同的错误消息
@@ -478,9 +624,21 @@ async function processText(action, text, actionSource = 'selection') {
       }
     }
     
-    // 显示错误信息给用户
+    // 安全地显示错误信息给用户
     const fullErrorMessage = errorDetails ? `${errorMessage}\n\n${errorDetails}` : errorMessage;
-    window.Application.Alert(`${errorTitle}: ${fullErrorMessage}`);
+    try {
+      window.Application.Alert(`${errorTitle}: ${fullErrorMessage}`);
+    } catch (alertError) {
+      console.error('无法显示错误提示:', alertError);
+      console.log(`错误: ${errorTitle}: ${fullErrorMessage}`);
+      
+      // 尝试使用原生alert
+      try {
+        alert(`${errorTitle}: ${fullErrorMessage}`);
+      } catch (e) {
+        console.error('所有错误提示方法都失败:', e);
+      }
+    }
     
     return false; // 处理失败
   }
