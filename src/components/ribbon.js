@@ -14,6 +14,20 @@ function OnAddinLoad(ribbonUI) {
 
   window.Util = Util
   window.Application.PluginStorage.setItem('EnableFlag', true) // 设置插件启用标记
+  
+  // 初始化调试控制台 (在开发模式下)
+  const isDebugMode = true; // 可以根据环境变量或配置设置
+  if (isDebugMode) {
+    console.log('初始化WPS AI助手 - 调试模式');
+    try {
+      setTimeout(() => {
+        Util.showDebugConsole();
+      }, 2000); // 延迟2秒启动控制台，确保DOM已加载
+    } catch (e) {
+      console.error('初始化调试控制台失败:', e);
+    }
+  }
+  
   console.log('WPS AI助手加载项已加载')
   return true
 }
@@ -50,27 +64,56 @@ function OnAction(control) {
 
 // 获取配置
 function getConfig() {
-  if (window.Application && window.Application.PluginStorage) {
-    const configStr = window.Application.PluginStorage.getItem('aiConfig')
-    if (configStr) {
-      try {
-        return JSON.parse(configStr)
-      } catch (e) {
-        console.error('配置加载失败', e)
-      }
-    }
+  console.log('尝试读取API配置...');
+  
+  if (!window.Application || !window.Application.PluginStorage) {
+    console.error('PluginStorage不可用');
+    return null;
   }
-  return null
+  
+  const configStr = window.Application.PluginStorage.getItem('aiConfig')
+  if (!configStr) {
+    console.warn('未找到保存的配置');
+    return null;
+  }
+  
+  try {
+    const config = JSON.parse(configStr);
+    console.log('成功加载配置', { 
+      apiUrl: config.apiUrl || '未设置', 
+      model: config.models?.defaultModel || '未设置'
+    });
+    return config;
+  } catch (e) {
+    console.error('配置解析失败', e);
+    return null;
+  }
 }
 
 // 检查配置是否有效
 function checkConfigured() {
+  console.log('检查API配置...');
+  
   const config = getConfig()
-  if (!config || !config.apiUrl) {
+  if (!config) {
+    console.error('未找到API配置');
     window.Application.Alert('请先配置API设置')
     handleSettings()
     return false
   }
+  
+  if (!config.apiUrl) {
+    console.error('API URL未配置');
+    window.Application.Alert('API地址未配置，请在设置中完成配置')
+    handleSettings()
+    return false
+  }
+  
+  const defaultModel = config.models?.defaultModel;
+  console.log('配置检查通过', { 
+    apiUrl: config.apiUrl, 
+    model: defaultModel || '未指定'
+  });
   return true
 }
 
@@ -262,29 +305,39 @@ async function handlePolishText() {
 
 // 处理选中文本的通用方法
 async function processSelection(action, text) {
+  console.log(`开始处理选中文本: ${action}, 文本长度: ${text.length}`);
   const loadingDialog = showLoadingDialog(`WPS AI助手 - 正在${getActionName(action)}`)
   
   try {
     // 更新API客户端配置
+    console.log('加载API配置');
     const config = getConfig()
     apiClient.updateConfig(config)
+    console.log('API配置已更新', {
+      apiUrl: config.apiUrl,
+      model: config.models?.defaultModel || '未指定'
+    });
     
     let result = ''
     
     // 根据动作调用不同API
+    console.log(`调用API: ${action}`);
     switch (action) {
       case 'continue':
         result = await apiClient.continueText(text)
+        console.log('文本续写完成，结果长度:', result.length);
         // 续写是在原文后添加内容
         insertTextAtCursor(result)
         break
       case 'proofread':
         result = await apiClient.proofreadText(text)
+        console.log('文本校对完成，结果长度:', result.length);
         // 校对是替换原文
         insertTextAtCursor('\n' + result)
         break
       case 'polish':
         result = await apiClient.polishText(text)
+        console.log('文本润色完成，结果长度:', result.length);
         // 润色是替换原文
         insertTextAtCursor('\n' + result)
         break
@@ -296,6 +349,7 @@ async function processSelection(action, text) {
     // 显示提示消息
     window.Application.Alert(`${getActionName(action)}完成！请按Enter接受修改。`)
   } catch (e) {
+    console.error(`${action}处理出错:`, e);
     // 关闭加载对话框
     closeDialog(loadingDialog)
     window.Application.Alert(`${getActionName(action)}失败: ${e.message}`)
@@ -304,29 +358,39 @@ async function processSelection(action, text) {
 
 // 处理段落的通用方法
 async function processParagraph(action, text) {
+  console.log(`开始处理段落: ${action}, 文本长度: ${text.length}`);
   const loadingDialog = showLoadingDialog(`WPS AI助手 - 正在${getActionName(action)}`)
   
   try {
     // 更新API客户端配置
+    console.log('加载API配置');
     const config = getConfig()
     apiClient.updateConfig(config)
+    console.log('API配置已更新', {
+      apiUrl: config.apiUrl,
+      model: config.models?.defaultModel || '未指定'
+    });
     
     let result = ''
     
     // 根据动作调用不同API
+    console.log(`调用API: ${action}`);
     switch (action) {
       case 'continue':
         result = await apiClient.continueText(text)
+        console.log('文本续写完成，结果长度:', result.length);
         // 续写是在原文后添加内容
         insertTextAtCursor(result)
         break
       case 'proofread':
         result = await apiClient.proofreadText(text)
+        console.log('文本校对完成，结果长度:', result.length);
         // 校对是替换原文
         insertTextAtCursor('\n' + result)
         break
       case 'polish':
         result = await apiClient.polishText(text)
+        console.log('文本润色完成，结果长度:', result.length);
         // 润色是替换原文
         insertTextAtCursor('\n' + result)
         break
@@ -338,6 +402,7 @@ async function processParagraph(action, text) {
     // 显示提示消息
     window.Application.Alert(`${getActionName(action)}完成！请按Enter接受修改。`)
   } catch (e) {
+    console.error(`${action}处理出错:`, e);
     // 关闭加载对话框
     closeDialog(loadingDialog)
     window.Application.Alert(`${getActionName(action)}失败: ${e.message}`)
@@ -360,56 +425,110 @@ function getActionName(action) {
 
 // 文档问答功能
 function handleDocumentQA() {
+  console.log('文档问答功能被触发');
+  
   const doc = window.Application.ActiveDocument
   if (!doc) {
+    console.error('没有打开文档');
     window.Application.Alert('当前没有打开任何文档')
     return
   }
   
-  if (!checkConfigured()) return
+  if (!checkConfigured()) {
+    console.warn('API未配置，无法使用文档问答功能');
+    return
+  }
   
-  // 创建侧边栏并导航到文档问答页面
-  const taskpaneUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/qa'
-  const taskpane = createTaskpane(taskpaneUrl)
-  
-  if (taskpane) {
-    console.log('文档问答侧边栏已创建')
+  try {
+    // 创建侧边栏并导航到文档问答页面
+    console.log('尝试创建文档问答侧边栏');
+    const taskpaneUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/qa'
+    console.log('侧边栏URL:', taskpaneUrl);
+    
+    const taskpane = createTaskpane(taskpaneUrl)
+    
+    if (taskpane) {
+      console.log('文档问答侧边栏已创建成功');
+    } else {
+      console.error('创建文档问答侧边栏失败');
+    }
+  } catch (e) {
+    console.error('文档问答功能出错:', e);
+    window.Application.Alert('启动文档问答功能失败: ' + e.message);
   }
 }
 
 // 全文总结功能
 function handleSummarizeDoc() {
+  console.log('全文总结功能被触发');
+  
   const doc = window.Application.ActiveDocument
   if (!doc) {
+    console.error('没有打开文档');
     window.Application.Alert('当前没有打开任何文档')
     return
   }
   
-  if (!checkConfigured()) return
+  if (!checkConfigured()) {
+    console.warn('API未配置，无法使用全文总结功能');
+    return
+  }
   
-  // 创建侧边栏并导航到全文总结页面
-  const taskpaneUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/summary'
-  const taskpane = createTaskpane(taskpaneUrl)
-  
-  if (taskpane) {
-    console.log('全文总结侧边栏已创建')
+  try {
+    // 创建侧边栏并导航到全文总结页面
+    console.log('尝试创建全文总结侧边栏');
+    const taskpaneUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/summary'
+    console.log('侧边栏URL:', taskpaneUrl);
+    
+    const taskpane = createTaskpane(taskpaneUrl)
+    
+    if (taskpane) {
+      console.log('全文总结侧边栏已创建成功');
+    } else {
+      console.error('创建全文总结侧边栏失败');
+    }
+  } catch (e) {
+    console.error('全文总结功能出错:', e);
+    window.Application.Alert('启动全文总结功能失败: ' + e.message);
   }
 }
 
 // 设置对话框
 function handleSettings() {
-  window.Application.ShowDialog(
-    Util.GetUrlPath() + Util.GetRouterHash() + '/dialog',
-    'WPS AI助手 - 设置',
-    450,
-    600,
-    false
-  )
+  console.log('打开设置对话框');
+  
+  try {
+    window.Application.ShowDialog(
+      Util.GetUrlPath() + Util.GetRouterHash() + '/settings', // 修正路径从/dialog到/settings
+      'WPS AI助手 - 设置',
+      550,
+      650,
+      false
+    )
+    console.log('设置对话框已创建');
+  } catch (e) {
+    console.error('创建设置对话框失败:', e);
+    window.Application.Alert('无法打开设置: ' + e.message);
+  }
 }
 
 // 帮助信息
 function handleHelp() {
-  window.Application.Alert('WPS AI助手\n版本: 1.0.0\n作者: AI助手开发团队\n\n如需帮助，请联系客服。')
+  console.log('打开帮助对话框');
+  
+  try {
+    window.Application.ShowDialog(
+      Util.GetUrlPath() + Util.GetRouterHash() + '/help',
+      'WPS AI助手 - 帮助',
+      500,
+      400,
+      false
+    )
+    console.log('帮助对话框已创建');
+  } catch (e) {
+    console.error('创建帮助对话框失败:', e);
+    window.Application.Alert('无法打开帮助: ' + e.message);
+  }
 }
 
 function GetImage(control) {

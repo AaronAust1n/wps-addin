@@ -98,6 +98,172 @@ function ReplaceSelectedText(text) {
   }
 }
 
+// 显示调试控制台
+function showDebugConsole() {
+  // 如果已存在则不重复创建
+  if (document.getElementById('debug-console')) {
+    return;
+  }
+
+  const debugConsole = document.createElement('div');
+  debugConsole.id = 'debug-console';
+  debugConsole.style.cssText = `
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 400px;
+    height: 300px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 10px;
+    overflow: auto;
+    z-index: 9999;
+    border: 1px solid #444;
+  `;
+  
+  const header = document.createElement('div');
+  header.style.cssText = `
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #555;
+    padding-bottom: 5px;
+  `;
+  
+  const title = document.createElement('span');
+  title.textContent = 'WPS AI助手调试控制台';
+  
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '关闭';
+  closeBtn.style.cssText = `
+    background: #555;
+    border: none;
+    color: white;
+    padding: 2px 5px;
+    cursor: pointer;
+  `;
+  closeBtn.onclick = () => debugConsole.remove();
+  
+  const clearBtn = document.createElement('button');
+  clearBtn.textContent = '清空';
+  clearBtn.style.cssText = `
+    background: #555;
+    border: none;
+    color: white;
+    padding: 2px 5px;
+    margin-right: 5px;
+    cursor: pointer;
+  `;
+  clearBtn.onclick = () => {
+    const logArea = document.getElementById('debug-log-area');
+    if (logArea) logArea.innerHTML = '';
+  };
+  
+  const controls = document.createElement('div');
+  controls.appendChild(clearBtn);
+  controls.appendChild(closeBtn);
+  
+  header.appendChild(title);
+  header.appendChild(controls);
+  
+  const logArea = document.createElement('div');
+  logArea.id = 'debug-log-area';
+  logArea.style.cssText = `height: calc(100% - 30px); overflow-y: auto;`;
+  
+  debugConsole.appendChild(header);
+  debugConsole.appendChild(logArea);
+  
+  document.body.appendChild(debugConsole);
+  
+  // 重写console方法
+  const originalLog = console.log;
+  const originalError = console.error;
+  const originalWarn = console.warn;
+  
+  console.log = function() {
+    originalLog.apply(console, arguments);
+    logToDebugConsole('log', arguments);
+  };
+  
+  console.error = function() {
+    originalError.apply(console, arguments);
+    logToDebugConsole('error', arguments);
+  };
+  
+  console.warn = function() {
+    originalWarn.apply(console, arguments);
+    logToDebugConsole('warn', arguments);
+  };
+  
+  // 添加全局错误处理
+  window.onerror = function(message, source, lineno, colno, error) {
+    logToDebugConsole('error', [`全局错误: ${message}`, `位置: ${source}:${lineno}:${colno}`, error]);
+    return false;
+  };
+  
+  function logToDebugConsole(type, args) {
+    const logArea = document.getElementById('debug-log-area');
+    if (!logArea) return;
+    
+    const entry = document.createElement('div');
+    entry.style.borderBottom = '1px solid #333';
+    entry.style.padding = '3px 0';
+    
+    // 添加时间戳
+    const timestamp = new Date().toLocaleTimeString();
+    const timeElement = document.createElement('span');
+    timeElement.textContent = `[${timestamp}] `;
+    timeElement.style.color = '#aaa';
+    entry.appendChild(timeElement);
+    
+    // 添加类型标签
+    const typeElement = document.createElement('span');
+    typeElement.textContent = `[${type.toUpperCase()}] `;
+    
+    if (type === 'error') {
+      typeElement.style.color = '#ff5555';
+    } else if (type === 'warn') {
+      typeElement.style.color = '#ffcc00';
+    } else {
+      typeElement.style.color = '#55ff55';
+    }
+    
+    entry.appendChild(typeElement);
+    
+    // 添加内容
+    const content = document.createElement('span');
+    Array.from(args).forEach((arg, index) => {
+      let text = '';
+      
+      if (typeof arg === 'object' && arg !== null) {
+        try {
+          text = JSON.stringify(arg, null, 2);
+        } catch (e) {
+          text = arg.toString();
+        }
+      } else {
+        text = String(arg);
+      }
+      
+      if (index > 0) {
+        content.appendChild(document.createElement('br'));
+      }
+      
+      content.appendChild(document.createTextNode(text));
+    });
+    
+    entry.appendChild(content);
+    logArea.appendChild(entry);
+    logArea.scrollTop = logArea.scrollHeight; // 滚动到底部
+  }
+  
+  console.log('调试控制台已启动');
+  
+  return debugConsole;
+}
+
 export default {
   WPS_Enum,
   GetUrlPath,
@@ -106,5 +272,6 @@ export default {
   GetSelectedText,
   GetDocumentText,
   InsertTextToDocument,
-  ReplaceSelectedText
+  ReplaceSelectedText,
+  showDebugConsole
 } 
