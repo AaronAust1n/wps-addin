@@ -7,7 +7,7 @@
                     <button id="btnContinueText" label="文本续写" onAction="ribbon.OnAction" getImage="ribbon.GetImage" size="large"/>
                     <button id="btnProofreadText" label="文本校对" onAction="ribbon.OnAction" getImage="ribbon.GetImage" size="large"/>
                     <button id="btnPolishText" label="文本润色" onAction="ribbon.OnAction" getImage="ribbon.GetImage" size="large"/>
-                    <button id="btnSummarizeText" label="文本摘要" onAction="ribbon.OnAction" getImage="ribbon.GetImage" size="large"/>
+                    <button id="btnSummarizeText" label="文档问答" onAction="ribbon.OnAction" getImage="ribbon.GetImage" size="large"/>
                     <button id="btnSummarizeDoc" label="全文总结" onAction="ribbon.OnAction" getImage="ribbon.GetImage" size="large"/>
                 </group>
                 <group id="AISettings" label="设置">

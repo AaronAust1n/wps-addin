@@ -145,6 +145,14 @@ function insertTextAtCursor(text) {
 function showCopilotPanel(title, prompt, operation, selectedText = '') {
   if (!window.Application) return
 
+  // 确保数据不为空
+  if (!selectedText || selectedText.trim() === '') {
+    window.Application.Alert('无法获取文本内容')
+    return
+  }
+
+  console.log('显示侧边栏', title, operation, selectedText.substring(0, 50) + '...')
+
   // 创建一个隐藏的HTML元素来存储临时数据
   const tempDataId = 'ai_copilot_temp_data_' + Date.now()
   const tempData = {
@@ -152,7 +160,8 @@ function showCopilotPanel(title, prompt, operation, selectedText = '') {
     prompt: prompt,
     operation: operation,
     selectedText: selectedText,
-    config: getConfig()
+    config: getConfig(),
+    initial: false  // 确保初始化标记正确设置
   }
 
   // 保存临时数据到浏览器存储
@@ -161,21 +170,48 @@ function showCopilotPanel(title, prompt, operation, selectedText = '') {
   // 打开Copilot侧边栏
   let tsId = window.Application.PluginStorage.getItem('copilot_panel_id')
   if (!tsId) {
-    let tskpane = window.Application.CreateTaskPane(Util.GetUrlPath() + Util.GetRouterHash() + '/copilot?id=' + tempDataId)
-    let id = tskpane.ID
-    window.Application.PluginStorage.setItem('copilot_panel_id', id)
-    tskpane.Visible = true
+    try {
+      let tskpane = window.Application.CreateTaskPane(Util.GetUrlPath() + Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+      if (tskpane) {
+        let id = tskpane.ID
+        window.Application.PluginStorage.setItem('copilot_panel_id', id)
+        tskpane.Visible = true
+        console.log('创建新的侧边栏成功')
+      } else {
+        throw new Error('无法创建任务面板')
+      }
+    } catch (e) {
+      console.error('创建任务面板失败:', e)
+      window.Application.Alert('创建任务面板失败: ' + e.message)
+      return
+    }
   } else {
     try {
       let tskpane = window.Application.GetTaskPane(tsId)
-      tskpane.Navigate(Util.GetUrlPath() + Util.GetRouterHash() + '/copilot?id=' + tempDataId)
-      tskpane.Visible = true
+      if (tskpane) {
+        tskpane.Navigate(Util.GetUrlPath() + Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+        tskpane.Visible = true
+        console.log('使用现有侧边栏成功')
+      } else {
+        throw new Error('无法获取任务面板')
+      }
     } catch (e) {
+      console.error('获取任务面板失败:', e)
       // 如果获取已有窗格失败，创建新的
-      let tskpane = window.Application.CreateTaskPane(Util.GetUrlPath() + Util.GetRouterHash() + '/copilot?id=' + tempDataId)
-      let id = tskpane.ID
-      window.Application.PluginStorage.setItem('copilot_panel_id', id)
-      tskpane.Visible = true
+      try {
+        let tskpane = window.Application.CreateTaskPane(Util.GetUrlPath() + Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+        if (tskpane) {
+          let id = tskpane.ID
+          window.Application.PluginStorage.setItem('copilot_panel_id', id)
+          tskpane.Visible = true
+          console.log('创建新的侧边栏成功(备选)')
+        } else {
+          throw new Error('无法创建任务面板(备选)')
+        }
+      } catch (innerE) {
+        console.error('创建任务面板失败(备选):', innerE)
+        window.Application.Alert('任务面板创建失败: ' + innerE.message)
+      }
     }
   }
 }
@@ -238,6 +274,12 @@ function handleContinueText() {
   
   // 更新API客户端配置
   const config = getConfig()
+  if (!config) {
+    closeDialog(loadingId)
+    window.Application.Alert('无法获取API配置')
+    return
+  }
+  
   apiClient.updateConfig(config)
   
   // 调用API续写文本
@@ -254,26 +296,36 @@ function handleContinueText() {
           // 在光标位置插入修改后内容
           selection.InsertAfter('\n' + result)
           
-          // 创建一个确认按钮事件
-          const doc = window.Application.ActiveDocument
-          const customEvent = doc.Application.CreateEventListener('DocumentNew', function() {
-            try {
-              // 获取原始文本范围
-              const originalRange = doc.Range(originalStartPosition, originalEndPosition)
-              // 删除原始文本
-              originalRange.Delete()
-              // 移除事件监听器
-              doc.Application.RemoveEventListener('DocumentNew', customEvent)
-            } catch (e) {
-              console.error('删除原始文本失败:', e)
-            }
-          })
-          
-          // 添加事件监听器
-          doc.Application.AddEventListener('DocumentNew', customEvent)
-          
           // 显示提示
-          window.Application.Alert('续写完成，按Enter确认接受修改')
+          window.Application.Alert('续写完成，按Enter接受修改，原文本会被删除')
+          
+          // 使用setTimeout监听键盘Enter事件，避免使用复杂的API事件
+          let enterPressed = false;
+          const enterListener = function(e) {
+            if (e.keyCode === 13 && !enterPressed) { // Enter键
+              enterPressed = true;
+              document.removeEventListener('keydown', enterListener);
+              
+              try {
+                // 获取原始文本范围
+                const originalRange = window.Application.ActiveDocument.Range(originalStartPosition, originalEndPosition)
+                // 删除原始文本
+                originalRange.Delete()
+              } catch (e) {
+                console.error('删除原始文本失败:', e)
+                window.Application.Alert('删除原始文本失败: ' + e.message)
+              }
+            }
+          };
+          
+          // 添加键盘监听
+          document.addEventListener('keydown', enterListener);
+          
+          // 30秒后自动移除监听器（避免长时间占用）
+          setTimeout(() => {
+            document.removeEventListener('keydown', enterListener);
+          }, 30000);
+          
         } catch (e) {
           console.error('应用结果失败:', e)
           window.Application.Alert('应用结果失败: ' + e.message)
@@ -324,6 +376,12 @@ function handleProofreadText() {
   
   // 更新API客户端配置
   const config = getConfig()
+  if (!config) {
+    closeDialog(loadingId)
+    window.Application.Alert('无法获取API配置')
+    return
+  }
+  
   apiClient.updateConfig(config)
   
   // 调用API校对文本
@@ -340,26 +398,36 @@ function handleProofreadText() {
           // 在光标位置插入修改后内容
           selection.InsertAfter('\n' + result)
           
-          // 创建一个确认按钮事件
-          const doc = window.Application.ActiveDocument
-          const customEvent = doc.Application.CreateEventListener('DocumentNew', function() {
-            try {
-              // 获取原始文本范围
-              const originalRange = doc.Range(originalStartPosition, originalEndPosition)
-              // 删除原始文本
-              originalRange.Delete()
-              // 移除事件监听器
-              doc.Application.RemoveEventListener('DocumentNew', customEvent)
-            } catch (e) {
-              console.error('删除原始文本失败:', e)
-            }
-          })
-          
-          // 添加事件监听器
-          doc.Application.AddEventListener('DocumentNew', customEvent)
-          
           // 显示提示
-          window.Application.Alert('校对完成，按Enter确认接受修改')
+          window.Application.Alert('校对完成，按Enter接受修改，原文本会被删除')
+          
+          // 使用setTimeout监听键盘Enter事件，避免使用复杂的API事件
+          let enterPressed = false;
+          const enterListener = function(e) {
+            if (e.keyCode === 13 && !enterPressed) { // Enter键
+              enterPressed = true;
+              document.removeEventListener('keydown', enterListener);
+              
+              try {
+                // 获取原始文本范围
+                const originalRange = window.Application.ActiveDocument.Range(originalStartPosition, originalEndPosition)
+                // 删除原始文本
+                originalRange.Delete()
+              } catch (e) {
+                console.error('删除原始文本失败:', e)
+                window.Application.Alert('删除原始文本失败: ' + e.message)
+              }
+            }
+          };
+          
+          // 添加键盘监听
+          document.addEventListener('keydown', enterListener);
+          
+          // 30秒后自动移除监听器（避免长时间占用）
+          setTimeout(() => {
+            document.removeEventListener('keydown', enterListener);
+          }, 30000);
+          
         } catch (e) {
           console.error('应用结果失败:', e)
           window.Application.Alert('应用结果失败: ' + e.message)
@@ -410,6 +478,12 @@ function handlePolishText() {
   
   // 更新API客户端配置
   const config = getConfig()
+  if (!config) {
+    closeDialog(loadingId)
+    window.Application.Alert('无法获取API配置')
+    return
+  }
+  
   apiClient.updateConfig(config)
   
   // 调用API润色文本
@@ -426,26 +500,36 @@ function handlePolishText() {
           // 在光标位置插入修改后内容
           selection.InsertAfter('\n' + result)
           
-          // 创建一个确认按钮事件
-          const doc = window.Application.ActiveDocument
-          const customEvent = doc.Application.CreateEventListener('DocumentNew', function() {
-            try {
-              // 获取原始文本范围
-              const originalRange = doc.Range(originalStartPosition, originalEndPosition)
-              // 删除原始文本
-              originalRange.Delete()
-              // 移除事件监听器
-              doc.Application.RemoveEventListener('DocumentNew', customEvent)
-            } catch (e) {
-              console.error('删除原始文本失败:', e)
-            }
-          })
-          
-          // 添加事件监听器
-          doc.Application.AddEventListener('DocumentNew', customEvent)
-          
           // 显示提示
-          window.Application.Alert('润色完成，按Enter确认接受修改')
+          window.Application.Alert('润色完成，按Enter接受修改，原文本会被删除')
+          
+          // 使用setTimeout监听键盘Enter事件，避免使用复杂的API事件
+          let enterPressed = false;
+          const enterListener = function(e) {
+            if (e.keyCode === 13 && !enterPressed) { // Enter键
+              enterPressed = true;
+              document.removeEventListener('keydown', enterListener);
+              
+              try {
+                // 获取原始文本范围
+                const originalRange = window.Application.ActiveDocument.Range(originalStartPosition, originalEndPosition)
+                // 删除原始文本
+                originalRange.Delete()
+              } catch (e) {
+                console.error('删除原始文本失败:', e)
+                window.Application.Alert('删除原始文本失败: ' + e.message)
+              }
+            }
+          };
+          
+          // 添加键盘监听
+          document.addEventListener('keydown', enterListener);
+          
+          // 30秒后自动移除监听器（避免长时间占用）
+          setTimeout(() => {
+            document.removeEventListener('keydown', enterListener);
+          }, 30000);
+          
         } catch (e) {
           console.error('应用结果失败:', e)
           window.Application.Alert('应用结果失败: ' + e.message)

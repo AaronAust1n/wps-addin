@@ -123,6 +123,7 @@
       </div>
     </div>
     <div class="dialog-footer">
+      <button @click="validateApiConfig" class="btn-secondary" :disabled="validating">验证连接</button>
       <button @click="saveConfig" class="btn-primary">保存</button>
       <button @click="closeDialog" class="btn-secondary">取消</button>
     </div>
@@ -131,6 +132,7 @@
 
 <script>
 import { ref, onMounted, computed, watch } from 'vue'
+import axios from 'axios'
 
 export default {
   setup() {
@@ -216,6 +218,74 @@ export default {
       }
     })
 
+    // 验证API连接
+    const validating = ref(false)
+
+    const validateApiConfig = async () => {
+      if (!config.value.apiUrl) {
+        window.Application.Alert('请填写API地址')
+        return
+      }
+      
+      validating.value = true
+      const loadingId = window.Application.ShowDialog(
+        window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/loading',
+        'WPS AI助手 - 验证中...',
+        300,
+        150,
+        false
+      )
+      
+      try {
+        // 克隆当前配置用于测试
+        const testClient = axios.create({
+          baseURL: config.value.apiUrl,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': config.value.apiKey ? `Bearer ${config.value.apiKey}` : ''
+          },
+          timeout: 10000 // 10秒超时，仅用于验证
+        })
+        
+        // 发送简单请求验证连接
+        const model = config.value.models?.defaultModel || "gpt-3.5-turbo"
+        const response = await testClient.post('/v1/chat/completions', {
+          model: model,
+          messages: [
+            { role: 'system', content: '请回复"连接成功"以验证API连接。' },
+            { role: 'user', content: '验证连接' }
+          ],
+          max_tokens: 10
+        })
+        
+        window.Application.CloseDialog(loadingId)
+        window.Application.Alert('API连接验证成功!')
+      } catch (e) {
+        window.Application.CloseDialog(loadingId)
+        let errorMsg = 'API连接验证失败'
+        if (e.response) {
+          errorMsg += ': ' + (e.response.data?.error?.message || e.response.statusText || '服务器返回错误')
+        } else if (e.request) {
+          errorMsg += ': 无法连接到服务器，请检查API地址和网络连接'
+        } else {
+          errorMsg += ': ' + e.message
+        }
+        window.Application.Alert(errorMsg)
+      } finally {
+        validating.value = false
+      }
+    }
+
+    const closeDialog = () => {
+      if (window.Application) {
+        try {
+          window.Application.CloseDialog()
+        } catch (e) {
+          console.error('关闭对话框失败:', e)
+        }
+      }
+    }
+
     const saveConfig = () => {
       // 保存前检查必填项
       if (!config.value.apiUrl) {
@@ -238,18 +308,30 @@ export default {
       if (window.Application && window.Application.PluginStorage) {
         try {
           window.Application.PluginStorage.setItem('aiConfig', JSON.stringify(config.value))
-          window.Application.Alert('配置已保存')
-          closeDialog() // 自动关闭对话框
+          
+          // 显示小弹窗而不是Alert
+          const smallDialog = window.Application.ShowDialog(
+            window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/loading',
+            '配置已保存',
+            250,
+            100,
+            false
+          )
+          
+          // 1秒后自动关闭小弹窗和设置对话框
+          setTimeout(() => {
+            try {
+              window.Application.CloseDialog(smallDialog)
+              closeDialog() // 自动关闭对话框
+            } catch (e) {
+              console.error('关闭对话框失败:', e)
+              window.Application.Alert('配置已保存')
+            }
+          }, 1000)
         } catch (e) {
           console.error('配置保存失败', e)
           window.Application.Alert('配置保存失败: ' + e.message)
         }
-      }
-    }
-
-    const closeDialog = () => {
-      if (window.Application) {
-        window.Application.CloseDialog()
       }
     }
 
@@ -260,7 +342,9 @@ export default {
       saveConfig,
       closeDialog,
       selectedModelOption,
-      customModelName
+      customModelName,
+      validateApiConfig,
+      validating
     }
   }
 }

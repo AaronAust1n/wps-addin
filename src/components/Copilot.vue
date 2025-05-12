@@ -141,7 +141,17 @@ export default {
       
       if (dataId) {
         try {
-          const tempData = JSON.parse(sessionStorage.getItem(dataId))
+          console.log('加载侧边栏数据:', dataId)
+          const storedData = sessionStorage.getItem(dataId)
+          if (!storedData) {
+            error.value = '无法加载数据，请重试'
+            console.error('无法找到保存的数据:', dataId)
+            return
+          }
+          
+          const tempData = JSON.parse(storedData)
+          console.log('加载到数据:', tempData.title, tempData.operation)
+          
           if (tempData) {
             title.value = tempData.title || 'AI助手'
             prompt.value = tempData.prompt || ''
@@ -151,18 +161,41 @@ export default {
             // 如果有配置，更新API客户端配置
             if (tempData.config) {
               apiClient.updateConfig(tempData.config)
+            } else {
+              console.warn('无API配置数据')
+              // 尝试从PluginStorage加载配置
+              if (window.Application && window.Application.PluginStorage) {
+                const configStr = window.Application.PluginStorage.getItem('aiConfig')
+                if (configStr) {
+                  try {
+                    const config = JSON.parse(configStr)
+                    apiClient.updateConfig(config)
+                    console.log('从PluginStorage加载配置成功')
+                  } catch (e) {
+                    console.error('解析配置失败:', e)
+                  }
+                }
+              }
             }
             
             // 如果有自动执行操作，触发生成
-            if (operation.value && selectedText.value && !tempData.initial) {
+            if (operation.value && selectedText.value) {
+              console.log('执行自动操作:', operation.value)
               // 标记为已初始化，避免重复执行
-              sessionStorage.setItem(dataId, JSON.stringify({...tempData, initial: true}))
+              const updatedData = {...tempData, initial: true}
+              sessionStorage.setItem(dataId, JSON.stringify(updatedData))
               await executeAIOperation()
+            } else {
+              console.warn('无操作或文本数据:', operation.value, selectedText.value ? '有文本' : '无文本')
             }
           }
         } catch (e) {
           console.error('加载数据失败:', e)
+          error.value = '加载数据失败: ' + e.message
         }
+      } else {
+        console.error('无dataId参数')
+        error.value = '无法获取数据ID'
       }
     })
     
@@ -183,13 +216,19 @@ export default {
     
     // 执行AI操作
     const executeAIOperation = async () => {
-      if (!operation.value || !selectedText.value) return
+      if (!operation.value || !selectedText.value) {
+        console.error('执行操作失败: 无操作类型或文本内容', operation.value, selectedText.value ? '有文本' : '无文本')
+        error.value = '无法执行操作: 缺少必要参数'
+        return
+      }
       
       loading.value = true
       error.value = ''
       assistantResponse.value = ''
       
       try {
+        console.log('开始执行AI操作:', operation.value)
+        
         // 添加对话历史
         conversationHistory.value = [
           { role: 'user', content: selectedText.value }
@@ -211,6 +250,7 @@ export default {
             result = await apiClient.summarizeText(selectedText.value)
             break
           case 'documentSummarization':
+            console.log('开始执行文档总结，文本长度:', selectedText.value.length)
             result = await apiClient.summarizeDocument(selectedText.value)
             break
           case 'docQA':
@@ -218,12 +258,15 @@ export default {
             userInput.value = ''
             // 设置提示信息
             prompt.value = '请输入您想问的关于文档的问题：'
+            console.log('准备文档问答，等待用户输入问题')
+            loading.value = false
             return // 不需要设置assistantResponse
           default:
-            throw new Error('未知操作类型')
+            throw new Error('未知操作类型: ' + operation.value)
         }
         
         // 更新响应和对话历史
+        console.log('获得结果，长度:', result.length)
         assistantResponse.value = result
         conversationHistory.value.push({ role: 'assistant', content: result })
         

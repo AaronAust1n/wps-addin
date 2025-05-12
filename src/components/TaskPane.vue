@@ -226,6 +226,8 @@ export default {
       
       if (!docText) return;
       
+      statusMessage.value = '打开文档问答...'
+      
       // 使用Ribbon.js中定义的showCopilotPanel函数
       if (window.Util) {
         // 调用Ribbon.js中定义的showCopilotPanel函数
@@ -235,32 +237,57 @@ export default {
           prompt: '我可以回答关于此文档的问题。请在下方输入您的问题：',
           operation: 'docQA',
           selectedText: docText,
-          config: getConfig()
+          config: getConfig(),
+          initial: false // 设为false，确保执行初始化
         }
         
+        console.log('打开文档问答侧边栏')
         // 保存临时数据到浏览器存储
         sessionStorage.setItem(tempDataId, JSON.stringify(tempData))
         
         // 打开Copilot侧边栏
         let tsId = window.Application.PluginStorage.getItem('copilot_panel_id')
         if (!tsId) {
-          let tskpane = window.Application.CreateTaskPane(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
-          let id = tskpane.ID
-          window.Application.PluginStorage.setItem('copilot_panel_id', id)
-          tskpane.Visible = true
-        } else {
           try {
-            let tskpane = window.Application.GetTaskPane(tsId)
-            tskpane.Navigate(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
-            tskpane.Visible = true
-          } catch (e) {
-            // 如果获取已有窗格失败，创建新的
             let tskpane = window.Application.CreateTaskPane(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+            if (!tskpane) {
+              throw new Error('创建任务面板失败')
+            }
             let id = tskpane.ID
             window.Application.PluginStorage.setItem('copilot_panel_id', id)
             tskpane.Visible = true
+          } catch (e) {
+            console.error('创建任务面板失败:', e)
+            window.Application.Alert('创建任务面板失败: ' + e.message)
+            return
+          }
+        } else {
+          try {
+            let tskpane = window.Application.GetTaskPane(tsId)
+            if (!tskpane) {
+              throw new Error('获取任务面板失败')
+            }
+            tskpane.Navigate(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+            tskpane.Visible = true
+          } catch (e) {
+            console.error('获取任务面板失败:', e)
+            try {
+              let tskpane = window.Application.CreateTaskPane(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+              if (!tskpane) {
+                throw new Error('创建任务面板失败')
+              }
+              let id = tskpane.ID
+              window.Application.PluginStorage.setItem('copilot_panel_id', id)
+              tskpane.Visible = true
+            } catch (innerE) {
+              console.error('创建任务面板失败:', innerE)
+              window.Application.Alert('任务面板创建失败: ' + innerE.message)
+              return
+            }
           }
         }
+        
+        statusMessage.value = '文档问答已打开'
       } else {
         window.Application.Alert('无法加载Copilot面板')
       }
@@ -291,6 +318,8 @@ export default {
       
       if (!docText) return;
       
+      statusMessage.value = '生成' + title + '中...'
+      
       // 使用Ribbon.js中定义的showCopilotPanel函数
       if (window.Util) {
         // 调用Ribbon.js中定义的showCopilotPanel函数
@@ -300,32 +329,57 @@ export default {
           prompt: prompt,
           operation: 'documentSummarization',
           selectedText: docText,
-          config: getConfig()
+          config: getConfig(),
+          initial: false // 设为false，确保执行初始化
         }
         
+        console.log('打开全文总结侧边栏')
         // 保存临时数据到浏览器存储
         sessionStorage.setItem(tempDataId, JSON.stringify(tempData))
         
         // 打开Copilot侧边栏
         let tsId = window.Application.PluginStorage.getItem('copilot_panel_id')
         if (!tsId) {
-          let tskpane = window.Application.CreateTaskPane(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
-          let id = tskpane.ID
-          window.Application.PluginStorage.setItem('copilot_panel_id', id)
-          tskpane.Visible = true
-        } else {
           try {
-            let tskpane = window.Application.GetTaskPane(tsId)
-            tskpane.Navigate(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
-            tskpane.Visible = true
-          } catch (e) {
-            // 如果获取已有窗格失败，创建新的
             let tskpane = window.Application.CreateTaskPane(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+            if (!tskpane) {
+              throw new Error('创建任务面板失败')
+            }
             let id = tskpane.ID
             window.Application.PluginStorage.setItem('copilot_panel_id', id)
             tskpane.Visible = true
+          } catch (e) {
+            console.error('创建任务面板失败:', e)
+            window.Application.Alert('创建任务面板失败: ' + e.message)
+            return
+          }
+        } else {
+          try {
+            let tskpane = window.Application.GetTaskPane(tsId)
+            if (!tskpane) {
+              throw new Error('获取任务面板失败')
+            }
+            tskpane.Navigate(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+            tskpane.Visible = true
+          } catch (e) {
+            console.error('获取任务面板失败:', e)
+            try {
+              let tskpane = window.Application.CreateTaskPane(window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+              if (!tskpane) {
+                throw new Error('创建任务面板失败')
+              }
+              let id = tskpane.ID
+              window.Application.PluginStorage.setItem('copilot_panel_id', id)
+              tskpane.Visible = true
+            } catch (innerE) {
+              console.error('创建任务面板失败:', innerE)
+              window.Application.Alert('任务面板创建失败: ' + innerE.message)
+              return
+            }
           }
         }
+        
+        statusMessage.value = title + '面板已打开'
       } else {
         window.Application.Alert('无法加载Copilot面板')
       }
