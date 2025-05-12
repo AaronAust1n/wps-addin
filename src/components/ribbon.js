@@ -1,4 +1,5 @@
 import Util from './js/util.js'
+import apiClient from './js/api.js'
 
 // 这个函数在整个wps加载项中是第一个执行的
 function OnAddinLoad(ribbonUI) {
@@ -47,68 +48,298 @@ function OnAction(control) {
   return true
 }
 
-// 显示任务窗格
-function showTaskPane() {
-  let tsId = window.Application.PluginStorage.getItem('taskpane_id')
-  if (!tsId) {
-    let tskpane = window.Application.CreateTaskPane(Util.GetUrlPath() + Util.GetRouterHash() + '/taskpane')
-    let id = tskpane.ID
-    window.Application.PluginStorage.setItem('taskpane_id', id)
-    tskpane.Visible = true
-  } else {
-    let tskpane = window.Application.GetTaskPane(tsId)
-    tskpane.Visible = true
+// 获取配置
+function getConfig() {
+  if (window.Application && window.Application.PluginStorage) {
+    const configStr = window.Application.PluginStorage.getItem('aiConfig')
+    if (configStr) {
+      try {
+        return JSON.parse(configStr)
+      } catch (e) {
+        console.error('配置加载失败', e)
+      }
+    }
+  }
+  return null
+}
+
+// 检查配置是否有效
+function checkConfigured() {
+  const config = getConfig()
+  if (!config || !config.apiUrl) {
+    window.Application.Alert('请先配置API设置')
+    handleSettings()
+    return false
+  }
+  return true
+}
+
+// 获取选中文本
+function getSelectedText() {
+  try {
+    const selection = window.Application.ActiveDocument.Range
+    if (selection) {
+      return selection.Text
+    } else {
+      window.Application.Alert('未选择任何文本')
+      return null
+    }
+  } catch (e) {
+    console.error('获取选中文本失败:', e)
+    window.Application.Alert('获取选中文本失败: ' + e.message)
+    return null
+  }
+}
+
+// 获取整个文档文本
+function getDocumentText() {
+  try {
+    const doc = window.Application.ActiveDocument
+    if (doc) {
+      const range = doc.Range()
+      return range.Text
+    } else {
+      window.Application.Alert('无法获取文档内容')
+      return null
+    }
+  } catch (e) {
+    console.error('获取文档内容失败:', e)
+    window.Application.Alert('获取文档内容失败: ' + e.message)
+    return null
+  }
+}
+
+// 替换选中文本
+function replaceSelectedText(newText) {
+  try {
+    const selection = window.Application.ActiveDocument.Range
+    if (selection) {
+      selection.Text = newText
+      return true
+    }
+    return false
+  } catch (e) {
+    console.error('替换文本失败:', e)
+    window.Application.Alert('替换文本失败: ' + e.message)
+    return false
+  }
+}
+
+// 显示加载对话框
+function showLoadingDialog(message) {
+  if (window.Application) {
+    return window.Application.ShowDialog(
+      Util.GetUrlPath() + Util.GetRouterHash() + '/loading',
+      message || 'WPS AI助手 - 正在处理',
+      300,
+      150,
+      false
+    )
+  }
+  return null
+}
+
+// 关闭对话框
+function closeDialog(dialogId) {
+  if (window.Application && dialogId) {
+    window.Application.CloseDialog(dialogId)
   }
 }
 
 // 文本续写功能
-function handleContinueText() {
+async function handleContinueText() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     window.Application.Alert('当前没有打开任何文档')
     return
   }
-  showTaskPane()
+  
+  if (!checkConfigured()) return
+  
+  const selectedText = getSelectedText()
+  if (!selectedText) return
+  
+  const loadingDialog = showLoadingDialog('WPS AI助手 - 正在续写文本')
+  
+  try {
+    // 更新API客户端配置
+    const config = getConfig()
+    apiClient.updateConfig(config)
+    
+    // 调用API续写文本
+    const result = await apiClient.continueText(selectedText)
+    
+    // 关闭加载对话框
+    closeDialog(loadingDialog)
+    
+    // 将结果替换选中文本
+    if (result) {
+      const combinedText = selectedText + result
+      replaceSelectedText(combinedText)
+      window.Application.Alert('文本续写完成！')
+    }
+  } catch (e) {
+    // 关闭加载对话框
+    closeDialog(loadingDialog)
+    window.Application.Alert('文本续写失败: ' + e.message)
+  }
 }
 
 // 文本校对功能
-function handleProofreadText() {
+async function handleProofreadText() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     window.Application.Alert('当前没有打开任何文档')
     return
   }
-  showTaskPane()
+  
+  if (!checkConfigured()) return
+  
+  const selectedText = getSelectedText()
+  if (!selectedText) return
+  
+  const loadingDialog = showLoadingDialog('WPS AI助手 - 正在校对文本')
+  
+  try {
+    // 更新API客户端配置
+    const config = getConfig()
+    apiClient.updateConfig(config)
+    
+    // 调用API校对文本
+    const result = await apiClient.proofreadText(selectedText)
+    
+    // 关闭加载对话框
+    closeDialog(loadingDialog)
+    
+    // 将结果替换选中文本
+    if (result) {
+      replaceSelectedText(result)
+      window.Application.Alert('文本校对完成！')
+    }
+  } catch (e) {
+    // 关闭加载对话框
+    closeDialog(loadingDialog)
+    window.Application.Alert('文本校对失败: ' + e.message)
+  }
 }
 
 // 文本润色功能
-function handlePolishText() {
+async function handlePolishText() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     window.Application.Alert('当前没有打开任何文档')
     return
   }
-  showTaskPane()
+  
+  if (!checkConfigured()) return
+  
+  const selectedText = getSelectedText()
+  if (!selectedText) return
+  
+  const loadingDialog = showLoadingDialog('WPS AI助手 - 正在润色文本')
+  
+  try {
+    // 更新API客户端配置
+    const config = getConfig()
+    apiClient.updateConfig(config)
+    
+    // 调用API润色文本
+    const result = await apiClient.polishText(selectedText)
+    
+    // 关闭加载对话框
+    closeDialog(loadingDialog)
+    
+    // 将结果替换选中文本
+    if (result) {
+      replaceSelectedText(result)
+      window.Application.Alert('文本润色完成！')
+    }
+  } catch (e) {
+    // 关闭加载对话框
+    closeDialog(loadingDialog)
+    window.Application.Alert('文本润色失败: ' + e.message)
+  }
 }
 
 // 文本摘要功能
-function handleSummarizeText() {
+async function handleSummarizeText() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     window.Application.Alert('当前没有打开任何文档')
     return
   }
-  showTaskPane()
+  
+  if (!checkConfigured()) return
+  
+  const selectedText = getSelectedText()
+  if (!selectedText) return
+  
+  const loadingDialog = showLoadingDialog('WPS AI助手 - 正在生成摘要')
+  
+  try {
+    // 更新API客户端配置
+    const config = getConfig()
+    apiClient.updateConfig(config)
+    
+    // 调用API生成摘要
+    const result = await apiClient.summarizeText(selectedText)
+    
+    // 关闭加载对话框
+    closeDialog(loadingDialog)
+    
+    // 询问用户是否替换选中文本
+    if (result) {
+      if (window.Application.Confirm('摘要生成成功，是否替换选中文本？\n\n' + result)) {
+        replaceSelectedText(result)
+      }
+    }
+  } catch (e) {
+    // 关闭加载对话框
+    closeDialog(loadingDialog)
+    window.Application.Alert('生成摘要失败: ' + e.message)
+  }
 }
 
 // 全文总结功能
-function handleSummarizeDoc() {
+async function handleSummarizeDoc() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     window.Application.Alert('当前没有打开任何文档')
     return
   }
-  showTaskPane()
+  
+  if (!checkConfigured()) return
+  
+  const docText = getDocumentText()
+  if (!docText) return
+  
+  const loadingDialog = showLoadingDialog('WPS AI助手 - 正在生成全文总结')
+  
+  try {
+    // 更新API客户端配置
+    const config = getConfig()
+    apiClient.updateConfig(config)
+    
+    // 调用API生成全文总结
+    const result = await apiClient.summarizeDocument(docText)
+    
+    // 关闭加载对话框
+    closeDialog(loadingDialog)
+    
+    // 询问用户是如何处理结果
+    if (result) {
+      if (window.Application.Confirm('全文总结生成成功，是否插入到文档末尾？\n\n' + result)) {
+        // 插入到文档末尾
+        const selection = window.Application.ActiveDocument.Range
+        selection.Collapse(false) // 折叠到末尾
+        selection.InsertBefore('\n\n## 文档总结\n\n' + result + '\n')
+      }
+    }
+  } catch (e) {
+    // 关闭加载对话框
+    closeDialog(loadingDialog)
+    window.Application.Alert('生成全文总结失败: ' + e.message)
+  }
 }
 
 // 设置对话框
@@ -117,7 +348,7 @@ function handleSettings() {
     Util.GetUrlPath() + Util.GetRouterHash() + '/dialog',
     'WPS AI助手 - 设置',
     450,
-    400,
+    600,
     false
   )
 }

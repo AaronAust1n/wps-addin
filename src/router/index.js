@@ -17,6 +17,11 @@ const router = createRouter({
       path: '/taskpane',
       name: '任务窗格',
       component: () => import('../components/TaskPane.vue')
+    },
+    {
+      path: '/loading',
+      name: '加载中',
+      component: () => import('../components/Loading.vue')
     }
   ]
 })

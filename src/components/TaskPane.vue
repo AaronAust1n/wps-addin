@@ -46,10 +46,62 @@
 
 <script>
 import { ref } from 'vue'
+import apiClient from './js/api.js'
 
 export default {
   setup() {
     const statusMessage = ref('准备就绪')
+
+    // 获取选中文本
+    const getSelectedText = () => {
+      try {
+        const selection = window.Application.ActiveDocument.Range
+        if (selection) {
+          return selection.Text
+        } else {
+          window.Application.Alert('未选择任何文本')
+          return null
+        }
+      } catch (e) {
+        console.error('获取选中文本失败:', e)
+        window.Application.Alert('获取选中文本失败: ' + e.message)
+        return null
+      }
+    }
+
+    // 获取整个文档文本
+    const getDocumentText = () => {
+      try {
+        const doc = window.Application.ActiveDocument
+        if (doc) {
+          const range = doc.Range()
+          return range.Text
+        } else {
+          window.Application.Alert('无法获取文档内容')
+          return null
+        }
+      } catch (e) {
+        console.error('获取文档内容失败:', e)
+        window.Application.Alert('获取文档内容失败: ' + e.message)
+        return null
+      }
+    }
+
+    // 替换选中文本
+    const replaceSelectedText = (newText) => {
+      try {
+        const selection = window.Application.ActiveDocument.Range
+        if (selection) {
+          selection.Text = newText
+          return true
+        }
+        return false
+      } catch (e) {
+        console.error('替换文本失败:', e)
+        window.Application.Alert('替换文本失败: ' + e.message)
+        return false
+      }
+    }
 
     const getConfig = () => {
       if (window.Application && window.Application.PluginStorage) {
@@ -67,7 +119,7 @@ export default {
 
     const checkConfigured = () => {
       const config = getConfig()
-      if (!config || !config.apiUrl || !config.apiKey) {
+      if (!config || !config.apiUrl) {
         window.Application.Alert('请先配置API设置')
         handleSettings()
         return false
@@ -75,61 +127,139 @@ export default {
       return true
     }
 
-    const handleContinueText = () => {
+    const handleContinueText = async () => {
       if (!checkConfigured()) return
+      
+      const selectedText = getSelectedText()
+      if (!selectedText) return
+      
       statusMessage.value = '执行文本续写...'
-      // 实现文本续写功能
+      
       try {
-        // 这里编写实际的文本续写实现
-        statusMessage.value = '文本续写完成'
+        // 更新API客户端配置
+        const config = getConfig()
+        apiClient.updateConfig(config)
+        
+        // 调用API续写文本
+        const result = await apiClient.continueText(selectedText)
+        
+        // 将结果替换选中文本
+        if (result) {
+          const combinedText = selectedText + result
+          replaceSelectedText(combinedText)
+          statusMessage.value = '文本续写完成'
+        }
       } catch (e) {
         statusMessage.value = '操作失败: ' + e.message
       }
     }
 
-    const handleProofread = () => {
+    const handleProofread = async () => {
       if (!checkConfigured()) return
+      
+      const selectedText = getSelectedText()
+      if (!selectedText) return
+      
       statusMessage.value = '执行文本校对...'
-      // 实现文本校对功能
+      
       try {
-        // 这里编写实际的文本校对实现
-        statusMessage.value = '文本校对完成'
+        // 更新API客户端配置
+        const config = getConfig()
+        apiClient.updateConfig(config)
+        
+        // 调用API校对文本
+        const result = await apiClient.proofreadText(selectedText)
+        
+        // 将结果替换选中文本
+        if (result) {
+          replaceSelectedText(result)
+          statusMessage.value = '文本校对完成'
+        }
       } catch (e) {
         statusMessage.value = '操作失败: ' + e.message
       }
     }
 
-    const handlePolish = () => {
+    const handlePolish = async () => {
       if (!checkConfigured()) return
+      
+      const selectedText = getSelectedText()
+      if (!selectedText) return
+      
       statusMessage.value = '执行文本润色...'
-      // 实现文本润色功能
+      
       try {
-        // 这里编写实际的文本润色实现
-        statusMessage.value = '文本润色完成'
+        // 更新API客户端配置
+        const config = getConfig()
+        apiClient.updateConfig(config)
+        
+        // 调用API润色文本
+        const result = await apiClient.polishText(selectedText)
+        
+        // 将结果替换选中文本
+        if (result) {
+          replaceSelectedText(result)
+          statusMessage.value = '文本润色完成'
+        }
       } catch (e) {
         statusMessage.value = '操作失败: ' + e.message
       }
     }
 
-    const handleSummarize = () => {
+    const handleSummarize = async () => {
       if (!checkConfigured()) return
+      
+      const selectedText = getSelectedText()
+      if (!selectedText) return
+      
       statusMessage.value = '生成文本摘要...'
-      // 实现文本摘要功能
+      
       try {
-        // 这里编写实际的文本摘要实现
-        statusMessage.value = '文本摘要生成完成'
+        // 更新API客户端配置
+        const config = getConfig()
+        apiClient.updateConfig(config)
+        
+        // 调用API生成摘要
+        const result = await apiClient.summarizeText(selectedText)
+        
+        // 询问用户是否替换选中文本
+        if (result) {
+          if (window.Application.Confirm('摘要生成成功，是否替换选中文本？\n\n' + result)) {
+            replaceSelectedText(result)
+          }
+          statusMessage.value = '文本摘要生成完成'
+        }
       } catch (e) {
         statusMessage.value = '操作失败: ' + e.message
       }
     }
 
-    const handleSummarizeDoc = () => {
+    const handleSummarizeDoc = async () => {
       if (!checkConfigured()) return
+      
+      const docText = getDocumentText()
+      if (!docText) return
+      
       statusMessage.value = '生成全文总结...'
-      // 实现全文总结功能
+      
       try {
-        // 这里编写实际的全文总结实现
-        statusMessage.value = '全文总结生成完成'
+        // 更新API客户端配置
+        const config = getConfig()
+        apiClient.updateConfig(config)
+        
+        // 调用API生成全文总结
+        const result = await apiClient.summarizeDocument(docText)
+        
+        // 询问用户是如何处理结果
+        if (result) {
+          if (window.Application.Confirm('全文总结生成成功，是否插入到文档末尾？\n\n' + result)) {
+            // 插入到文档末尾
+            const selection = window.Application.ActiveDocument.Range
+            selection.Collapse(false) // 折叠到末尾
+            selection.InsertBefore('\n\n## 文档总结\n\n' + result + '\n')
+          }
+          statusMessage.value = '全文总结生成完成'
+        }
       } catch (e) {
         statusMessage.value = '操作失败: ' + e.message
       }
@@ -141,7 +271,7 @@ export default {
           window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/dialog',
           'WPS AI助手 - 设置',
           450,
-          400,
+          600,
           false
         )
       }
@@ -254,7 +384,7 @@ button {
 }
 
 .btn-help {
-  background-color: #f1f1f1;
+  background-color: #e6e6e6;
   color: #333;
 }
 </style> 
