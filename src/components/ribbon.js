@@ -12,6 +12,15 @@ function OnAddinLoad(ribbonUI) {
     window.Application.Enum = Util.WPS_Enum
   }
 
+  // 添加自定义Alert函数
+  if (typeof window.Application.Alert != 'function') {
+    window.Application.Alert = function(message) {
+      console.log('Alert:', message);
+      // 使用原生alert或其他可用的提示方法
+      alert(message);
+    }
+  }
+
   window.Util = Util
   window.Application.PluginStorage.setItem('EnableFlag', true) // 设置插件启用标记
   
@@ -81,7 +90,7 @@ function getConfig() {
     return null;
   }
   
-  const configStr = window.Application.PluginStorage.getItem('aiConfig')
+    const configStr = window.Application.PluginStorage.getItem('aiConfig')
   if (!configStr) {
     console.warn('未找到保存的配置');
     return null;
@@ -94,7 +103,7 @@ function getConfig() {
       model: config.models?.defaultModel || '未设置'
     });
     return config;
-  } catch (e) {
+      } catch (e) {
     console.error('配置解析失败', e);
     return null;
   }
@@ -158,21 +167,32 @@ function getCurrentParagraph() {
   try {
     const selection = window.Application.ActiveDocument.Range
     if (selection) {
-      const paragraph = selection.Paragraphs(1)
-      if (paragraph) {
-        const text = paragraph.Range.Text
-        
-        // 检查段落是否有实际内容
-        if (text && text.trim().length > 0) {
-          console.log('成功获取段落文本，长度:', text.length);
+      // 获取光标所在段落的替代方法
+      try {
+        // 尝试直接获取段落文本
+        const paragraph = selection.Paragraphs(1);
+        if (paragraph) {
+          const text = paragraph.Range.Text;
+          console.log('成功通过Paragraphs获取段落文本');
           return text;
-        } else {
-          console.log('段落文本为空或仅包含空白字符');
-          return null;
         }
-      } else {
-        console.log('未找到段落对象');
-        return null;
+      } catch (err) {
+        console.warn('无法通过Paragraphs获取段落，尝试替代方法:', err);
+        
+        // 替代方法：扩展选区到当前段落边界
+        const doc = window.Application.ActiveDocument;
+        const currentPosition = selection.Start;
+        
+        // 创建一个新的范围对象，从当前位置开始
+        const range = doc.Range(currentPosition, currentPosition);
+        
+        // 扩展到段落开始和结束
+        range.StartOf(5, 1); // 5表示段落单位, 1表示扩展选区
+        range.EndOf(5, 1);   // 扩展到段落结尾
+        
+        const text = range.Text;
+        console.log('通过替代方法获取段落文本');
+        return text;
       }
     } else {
       console.warn('未获取到选择范围');
@@ -208,7 +228,7 @@ function insertTextAtCursor(text) {
     const selection = window.Application.ActiveDocument.Range
     selection.Collapse() // 确保光标折叠（不是选区）
     selection.InsertAfter(text)
-    return true
+      return true
   } catch (e) {
     console.error('插入文本失败:', e)
     window.Application.Alert('插入文本失败: ' + e.message)
@@ -219,16 +239,32 @@ function insertTextAtCursor(text) {
 // 创建侧边栏
 function createTaskpane(url, width = 300) {
   try {
-    const taskpane = window.Application.CreateTaskPane()
-    taskpane.DockPosition = window.Application.Enum.msoCTPDockPositionRight
-    taskpane.Width = width
-    taskpane.Visible = true
-    taskpane.Navigate(url)
-    return taskpane
+    // 检查API是否可用
+    if (typeof window.Application.CreateTaskPane !== 'function') {
+      console.error('CreateTaskPane API不可用，尝试替代方法');
+      // 可以使用替代方法，比如打开一个对话框
+      window.open(url, '_blank', `width=${width},height=600`);
+      return { success: true, method: 'window.open' };
+    }
+    
+    const taskpane = window.Application.CreateTaskPane();
+    taskpane.DockPosition = window.Application.Enum.msoCTPDockPositionRight;
+    taskpane.Width = width;
+    taskpane.Visible = true;
+    taskpane.Navigate(url);
+    return taskpane;
   } catch (e) {
-    console.error('创建侧边栏失败:', e)
-    window.Application.Alert('创建侧边栏失败: ' + e.message)
-    return null
+    console.error('创建侧边栏失败:', e);
+    // 尝试回退到window.open
+    try {
+      window.open(url, '_blank', `width=${width},height=600`);
+      console.log('已使用window.open作为替代方法');
+      return { success: true, method: 'window.open' };
+    } catch (err) {
+      console.error('所有创建侧边栏方法都失败:', err);
+      window.Application.Alert('无法创建侧边栏: ' + e.message);
+      return null;
+    }
   }
 }
 
@@ -600,7 +636,7 @@ async function handleContinueText() {
   
   try {
     // 检查是否有选中文本
-    const selectedText = getSelectedText()
+  const selectedText = getSelectedText()
     console.log(`选中文本检查: ${selectedText ? '有选中文本' : '无选中文本'}`);
     
     if (!selectedText || selectedText.trim() === '') {
@@ -646,7 +682,7 @@ async function handleProofreadText() {
   
   try {
     // 检查是否有选中文本
-    const selectedText = getSelectedText()
+  const selectedText = getSelectedText()
     console.log(`选中文本检查: ${selectedText ? '有选中文本' : '无选中文本'}`);
     
     if (!selectedText || selectedText.trim() === '') {
