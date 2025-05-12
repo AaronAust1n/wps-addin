@@ -15,39 +15,48 @@
       </div>
       <div class="form-group">
         <label for="model">默认模型</label>
-        <select id="model" v-model="config.models.defaultModel">
+        <select id="model" v-model="selectedModelOption">
           <optgroup label="OpenAI">
-            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-            <option value="gpt-4">GPT-4</option>
+            <option value="gpt-4.1">GPT-4.1</option>
+            <option value="gpt-4.5-preview">GPT-4.5 Preview</option>
+            <option value="o4-mini">O4 Mini</option>
+            <option value="o1">O1</option>
             <option value="gpt-4-turbo">GPT-4 Turbo</option>
-          </optgroup>
-          <optgroup label="Google">
-            <option value="gemini-pro">Gemini Pro</option>
-            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
           </optgroup>
           <optgroup label="Anthropic">
+            <option value="claude-3-7-sonnet">Claude 3.7 Sonnet</option>
+            <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
             <option value="claude-3-opus">Claude 3 Opus</option>
             <option value="claude-3-sonnet">Claude 3 Sonnet</option>
           </optgroup>
-          <optgroup label="阿里云">
-            <option value="qwen-turbo">Qwen Turbo</option>
-            <option value="qwen-plus">Qwen Plus</option>
-            <option value="qwen-max">Qwen Max</option>
+          <optgroup label="Google">
+            <option value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro Preview</option>
+            <option value="gemini-2.5-flash-preview-04-17">Gemini 2.5 Flash Preview</option>
+            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+            <option value="gemini-pro">Gemini Pro</option>
           </optgroup>
-          <optgroup label="百度">
-            <option value="ernie-bot-4">文心一言 ERNIE Bot 4.0</option>
-            <option value="ernie-bot">文心一言 ERNIE Bot</option>
+          <optgroup label="阿里云">
+            <option value="qwen3-235b-a22b">Qwen3 235B</option>
+            <option value="qwen3-30b-a3b">Qwen3 30B</option>
+            <option value="qwen3-32b">Qwen3 32B</option>
+            <option value="qwen3-14b">Qwen3 14B</option>
+            <option value="qwq-32b">QWQ 32B</option>
+            <option value="qwen2.5-72b-instruct">Qwen2.5 72B</option>
+            <option value="qwen2.5-32b-instruct">Qwen2.5 32B</option>
+            <option value="qwen2.5-14b-instruct">Qwen2.5 14B</option>
           </optgroup>
           <optgroup label="其他">
-            <option value="deepseek-chat">DeepSeek Chat</option>
-            <option value="llama-3-70b">Llama 3 70B</option>
+            <option value="deepseek-r1">DeepSeek R1</option>
+            <option value="deepseek-v3-0324">DeepSeek V3</option>
+            <option value="grok-3-beta">Grok 3 Beta</option>
             <option value="custom">自定义</option>
           </optgroup>
         </select>
       </div>
-      <div class="form-group" v-if="config.models.defaultModel === 'custom'">
+      <div class="form-group" v-if="selectedModelOption === 'custom'">
         <label for="customModel">自定义模型名称</label>
-        <input type="text" id="customModel" v-model="config.models.customModel" placeholder="请输入模型名称">
+        <input type="text" id="customModel" v-model="customModelName" placeholder="请输入模型名称">
       </div>
       <div class="advanced-settings">
         <div class="section-title" @click="toggleAdvanced">
@@ -69,40 +78,44 @@
               <label for="continuationModel">文本续写</label>
               <select id="continuationModel" v-model="config.models.continuationModel">
                 <option value="">使用默认模型</option>
+                <option value="gpt-4.1">GPT-4.1</option>
                 <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                <option value="gpt-4">GPT-4</option>
-                <option value="gemini-pro">Gemini Pro</option>
-                <option value="qwen-plus">Qwen Plus</option>
+                <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                <option value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro</option>
+                <option value="qwen3-32b">Qwen3 32B</option>
               </select>
             </div>
             <div class="sub-setting">
               <label for="proofreadingModel">文本校对</label>
               <select id="proofreadingModel" v-model="config.models.proofreadingModel">
                 <option value="">使用默认模型</option>
+                <option value="gpt-4.1">GPT-4.1</option>
                 <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                <option value="gpt-4">GPT-4</option>
-                <option value="gemini-pro">Gemini Pro</option>
-                <option value="qwen-plus">Qwen Plus</option>
+                <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                <option value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro</option>
+                <option value="qwen3-32b">Qwen3 32B</option>
               </select>
             </div>
             <div class="sub-setting">
               <label for="polishingModel">文本润色</label>
               <select id="polishingModel" v-model="config.models.polishingModel">
                 <option value="">使用默认模型</option>
+                <option value="gpt-4.1">GPT-4.1</option>
                 <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                <option value="gpt-4">GPT-4</option>
-                <option value="gemini-pro">Gemini Pro</option>
-                <option value="qwen-plus">Qwen Plus</option>
+                <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                <option value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro</option>
+                <option value="qwen3-32b">Qwen3 32B</option>
               </select>
             </div>
             <div class="sub-setting">
               <label for="summarizationModel">文本摘要/全文总结</label>
               <select id="summarizationModel" v-model="config.models.summarizationModel">
                 <option value="">使用默认模型</option>
+                <option value="gpt-4.1">GPT-4.1</option>
                 <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                <option value="gpt-4">GPT-4</option>
-                <option value="gemini-pro">Gemini Pro</option>
-                <option value="qwen-plus">Qwen Plus</option>
+                <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                <option value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro</option>
+                <option value="qwen3-32b">Qwen3 32B</option>
               </select>
             </div>
           </div>
@@ -117,7 +130,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 
 export default {
   setup() {
@@ -125,7 +138,7 @@ export default {
       apiUrl: '',
       apiKey: '',
       models: {
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-4.1',
         customModel: '',
         continuationModel: '',
         proofreadingModel: '',
@@ -135,6 +148,32 @@ export default {
       options: {
         maxTokens: 2000,
         temperature: 0.7
+      }
+    })
+    
+    // 用于处理自定义模型的变量
+    const customModelName = ref('')
+    const selectedModelOption = ref('gpt-4.1')
+    
+    // 监听配置变化，同步selectedModelOption
+    watch(() => config.value.models.defaultModel, (newVal) => {
+      if (newVal && !['custom', 'gpt-4.1', 'gpt-4.5-preview', 'o4-mini', 'o1', 'gpt-4-turbo', 'gpt-3.5-turbo', 
+                       'claude-3-7-sonnet', 'claude-3-5-sonnet', 'claude-3-opus', 'claude-3-sonnet',
+                       'gemini-2.5-pro-preview-03-25', 'gemini-2.5-flash-preview-04-17', 'gemini-1.5-pro', 'gemini-pro',
+                       'qwen3-235b-a22b', 'qwen3-30b-a3b', 'qwen3-32b', 'qwen3-14b', 'qwq-32b', 'qwen2.5-72b-instruct', 'qwen2.5-32b-instruct', 'qwen2.5-14b-instruct',
+                       'deepseek-r1', 'deepseek-v3-0324', 'grok-3-beta'].includes(newVal)) {
+        // 如果是不在列表中的模型，设为自定义
+        selectedModelOption.value = 'custom'
+        customModelName.value = newVal
+      } else {
+        selectedModelOption.value = newVal
+      }
+    })
+    
+    // 监听选择的模型变化
+    watch(selectedModelOption, (newVal) => {
+      if (newVal !== 'custom') {
+        config.value.models.defaultModel = newVal
       }
     })
     
@@ -157,6 +196,19 @@ export default {
               models: { ...config.value.models, ...savedConfig.models },
               options: { ...config.value.options, ...savedConfig.options }
             }
+            
+            // 处理自定义模型
+            const defaultModel = config.value.models.defaultModel
+            if (defaultModel && !['custom', 'gpt-4.1', 'gpt-4.5-preview', 'o4-mini', 'o1', 'gpt-4-turbo', 'gpt-3.5-turbo', 
+                           'claude-3-7-sonnet', 'claude-3-5-sonnet', 'claude-3-opus', 'claude-3-sonnet',
+                           'gemini-2.5-pro-preview-03-25', 'gemini-2.5-flash-preview-04-17', 'gemini-1.5-pro', 'gemini-pro',
+                           'qwen3-235b-a22b', 'qwen3-30b-a3b', 'qwen3-32b', 'qwen3-14b', 'qwq-32b', 'qwen2.5-72b-instruct', 'qwen2.5-32b-instruct', 'qwen2.5-14b-instruct',
+                           'deepseek-r1', 'deepseek-v3-0324', 'grok-3-beta'].includes(defaultModel)) {
+              selectedModelOption.value = 'custom'
+              customModelName.value = defaultModel
+            } else {
+              selectedModelOption.value = defaultModel
+            }
           } catch (e) {
             console.error('配置加载失败', e)
           }
@@ -172,14 +224,14 @@ export default {
       }
       
       // 检查自定义模型名称
-      if (config.value.models.defaultModel === 'custom' && !config.value.models.customModel) {
-        window.Application.Alert('请填写自定义模型名称')
-        return
-      }
-      
-      // 如果选择了自定义模型，更新默认模型为自定义模型名称
-      if (config.value.models.defaultModel === 'custom') {
-        config.value.models.defaultModel = config.value.models.customModel
+      if (selectedModelOption.value === 'custom') {
+        if (!customModelName.value) {
+          window.Application.Alert('请填写自定义模型名称')
+          return
+        }
+        config.value.models.defaultModel = customModelName.value
+      } else {
+        config.value.models.defaultModel = selectedModelOption.value
       }
       
       // 保存配置到WPS本地存储
@@ -187,7 +239,7 @@ export default {
         try {
           window.Application.PluginStorage.setItem('aiConfig', JSON.stringify(config.value))
           window.Application.Alert('配置已保存')
-          closeDialog()
+          closeDialog() // 自动关闭对话框
         } catch (e) {
           console.error('配置保存失败', e)
           window.Application.Alert('配置保存失败: ' + e.message)
@@ -206,7 +258,9 @@ export default {
       advancedOpen,
       toggleAdvanced,
       saveConfig,
-      closeDialog
+      closeDialog,
+      selectedModelOption,
+      customModelName
     }
   }
 }
@@ -245,6 +299,12 @@ input, select {
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
+  box-sizing: border-box; /* 确保边框包含在宽度内 */
+  outline: none; /* 去掉聚焦时的外边框 */
+}
+
+input:focus, select:focus {
+  border-color: #4a86e8;
 }
 
 .required {
@@ -314,8 +374,16 @@ button {
   color: white;
 }
 
+.btn-primary:hover {
+  background-color: #3b78e7;
+}
+
 .btn-secondary {
   background-color: #f1f1f1;
   color: #333;
+}
+
+.btn-secondary:hover {
+  background-color: #e4e4e4;
 }
 </style> 

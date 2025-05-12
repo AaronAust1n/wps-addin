@@ -78,10 +78,10 @@ function checkConfigured() {
 function getSelectedText() {
   try {
     const selection = window.Application.ActiveDocument.Range
-    if (selection) {
+    if (selection && selection.Text.trim()) {
       return selection.Text
     } else {
-      window.Application.Alert('未选择任何文本')
+      window.Application.Alert('请先选择要处理的文本')
       return null
     }
   } catch (e) {
@@ -125,6 +125,61 @@ function replaceSelectedText(newText) {
   }
 }
 
+// 插入文本到光标位置
+function insertTextAtCursor(text) {
+  try {
+    const selection = window.Application.ActiveDocument.Range
+    if (selection) {
+      selection.InsertAfter(text)
+      return true
+    }
+    return false
+  } catch (e) {
+    console.error('插入文本失败:', e)
+    window.Application.Alert('插入文本失败: ' + e.message)
+    return false
+  }
+}
+
+// 显示Copilot风格的侧边栏
+function showCopilotPanel(title, prompt, operation, selectedText = '') {
+  if (!window.Application) return
+
+  // 创建一个隐藏的HTML元素来存储临时数据
+  const tempDataId = 'ai_copilot_temp_data_' + Date.now()
+  const tempData = {
+    title: title,
+    prompt: prompt,
+    operation: operation,
+    selectedText: selectedText,
+    config: getConfig()
+  }
+
+  // 保存临时数据到浏览器存储
+  sessionStorage.setItem(tempDataId, JSON.stringify(tempData))
+  
+  // 打开Copilot侧边栏
+  let tsId = window.Application.PluginStorage.getItem('copilot_panel_id')
+  if (!tsId) {
+    let tskpane = window.Application.CreateTaskPane(Util.GetUrlPath() + Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+    let id = tskpane.ID
+    window.Application.PluginStorage.setItem('copilot_panel_id', id)
+    tskpane.Visible = true
+  } else {
+    try {
+      let tskpane = window.Application.GetTaskPane(tsId)
+      tskpane.Navigate(Util.GetUrlPath() + Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+      tskpane.Visible = true
+    } catch (e) {
+      // 如果获取已有窗格失败，创建新的
+      let tskpane = window.Application.CreateTaskPane(Util.GetUrlPath() + Util.GetRouterHash() + '/copilot?id=' + tempDataId)
+      let id = tskpane.ID
+      window.Application.PluginStorage.setItem('copilot_panel_id', id)
+      tskpane.Visible = true
+    }
+  }
+}
+
 // 显示加载对话框
 function showLoadingDialog(message) {
   if (window.Application) {
@@ -147,7 +202,7 @@ function closeDialog(dialogId) {
 }
 
 // 文本续写功能
-async function handleContinueText() {
+function handleContinueText() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     window.Application.Alert('当前没有打开任何文档')
@@ -158,35 +213,17 @@ async function handleContinueText() {
   
   const selectedText = getSelectedText()
   if (!selectedText) return
-  
-  const loadingDialog = showLoadingDialog('WPS AI助手 - 正在续写文本')
-  
-  try {
-    // 更新API客户端配置
-    const config = getConfig()
-    apiClient.updateConfig(config)
-    
-    // 调用API续写文本
-    const result = await apiClient.continueText(selectedText)
-    
-    // 关闭加载对话框
-    closeDialog(loadingDialog)
-    
-    // 将结果替换选中文本
-    if (result) {
-      const combinedText = selectedText + result
-      replaceSelectedText(combinedText)
-      window.Application.Alert('文本续写完成！')
-    }
-  } catch (e) {
-    // 关闭加载对话框
-    closeDialog(loadingDialog)
-    window.Application.Alert('文本续写失败: ' + e.message)
-  }
+
+  showCopilotPanel(
+    '文本续写', 
+    '我将根据您选择的文本内容，智能续写后续内容。请确认以下是您希望续写的文本：',
+    'continuation',
+    selectedText
+  )
 }
 
 // 文本校对功能
-async function handleProofreadText() {
+function handleProofreadText() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     window.Application.Alert('当前没有打开任何文档')
@@ -197,34 +234,17 @@ async function handleProofreadText() {
   
   const selectedText = getSelectedText()
   if (!selectedText) return
-  
-  const loadingDialog = showLoadingDialog('WPS AI助手 - 正在校对文本')
-  
-  try {
-    // 更新API客户端配置
-    const config = getConfig()
-    apiClient.updateConfig(config)
-    
-    // 调用API校对文本
-    const result = await apiClient.proofreadText(selectedText)
-    
-    // 关闭加载对话框
-    closeDialog(loadingDialog)
-    
-    // 将结果替换选中文本
-    if (result) {
-      replaceSelectedText(result)
-      window.Application.Alert('文本校对完成！')
-    }
-  } catch (e) {
-    // 关闭加载对话框
-    closeDialog(loadingDialog)
-    window.Application.Alert('文本校对失败: ' + e.message)
-  }
+
+  showCopilotPanel(
+    '文本校对', 
+    '我将检查并修正选中文本中的错误，包括拼写、语法和标点符号等问题。请确认以下是您希望校对的文本：',
+    'proofreading',
+    selectedText
+  )
 }
 
 // 文本润色功能
-async function handlePolishText() {
+function handlePolishText() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     window.Application.Alert('当前没有打开任何文档')
@@ -235,34 +255,17 @@ async function handlePolishText() {
   
   const selectedText = getSelectedText()
   if (!selectedText) return
-  
-  const loadingDialog = showLoadingDialog('WPS AI助手 - 正在润色文本')
-  
-  try {
-    // 更新API客户端配置
-    const config = getConfig()
-    apiClient.updateConfig(config)
-    
-    // 调用API润色文本
-    const result = await apiClient.polishText(selectedText)
-    
-    // 关闭加载对话框
-    closeDialog(loadingDialog)
-    
-    // 将结果替换选中文本
-    if (result) {
-      replaceSelectedText(result)
-      window.Application.Alert('文本润色完成！')
-    }
-  } catch (e) {
-    // 关闭加载对话框
-    closeDialog(loadingDialog)
-    window.Application.Alert('文本润色失败: ' + e.message)
-  }
+
+  showCopilotPanel(
+    '文本润色', 
+    '我将改进您选中的文本，使表达更加优雅、专业和流畅，但保持原有意思不变。请确认以下是您希望润色的文本：',
+    'polishing',
+    selectedText
+  )
 }
 
 // 文本摘要功能
-async function handleSummarizeText() {
+function handleSummarizeText() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     window.Application.Alert('当前没有打开任何文档')
@@ -273,35 +276,17 @@ async function handleSummarizeText() {
   
   const selectedText = getSelectedText()
   if (!selectedText) return
-  
-  const loadingDialog = showLoadingDialog('WPS AI助手 - 正在生成摘要')
-  
-  try {
-    // 更新API客户端配置
-    const config = getConfig()
-    apiClient.updateConfig(config)
-    
-    // 调用API生成摘要
-    const result = await apiClient.summarizeText(selectedText)
-    
-    // 关闭加载对话框
-    closeDialog(loadingDialog)
-    
-    // 询问用户是否替换选中文本
-    if (result) {
-      if (window.Application.Confirm('摘要生成成功，是否替换选中文本？\n\n' + result)) {
-        replaceSelectedText(result)
-      }
-    }
-  } catch (e) {
-    // 关闭加载对话框
-    closeDialog(loadingDialog)
-    window.Application.Alert('生成摘要失败: ' + e.message)
-  }
+
+  showCopilotPanel(
+    '文本摘要', 
+    '我将为您选中的文本生成简洁、准确的摘要，突出核心内容和关键点。请确认以下是您希望摘要的文本：',
+    'summarization',
+    selectedText
+  )
 }
 
 // 全文总结功能
-async function handleSummarizeDoc() {
+function handleSummarizeDoc() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     window.Application.Alert('当前没有打开任何文档')
@@ -312,34 +297,13 @@ async function handleSummarizeDoc() {
   
   const docText = getDocumentText()
   if (!docText) return
-  
-  const loadingDialog = showLoadingDialog('WPS AI助手 - 正在生成全文总结')
-  
-  try {
-    // 更新API客户端配置
-    const config = getConfig()
-    apiClient.updateConfig(config)
-    
-    // 调用API生成全文总结
-    const result = await apiClient.summarizeDocument(docText)
-    
-    // 关闭加载对话框
-    closeDialog(loadingDialog)
-    
-    // 询问用户是如何处理结果
-    if (result) {
-      if (window.Application.Confirm('全文总结生成成功，是否插入到文档末尾？\n\n' + result)) {
-        // 插入到文档末尾
-        const selection = window.Application.ActiveDocument.Range
-        selection.Collapse(false) // 折叠到末尾
-        selection.InsertBefore('\n\n## 文档总结\n\n' + result + '\n')
-      }
-    }
-  } catch (e) {
-    // 关闭加载对话框
-    closeDialog(loadingDialog)
-    window.Application.Alert('生成全文总结失败: ' + e.message)
-  }
+
+  showCopilotPanel(
+    '全文总结', 
+    '我将为整个文档生成全面、结构化的总结，包括主要观点、论据和结论。',
+    'documentSummarization',
+    docText
+  )
 }
 
 // 设置对话框
