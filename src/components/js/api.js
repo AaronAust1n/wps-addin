@@ -162,18 +162,45 @@ class AIAPIClient {
   }
 
   /**
-   * 执行文档问答
-   * @param {string} text - 文档文本
-   * @param {string} question - 用户问题
-   * @returns {Promise<string>} - 回答结果
+   * 测试API连接
+   * @returns {Promise<boolean>} - 测试结果
    */
-  async documentQA(text, question) {
-    const model = this.config.models?.summarizationModel || this.config.models?.defaultModel
+  async testConnection() {
+    const data = {
+      model: this.config.models?.defaultModel,
+      messages: [
+        { role: 'user', content: '测试连接' }
+      ],
+      max_tokens: 5, // 只需要很小的响应
+      temperature: 0
+    }
+
+    try {
+      const response = await this.axios.post('/v1/chat/completions', data)
+      if (response.data && response.data.choices && response.data.choices.length > 0) {
+        return true
+      } else {
+        throw new Error('API响应格式不正确')
+      }
+    } catch (error) {
+      console.error('API连接测试失败:', error)
+      throw new Error(this.formatErrorMessage(error))
+    }
+  }
+
+  /**
+   * 为文档问答生成回答
+   * @param {string} docContent - 文档内容
+   * @param {string} question - 用户问题
+   * @returns {Promise<string>} - 问答结果
+   */
+  async documentQA(docContent, question) {
+    const model = this.config.models?.qaModel || this.config.models?.defaultModel
     const data = {
       model: model,
       messages: [
-        { role: 'system', content: '你是一个专业的文档问答助手，请基于用户提供的文档内容回答问题。只回答文档中包含的内容，如果无法从文档中找到答案，请明确指出。' },
-        { role: 'user', content: `文档内容：\n${text}\n\n问题：${question}` }
+        { role: 'system', content: '你是一个专业的文档助手，根据文档内容回答用户问题。' },
+        { role: 'user', content: `文档内容：${docContent}\n\n问题：${question}` }
       ],
       max_tokens: this.config.options?.maxTokens || 2000,
       temperature: this.config.options?.temperature || 0.3
@@ -184,29 +211,6 @@ class AIAPIClient {
       return response.data.choices[0].message.content
     } catch (error) {
       console.error('文档问答请求失败:', error)
-      throw new Error(this.formatErrorMessage(error))
-    }
-  }
-
-  /**
-   * 执行一般聊天对话
-   * @param {Array} messages - 消息数组
-   * @returns {Promise<string>} - 回复内容
-   */
-  async chat(messages) {
-    const model = this.config.models?.defaultModel
-    const data = {
-      model: model,
-      messages: messages,
-      max_tokens: this.config.options?.maxTokens || 2000,
-      temperature: this.config.options?.temperature || 0.7
-    }
-
-    try {
-      const response = await this.axios.post('/v1/chat/completions', data)
-      return response.data.choices[0].message.content
-    } catch (error) {
-      console.error('聊天请求失败:', error)
       throw new Error(this.formatErrorMessage(error))
     }
   }

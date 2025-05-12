@@ -9,8 +9,8 @@ const router = createRouter({
       component: () => import('../components/Root.vue')
     },
     {
-      path: '/dialog',
-      name: '对话框',
+      path: '/settings',
+      name: '设置',
       component: () => import('../components/Dialog.vue')
     },
     {
@@ -24,9 +24,19 @@ const router = createRouter({
       component: () => import('../components/Loading.vue')
     },
     {
-      path: '/copilot',
-      name: 'Copilot侧边栏',
-      component: () => import('../components/Copilot.vue')
+      path: '/qa',
+      name: '文档问答',
+      component: () => import('../components/TaskPane.vue')
+    },
+    {
+      path: '/summary',
+      name: '全文总结',
+      component: () => import('../components/TaskPane.vue')
+    },
+    {
+      path: '/help',
+      name: '帮助',
+      component: () => import('../components/Dialog.vue')
     }
   ]
 })

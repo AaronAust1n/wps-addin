@@ -6,21 +6,20 @@
     <div class="dialog-content">
       <div class="form-group">
         <label for="apiUrl">API 地址 <span class="required">*</span></label>
-        <input type="text" id="apiUrl" v-model="config.apiUrl" placeholder="请输入AI服务API地址，例如: https://api.openai.com">
+        <input type="text" id="apiUrl" v-model="config.apiUrl" class="full-border-input" placeholder="请输入AI服务API地址，例如: https://api.openai.com">
         <div class="help-text">支持OpenAI API格式的服务，如OpenAI、Azure OpenAI、私有部署模型等</div>
       </div>
       <div class="form-group">
         <label for="apiKey">API 密钥</label>
-        <input type="password" id="apiKey" v-model="config.apiKey" placeholder="请输入API密钥（可选，部分API服务不需要）">
+        <input type="password" id="apiKey" v-model="config.apiKey" class="full-border-input" placeholder="请输入API密钥（可选，部分API服务不需要）">
       </div>
       <div class="form-group">
         <label for="model">默认模型</label>
-        <select id="model" v-model="selectedModelOption">
+        <select id="model" v-model="config.models.defaultModel" class="full-border-input">
           <optgroup label="OpenAI">
             <option value="gpt-4.1">GPT-4.1</option>
             <option value="gpt-4.5-preview">GPT-4.5 Preview</option>
-            <option value="o4-mini">O4 Mini</option>
-            <option value="o1">O1</option>
+            <option value="gpt-4">GPT-4</option>
             <option value="gpt-4-turbo">GPT-4 Turbo</option>
             <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
           </optgroup>
@@ -28,35 +27,43 @@
             <option value="claude-3-7-sonnet">Claude 3.7 Sonnet</option>
             <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
             <option value="claude-3-opus">Claude 3 Opus</option>
-            <option value="claude-3-sonnet">Claude 3 Sonnet</option>
           </optgroup>
           <optgroup label="Google">
             <option value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro Preview</option>
             <option value="gemini-2.5-flash-preview-04-17">Gemini 2.5 Flash Preview</option>
             <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-            <option value="gemini-pro">Gemini Pro</option>
+          </optgroup>
+          <optgroup label="混合">
+            <option value="o4-mini">O4-mini</option>
+            <option value="o1">O1</option>
+            <option value="grok-3-beta">Grok-3-beta</option>
+          </optgroup>
+          <optgroup label="DeepSeek">
+            <option value="deepseek-r1">DeepSeek-R1</option>
+            <option value="deepseek-v3-0324">DeepSeek-V3-0324</option>
           </optgroup>
           <optgroup label="阿里云">
-            <option value="qwen3-235b-a22b">Qwen3 235B</option>
-            <option value="qwen3-30b-a3b">Qwen3 30B</option>
-            <option value="qwen3-32b">Qwen3 32B</option>
-            <option value="qwen3-14b">Qwen3 14B</option>
-            <option value="qwq-32b">QWQ 32B</option>
-            <option value="qwen2.5-72b-instruct">Qwen2.5 72B</option>
-            <option value="qwen2.5-32b-instruct">Qwen2.5 32B</option>
-            <option value="qwen2.5-14b-instruct">Qwen2.5 14B</option>
+            <option value="qwen3-235b-a22b">Qwen3-235b-a22b</option>
+            <option value="qwen3-30b-a3b">Qwen3-30b-a3b</option>
+            <option value="qwen3-32b">Qwen3-32b</option>
+            <option value="qwen3-14b">Qwen3-14b</option>
+            <option value="qwq-32b">QWQ-32b</option>
+            <option value="qwen2.5-72b-instruct">Qwen2.5-72b-instruct</option>
+            <option value="qwen2.5-32b-instruct">Qwen2.5-32b-instruct</option>
+            <option value="qwen2.5-14b-instruct">Qwen2.5-14b-instruct</option>
           </optgroup>
           <optgroup label="其他">
-            <option value="deepseek-r1">DeepSeek R1</option>
-            <option value="deepseek-v3-0324">DeepSeek V3</option>
-            <option value="grok-3-beta">Grok 3 Beta</option>
-            <option value="custom">自定义</option>
+            <option value="custom">自定义...</option>
           </optgroup>
         </select>
       </div>
-      <div class="form-group" v-if="selectedModelOption === 'custom'">
+      <div class="form-group" v-if="config.models.defaultModel === 'custom'">
         <label for="customModel">自定义模型名称</label>
-        <input type="text" id="customModel" v-model="customModelName" placeholder="请输入模型名称">
+        <input type="text" id="customModel" v-model="config.models.customModel" class="full-border-input" placeholder="请输入模型名称">
+      </div>
+      <div class="test-connection-group">
+        <button @click="testConnection" class="btn-test">检测连通性</button>
+        <span v-if="testStatus" :class="['test-status', testStatus === 'success' ? 'success' : 'error']">{{ testMessage }}</span>
       </div>
       <div class="advanced-settings">
         <div class="section-title" @click="toggleAdvanced">
@@ -65,57 +72,63 @@
         <div class="advanced-content" v-if="advancedOpen">
           <div class="form-group">
             <label for="maxTokens">最大输出令牌数</label>
-            <input type="number" id="maxTokens" v-model.number="config.options.maxTokens" min="100" max="32000">
+            <input type="number" id="maxTokens" v-model.number="config.options.maxTokens" min="100" max="32000" class="full-border-input">
           </div>
           <div class="form-group">
             <label for="temperature">随机性 (0.0-1.0)</label>
-            <input type="range" id="temperature" v-model.number="config.options.temperature" min="0" max="1" step="0.1">
+            <input type="range" id="temperature" v-model.number="config.options.temperature" min="0" max="1" step="0.1" class="full-border-input">
             <div class="range-value">{{ config.options.temperature }}</div>
           </div>
           <div class="form-group">
             <label>特定功能模型设置</label>
             <div class="sub-setting">
               <label for="continuationModel">文本续写</label>
-              <select id="continuationModel" v-model="config.models.continuationModel">
+              <select id="continuationModel" v-model="config.models.continuationModel" class="full-border-input">
                 <option value="">使用默认模型</option>
                 <option value="gpt-4.1">GPT-4.1</option>
-                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
-                <option value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro</option>
-                <option value="qwen3-32b">Qwen3 32B</option>
+                <option value="claude-3-7-sonnet">Claude 3.7 Sonnet</option>
+                <option value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro Preview</option>
+                <option value="qwen3-32b">Qwen3-32b</option>
               </select>
             </div>
             <div class="sub-setting">
               <label for="proofreadingModel">文本校对</label>
-              <select id="proofreadingModel" v-model="config.models.proofreadingModel">
+              <select id="proofreadingModel" v-model="config.models.proofreadingModel" class="full-border-input">
                 <option value="">使用默认模型</option>
                 <option value="gpt-4.1">GPT-4.1</option>
-                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
-                <option value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro</option>
-                <option value="qwen3-32b">Qwen3 32B</option>
+                <option value="claude-3-7-sonnet">Claude 3.7 Sonnet</option>
+                <option value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro Preview</option>
+                <option value="qwen3-32b">Qwen3-32b</option>
               </select>
             </div>
             <div class="sub-setting">
               <label for="polishingModel">文本润色</label>
-              <select id="polishingModel" v-model="config.models.polishingModel">
+              <select id="polishingModel" v-model="config.models.polishingModel" class="full-border-input">
                 <option value="">使用默认模型</option>
                 <option value="gpt-4.1">GPT-4.1</option>
-                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
-                <option value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro</option>
-                <option value="qwen3-32b">Qwen3 32B</option>
+                <option value="claude-3-7-sonnet">Claude 3.7 Sonnet</option>
+                <option value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro Preview</option>
+                <option value="qwen3-32b">Qwen3-32b</option>
               </select>
             </div>
             <div class="sub-setting">
-              <label for="summarizationModel">文本摘要/全文总结</label>
-              <select id="summarizationModel" v-model="config.models.summarizationModel">
+              <label for="qaModel">文档问答</label>
+              <select id="qaModel" v-model="config.models.qaModel" class="full-border-input">
                 <option value="">使用默认模型</option>
                 <option value="gpt-4.1">GPT-4.1</option>
-                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
-                <option value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro</option>
-                <option value="qwen3-32b">Qwen3 32B</option>
+                <option value="claude-3-7-sonnet">Claude 3.7 Sonnet</option>
+                <option value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro Preview</option>
+                <option value="qwen3-32b">Qwen3-32b</option>
+              </select>
+            </div>
+            <div class="sub-setting">
+              <label for="summarizationModel">全文总结</label>
+              <select id="summarizationModel" v-model="config.models.summarizationModel" class="full-border-input">
+                <option value="">使用默认模型</option>
+                <option value="gpt-4.1">GPT-4.1</option>
+                <option value="claude-3-7-sonnet">Claude 3.7 Sonnet</option>
+                <option value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro Preview</option>
+                <option value="qwen3-32b">Qwen3-32b</option>
               </select>
             </div>
           </div>
@@ -123,7 +136,6 @@
       </div>
     </div>
     <div class="dialog-footer">
-      <button @click="validateApiConfig" class="btn-secondary" :disabled="validating">验证连接</button>
       <button @click="saveConfig" class="btn-primary">保存</button>
       <button @click="closeDialog" class="btn-secondary">取消</button>
     </div>
@@ -131,8 +143,8 @@
 </template>
 
 <script>
-import { ref, onMounted, computed, watch } from 'vue'
-import axios from 'axios'
+import { ref, onMounted } from 'vue'
+import apiClient from './js/api.js'
 
 export default {
   setup() {
@@ -145,6 +157,7 @@ export default {
         continuationModel: '',
         proofreadingModel: '',
         polishingModel: '',
+        qaModel: '',
         summarizationModel: ''
       },
       options: {
@@ -153,33 +166,9 @@ export default {
       }
     })
     
-    // 用于处理自定义模型的变量
-    const customModelName = ref('')
-    const selectedModelOption = ref('gpt-4.1')
-    
-    // 监听配置变化，同步selectedModelOption
-    watch(() => config.value.models.defaultModel, (newVal) => {
-      if (newVal && !['custom', 'gpt-4.1', 'gpt-4.5-preview', 'o4-mini', 'o1', 'gpt-4-turbo', 'gpt-3.5-turbo', 
-                       'claude-3-7-sonnet', 'claude-3-5-sonnet', 'claude-3-opus', 'claude-3-sonnet',
-                       'gemini-2.5-pro-preview-03-25', 'gemini-2.5-flash-preview-04-17', 'gemini-1.5-pro', 'gemini-pro',
-                       'qwen3-235b-a22b', 'qwen3-30b-a3b', 'qwen3-32b', 'qwen3-14b', 'qwq-32b', 'qwen2.5-72b-instruct', 'qwen2.5-32b-instruct', 'qwen2.5-14b-instruct',
-                       'deepseek-r1', 'deepseek-v3-0324', 'grok-3-beta'].includes(newVal)) {
-        // 如果是不在列表中的模型，设为自定义
-        selectedModelOption.value = 'custom'
-        customModelName.value = newVal
-      } else {
-        selectedModelOption.value = newVal
-      }
-    })
-    
-    // 监听选择的模型变化
-    watch(selectedModelOption, (newVal) => {
-      if (newVal !== 'custom') {
-        config.value.models.defaultModel = newVal
-      }
-    })
-    
     const advancedOpen = ref(false)
+    const testStatus = ref('') // 'success' or 'error'
+    const testMessage = ref('')
     
     const toggleAdvanced = () => {
       advancedOpen.value = !advancedOpen.value
@@ -198,19 +187,6 @@ export default {
               models: { ...config.value.models, ...savedConfig.models },
               options: { ...config.value.options, ...savedConfig.options }
             }
-            
-            // 处理自定义模型
-            const defaultModel = config.value.models.defaultModel
-            if (defaultModel && !['custom', 'gpt-4.1', 'gpt-4.5-preview', 'o4-mini', 'o1', 'gpt-4-turbo', 'gpt-3.5-turbo', 
-                           'claude-3-7-sonnet', 'claude-3-5-sonnet', 'claude-3-opus', 'claude-3-sonnet',
-                           'gemini-2.5-pro-preview-03-25', 'gemini-2.5-flash-preview-04-17', 'gemini-1.5-pro', 'gemini-pro',
-                           'qwen3-235b-a22b', 'qwen3-30b-a3b', 'qwen3-32b', 'qwen3-14b', 'qwq-32b', 'qwen2.5-72b-instruct', 'qwen2.5-32b-instruct', 'qwen2.5-14b-instruct',
-                           'deepseek-r1', 'deepseek-v3-0324', 'grok-3-beta'].includes(defaultModel)) {
-              selectedModelOption.value = 'custom'
-              customModelName.value = defaultModel
-            } else {
-              selectedModelOption.value = defaultModel
-            }
           } catch (e) {
             console.error('配置加载失败', e)
           }
@@ -218,116 +194,47 @@ export default {
       }
     })
 
-    // 验证API连接
-    const validating = ref(false)
-
-    const validateApiConfig = async () => {
+    const testConnection = async () => {
+      // 保存前检查API地址
       if (!config.value.apiUrl) {
         window.Application.Alert('请填写API地址')
         return
       }
       
-      validating.value = true
-      console.log('开始验证API连接:', config.value.apiUrl)
+      // 初始化测试状态
+      testStatus.value = 'testing'
+      testMessage.value = '正在测试连接...'
       
-      const loadingId = window.Application.ShowDialog(
-        window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/loading',
-        'WPS AI助手 - 验证中...',
-        300,
-        150,
-        false
-      )
+      // 获取实际使用的模型
+      let model = config.value.models.defaultModel
+      if (model === 'custom' && config.value.models.customModel) {
+        model = config.value.models.customModel
+      } else if (model === 'custom' && !config.value.models.customModel) {
+        testStatus.value = 'error'
+        testMessage.value = '请填写自定义模型名称'
+        return
+      }
       
       try {
-        // 克隆当前配置用于测试
-        const testClient = axios.create({
-          baseURL: config.value.apiUrl,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': config.value.apiKey ? `Bearer ${config.value.apiKey}` : ''
-          },
-          timeout: 10000 // 10秒超时，仅用于验证
+        // 临时更新API客户端配置
+        apiClient.updateConfig({
+          apiUrl: config.value.apiUrl,
+          apiKey: config.value.apiKey,
+          models: {
+            defaultModel: model
+          }
         })
         
-        // 构建请求参数
-        const model = config.value.models?.defaultModel || "gpt-3.5-turbo"
-        const requestData = {
-          model: model,
-          messages: [
-            { role: 'system', content: '请回复"连接成功"以验证API连接。' },
-            { role: 'user', content: '验证连接' }
-          ],
-          max_tokens: 10
-        }
+        // 发送测试请求
+        await apiClient.testConnection()
         
-        console.log('发送API验证请求:', JSON.stringify(requestData))
-        
-        // 发送简单请求验证连接
-        const response = await testClient.post('/v1/chat/completions', requestData)
-        
-        console.log('收到API响应:', response.status, JSON.stringify(response.data).substring(0, 200) + '...')
-        
-        window.Application.CloseDialog(loadingId)
-        
-        let successMessage = 'API连接验证成功!'
-        if (response.data && response.data.choices && response.data.choices.length > 0) {
-          successMessage += '\n\n模型响应: ' + response.data.choices[0].message.content
-          successMessage += '\n\n模型名称: ' + model
-          if (response.data.model) {
-            successMessage += ' (服务器使用: ' + response.data.model + ')'
-          }
-          if (response.data.usage) {
-            successMessage += '\n令牌使用: ' + response.data.usage.total_tokens + ' 个'
-          }
-        }
-        
-        window.Application.Alert(successMessage)
-      } catch (e) {
-        console.error('API验证失败:', e)
-        
-        window.Application.CloseDialog(loadingId)
-        
-        let errorMsg = 'API连接验证失败'
-        if (e.response) {
-          console.error('服务器响应:', e.response.status, JSON.stringify(e.response.data))
-          errorMsg += ': ' + (e.response.data?.error?.message || e.response.statusText || '服务器返回错误')
-          errorMsg += '\n\n状态码: ' + e.response.status
-          if (e.response.data?.error?.type) {
-            errorMsg += '\n错误类型: ' + e.response.data.error.type
-          }
-          
-          // 添加常见错误的解释
-          if (e.response.status === 401) {
-            errorMsg += '\n\n可能原因: API密钥无效或已过期'
-          } else if (e.response.status === 404) {
-            errorMsg += '\n\n可能原因: API地址不正确或接口路径错误'
-          } else if (e.response.status === 429) {
-            errorMsg += '\n\n可能原因: 超出API速率限制或配额'
-          } else if (e.response.data?.error?.message?.includes('model')) {
-            errorMsg += '\n\n可能原因: 模型名称无效或不可用'
-          }
-        } else if (e.request) {
-          console.error('请求发送但无响应')
-          errorMsg += ': 无法连接到服务器，请检查API地址和网络连接'
-          errorMsg += '\n\n可能原因: \n1. API地址格式错误\n2. 服务器未运行或不可达\n3. 网络连接问题'
-        } else {
-          console.error('请求初始化失败:', e.message)
-          errorMsg += ': ' + e.message
-        }
-        
-        window.Application.Alert(errorMsg)
-      } finally {
-        validating.value = false
-      }
-    }
-
-    const closeDialog = () => {
-      if (window.Application) {
-        try {
-          window.Application.CloseDialog()
-        } catch (e) {
-          console.error('关闭对话框失败:', e)
-        }
+        // 测试成功
+        testStatus.value = 'success'
+        testMessage.value = '连接成功！'
+      } catch (error) {
+        // 测试失败
+        testStatus.value = 'error'
+        testMessage.value = `连接失败: ${error.message}`
       }
     }
 
@@ -339,40 +246,23 @@ export default {
       }
       
       // 检查自定义模型名称
-      if (selectedModelOption.value === 'custom') {
-        if (!customModelName.value) {
-          window.Application.Alert('请填写自定义模型名称')
-          return
-        }
-        config.value.models.defaultModel = customModelName.value
-      } else {
-        config.value.models.defaultModel = selectedModelOption.value
+      if (config.value.models.defaultModel === 'custom' && !config.value.models.customModel) {
+        window.Application.Alert('请填写自定义模型名称')
+        return
+      }
+      
+      // 如果选择了自定义模型，更新实际的默认模型值为自定义模型名称
+      const actualConfig = JSON.parse(JSON.stringify(config.value))
+      if (actualConfig.models.defaultModel === 'custom') {
+        actualConfig.models.defaultModel = actualConfig.models.customModel
       }
       
       // 保存配置到WPS本地存储
       if (window.Application && window.Application.PluginStorage) {
         try {
-          window.Application.PluginStorage.setItem('aiConfig', JSON.stringify(config.value))
-          
-          // 显示小弹窗而不是Alert
-          const smallDialog = window.Application.ShowDialog(
-            window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/loading',
-            '配置已保存',
-            250,
-            100,
-            false
-          )
-          
-          // 1秒后自动关闭小弹窗和设置对话框
-          setTimeout(() => {
-            try {
-              window.Application.CloseDialog(smallDialog)
-              closeDialog() // 自动关闭对话框
-            } catch (e) {
-              console.error('关闭对话框失败:', e)
-              window.Application.Alert('配置已保存')
-            }
-          }, 1000)
+          window.Application.PluginStorage.setItem('aiConfig', JSON.stringify(actualConfig))
+          window.Application.Alert('配置已保存')
+          closeDialog()
         } catch (e) {
           console.error('配置保存失败', e)
           window.Application.Alert('配置保存失败: ' + e.message)
@@ -380,16 +270,21 @@ export default {
       }
     }
 
+    const closeDialog = () => {
+      if (window.Application) {
+        window.Application.CloseDialog()
+      }
+    }
+
     return {
       config,
       advancedOpen,
+      testStatus,
+      testMessage,
       toggleAdvanced,
+      testConnection,
       saveConfig,
-      closeDialog,
-      selectedModelOption,
-      customModelName,
-      validateApiConfig,
-      validating
+      closeDialog
     }
   }
 }
@@ -423,41 +318,33 @@ label {
   font-weight: bold;
 }
 
-input, select {
+.full-border-input {
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  box-sizing: border-box; /* 确保边框包含在宽度内 */
-  outline: none; /* 去掉聚焦时的外边框 */
-}
-
-input:focus, select:focus {
-  border-color: #4a86e8;
+  box-sizing: border-box;
 }
 
 .required {
-  color: red;
+  color: #f00;
 }
 
 .help-text {
   font-size: 12px;
   color: #666;
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 .advanced-settings {
   margin-top: 20px;
-  border: 1px solid #eee;
-  border-radius: 4px;
 }
 
 .section-title {
-  padding: 10px;
-  background-color: #f5f5f5;
   font-weight: bold;
   cursor: pointer;
-  user-select: none;
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
 }
 
 .toggle-icon {
@@ -465,8 +352,18 @@ input:focus, select:focus {
 }
 
 .advanced-content {
-  padding: 15px;
-  border-top: 1px solid #eee;
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.sub-setting {
+  margin-bottom: 10px;
+}
+
+.sub-setting label {
+  font-weight: normal;
 }
 
 .range-value {
@@ -474,45 +371,52 @@ input:focus, select:focus {
   margin-top: 5px;
 }
 
-.sub-setting {
-  margin-bottom: 10px;
-  padding-left: 10px;
-}
-
-.sub-setting label {
-  font-weight: normal;
-  font-size: 14px;
-}
-
 .dialog-footer {
   text-align: right;
+  padding-top: 10px;
   border-top: 1px solid #eee;
-  padding-top: 15px;
 }
 
 button {
-  padding: 8px 16px;
+  padding: 8px 15px;
+  margin-left: 10px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  margin-left: 10px;
 }
 
 .btn-primary {
-  background-color: #4a86e8;
+  background-color: #2b579a;
   color: white;
 }
 
-.btn-primary:hover {
-  background-color: #3b78e7;
-}
-
 .btn-secondary {
-  background-color: #f1f1f1;
+  background-color: #f0f0f0;
   color: #333;
 }
 
-.btn-secondary:hover {
-  background-color: #e4e4e4;
+.btn-test {
+  background-color: #4caf50;
+  color: white;
+  margin-left: 0;
+}
+
+.test-connection-group {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.test-status {
+  margin-left: 10px;
+  font-size: 14px;
+}
+
+.success {
+  color: #4caf50;
+}
+
+.error {
+  color: #f44336;
 }
 </style> 
