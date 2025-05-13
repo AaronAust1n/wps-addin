@@ -1,173 +1,102 @@
-WPS AI助手应用已加载
-ribbon.js:46 按钮点击: btnSettings
-ribbon.js:70 准备打开设置对话框...
-ribbon.js:641 打开设置对话框
-ribbon.js:651 设置对话框已创建
-ribbon.js:46 按钮点击: btnContinueText
-ribbon.js:50 准备处理文本续写功能...
-ribbon.js:679 文本续写功能开始执行
-ribbon.js:114 检查API配置...
-ribbon.js:86 尝试读取API配置...
-ribbon.js:101 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-ribbon.js:132 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-ribbon.js:151 选中文本为空或仅包含空白字符
-ribbon.js:696 选中文本检查: 无选中文本
-ribbon.js:180 无法通过Paragraphs获取段落，尝试替代方法: TypeError: selection.Paragraphs is not a function
-    at getCurrentParagraph (ribbon.js:173:37)
-    at handleContinueText (ribbon.js:700:25)
-    at Object.OnAction (ribbon.js:51:7)
+按钮点击: btnSettings
+​ 准备打开设置对话框...
+​ 打开设置对话框
+​ 设置对话框已创建
+​ 按钮点击: btnContinueText
+​ 准备处理文本续写功能...
+​ 文本续写功能开始执行
+​ 检查API配置...
+​ 尝试读取API配置...
+​ 成功加载配置 Object
+​ 配置检查通过 Object
+​ 选中文本为空或仅包含空白字符
+​ 选中文本检查: 无选中文本
+​ 无法通过Paragraphs获取段落，尝试替代方法: TypeError: selection.Paragraphs is not a function
+    at getCurrentParagraph (src/components/ribbon.js?t=1747104090626:173:37)
+    at handleContinueText (src/components/ribbon.js?t=1747104090626:969:25)
+    at Object.OnAction (src/components/ribbon.js?t=1747104090626:51:7)
     at <anonymous>:1:22
-getCurrentParagraph @ ribbon.js:180
-handleContinueText @ ribbon.js:700
-OnAction @ ribbon.js:51
-（匿名） @ VM709:1
-ribbon.js:194 通过替代方法获取段落文本
-ribbon.js:701 获取段落: 成功
-ribbon.js:710 使用段落进行续写，长度: 2483
-ribbon.js:472 开始处理段落: continue, 文本长度: 2483
-ribbon.js:478 加载API配置
-ribbon.js:86 尝试读取API配置...
-ribbon.js:101 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-ribbon.js:486 API配置已更新 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct', specificModel: '未指定'}
-ribbon.js:494 调用API: continue, 开始时间: 2025-05-13T02:32:34.322Z
-​ 使用模型"Qwen2.5-14B-Instruct"执行文本续写，输入长度: 2483字符
+console.warn @ src/components/js/util.js:196
+​ 通过替代方法获取段落文本
+​ 获取段落: 成功
+​ 使用段落进行续写，长度: 126
+​ 开始处理段落: continue, 文本长度: 126
+​ 加载API配置
+​ 尝试读取API配置...
+​ 成功加载配置 Object
+​ API配置已更新 Object
+​ 调用API: continue, 开始时间: 2025-05-13T02:45:38.291Z
+​ 使用模型"Qwen2.5-14B-Instruct"执行文本续写，输入长度: 126字符
 ​ 正在发送API请求到: http://10.79.16.95:9005/v1/chat/completions
-ribbon.js:46 按钮点击: btnContinueText
-ribbon.js:50 准备处理文本续写功能...
-ribbon.js:679 文本续写功能开始执行
-ribbon.js:114 检查API配置...
-ribbon.js:86 尝试读取API配置...
-ribbon.js:101 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-ribbon.js:132 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-ribbon.js:151 选中文本为空或仅包含空白字符
-ribbon.js:696 选中文本检查: 无选中文本
-ribbon.js:180 无法通过Paragraphs获取段落，尝试替代方法: TypeError: selection.Paragraphs is not a function
-    at getCurrentParagraph (ribbon.js:173:37)
-    at handleContinueText (ribbon.js:700:25)
-    at Object.OnAction (ribbon.js:51:7)
+​ API请求成功，返回595字符的续写结果
+​ 文本续写API调用完成，结果长度: 595
+​ 插入处理结果: 成功
+​ continue处理完成, 结束时间: 2025-05-13T02:45:47.007Z
+​ 按钮点击: btnContinueText
+​ 准备处理文本续写功能...
+​ 文本续写功能开始执行
+​ 检查API配置...
+​ 尝试读取API配置...
+​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+​ 选中文本为空或仅包含空白字符
+​ 选中文本检查: 无选中文本
+​ 无法通过Paragraphs获取段落，尝试替代方法: TypeError: selection.Paragraphs is not a function
+    at getCurrentParagraph (src/components/ribbo…747104090626:173:37)
+    at handleContinueText (src/components/ribbo…747104090626:969:25)
+    at Object.OnAction (src/components/ribbo…=1747104090626:51:7)
     at <anonymous>:1:22
-getCurrentParagraph @ ribbon.js:180
-handleContinueText @ ribbon.js:700
-OnAction @ ribbon.js:51
-（匿名） @ VM710:1
-ribbon.js:194 通过替代方法获取段落文本
-ribbon.js:701 获取段落: 成功
-ribbon.js:710 使用段落进行续写，长度: 2483
-ribbon.js:472 开始处理段落: continue, 文本长度: 2483
-ribbon.js:478 加载API配置
-ribbon.js:86 尝试读取API配置...
-ribbon.js:101 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-ribbon.js:486 API配置已更新 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct', specificModel: '未指定'}
-ribbon.js:494 调用API: continue, 开始时间: 2025-05-13T02:32:46.800Z
-​ 使用模型"Qwen2.5-14B-Instruct"执行文本续写，输入长度: 2483字符
+console.warn @ src/components/js/util.js:196
+getCurrentParagraph @ src/components/ribbo…t=1747104090626:180
+handleContinueText @ src/components/ribbo…t=1747104090626:969
+OnAction @ src/components/ribbo…?t=1747104090626:51
+(anonymous) @ VM124:1
+​ 通过替代方法获取段落文本
+​ 获取段落: 成功
+​ 使用段落进行续写，长度: 721
+​ 开始处理段落: continue, 文本长度: 721
+​ 加载API配置
+​ 尝试读取API配置...
+​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+​ API配置已更新 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct', specificModel: '未指定'}
+​ 调用API: continue, 开始时间: 2025-05-13T02:50:04.476Z
+​ 使用模型"Qwen2.5-14B-Instruct"执行文本续写，输入长度: 721字符
 ​ 正在发送API请求到: http://10.79.16.95:9005/v1/chat/completions
-​ API请求成功，返回779字符的续写结果
-ribbon.js:499 文本续写API调用完成，结果长度: 779
-ribbon.js:546 continue处理完成, 结束时间: 2025-05-13T02:32:47.220Z
-ribbon.js:234 Selection.Collapse方法不可用，尝试替代方法
-insertTextAtCursor @ ribbon.js:234
-（匿名） @ ribbon.js:538
-（匿名） @ ribbon.js:463
-setInterval（异步）
-streamText @ ribbon.js:458
-processText @ ribbon.js:535
-await in processText（异步）
-handleContinueText @ ribbon.js:711
-OnAction @ ribbon.js:51
-（匿名） @ VM709:1
-ribbon.js:241 Selection.InsertAfter方法不可用，尝试替代方法
-insertTextAtCursor @ ribbon.js:241
-（匿名） @ ribbon.js:538
-（匿名） @ ribbon.js:463
-setInterval（异步）
-streamText @ ribbon.js:458
-processText @ ribbon.js:535
-await in processText（异步）
-handleContinueText @ ribbon.js:711
-OnAction @ ribbon.js:51
-（匿名） @ VM709:1
-ribbon.js:248 使用TypeText方法插入文本
-ribbon.js:542 插入处理结果: 成功
-​ API请求成功，返回839字符的续写结果
-ribbon.js:499 文本续写API调用完成，结果长度: 839
-ribbon.js:546 continue处理完成, 结束时间: 2025-05-13T02:32:59.130Z
-ribbon.js:234 Selection.Collapse方法不可用，尝试替代方法
-insertTextAtCursor @ ribbon.js:234
-（匿名） @ ribbon.js:538
-（匿名） @ ribbon.js:463
-setInterval（异步）
-streamText @ ribbon.js:458
-processText @ ribbon.js:535
-await in processText（异步）
-handleContinueText @ ribbon.js:711
-OnAction @ ribbon.js:51
-（匿名） @ VM710:1
-ribbon.js:241 Selection.InsertAfter方法不可用，尝试替代方法
-insertTextAtCursor @ ribbon.js:241
-（匿名） @ ribbon.js:538
-（匿名） @ ribbon.js:463
-setInterval（异步）
-streamText @ ribbon.js:458
-processText @ ribbon.js:535
-await in processText（异步）
-handleContinueText @ ribbon.js:711
-OnAction @ ribbon.js:51
-（匿名） @ VM710:1
-ribbon.js:248 使用TypeText方法插入文本
-ribbon.js:542 插入处理结果: 成功
-ribbon.js:46 按钮点击: btnContinueText
-ribbon.js:50 准备处理文本续写功能...
-ribbon.js:679 文本续写功能开始执行
-ribbon.js:114 检查API配置...
-ribbon.js:86 尝试读取API配置...
-ribbon.js:101 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-ribbon.js:132 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-ribbon.js:151 选中文本为空或仅包含空白字符
-ribbon.js:696 选中文本检查: 无选中文本
-ribbon.js:180 无法通过Paragraphs获取段落，尝试替代方法: TypeError: selection.Paragraphs is not a function
-    at getCurrentParagraph (ribbon.js:173:37)
-    at handleContinueText (ribbon.js:700:25)
-    at Object.OnAction (ribbon.js:51:7)
+​ API请求成功，返回455字符的续写结果
+​ 文本续写API调用完成，结果长度: 455
+​ 插入处理结果: 成功
+​ continue处理完成, 结束时间: 2025-05-13T02:50:12.141Z
+​ 按钮点击: btnPolishText
+​ 准备处理文本润色功能...
+​ 文本润色功能开始执行
+​ 检查API配置...
+​ 尝试读取API配置...
+​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+​ 选中文本为空或仅包含空白字符
+​ 选中文本检查: 无选中文本
+​ 无法通过Paragraphs获取段落，尝试替代方法: TypeError: selection.Paragraphs is not a function
+    at getCurrentParagraph (src/components/ribbo…747104090626:173:37)
+    at handlePolishText (src/components/ribbo…47104090626:1061:25)
+    at Object.OnAction (src/components/ribbo…=1747104090626:59:7)
     at <anonymous>:1:22
-getCurrentParagraph @ ribbon.js:180
-handleContinueText @ ribbon.js:700
-OnAction @ ribbon.js:51
-（匿名） @ VM711:1
-ribbon.js:194 通过替代方法获取段落文本
-ribbon.js:701 获取段落: 成功
-ribbon.js:710 使用段落进行续写，长度: 2483
-ribbon.js:472 开始处理段落: continue, 文本长度: 2483
-ribbon.js:478 加载API配置
-ribbon.js:86 尝试读取API配置...
-ribbon.js:101 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-ribbon.js:486 API配置已更新 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct', specificModel: '未指定'}
-ribbon.js:494 调用API: continue, 开始时间: 2025-05-13T02:33:21.504Z
-​ 使用模型"Qwen2.5-14B-Instruct"执行文本续写，输入长度: 2483字符
+console.warn @ src/components/js/util.js:196
+getCurrentParagraph @ src/components/ribbo…t=1747104090626:180
+handlePolishText @ src/components/ribbo…=1747104090626:1061
+OnAction @ src/components/ribbo…?t=1747104090626:59
+(anonymous) @ VM125:1
+​ 通过替代方法获取段落文本
+​ 获取段落: 成功
+​ 使用段落进行润色，长度: 721
+​ 开始处理段落: polish, 文本长度: 721
+​ 加载API配置
+​ 尝试读取API配置...
+​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+​ API配置已更新 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct', specificModel: '未指定'}
+​ 调用API: polish, 开始时间: 2025-05-13T02:50:47.403Z
+​ 使用模型"Qwen2.5-14B-Instruct"执行文本润色，输入长度: 721字符
 ​ 正在发送API请求到: http://10.79.16.95:9005/v1/chat/completions
-​ API请求成功，返回544字符的续写结果
-ribbon.js:499 文本续写API调用完成，结果长度: 544
-ribbon.js:546 continue处理完成, 结束时间: 2025-05-13T02:33:29.198Z
-ribbon.js:234 Selection.Collapse方法不可用，尝试替代方法
-insertTextAtCursor @ ribbon.js:234
-（匿名） @ ribbon.js:538
-（匿名） @ ribbon.js:463
-setInterval（异步）
-streamText @ ribbon.js:458
-processText @ ribbon.js:535
-await in processText（异步）
-handleContinueText @ ribbon.js:711
-OnAction @ ribbon.js:51
-（匿名） @ VM711:1
-ribbon.js:241 Selection.InsertAfter方法不可用，尝试替代方法
-insertTextAtCursor @ ribbon.js:241
-（匿名） @ ribbon.js:538
-（匿名） @ ribbon.js:463
-setInterval（异步）
-streamText @ ribbon.js:458
-processText @ ribbon.js:535
-await in processText（异步）
-handleContinueText @ ribbon.js:711
-OnAction @ ribbon.js:51
-（匿名） @ VM711:1
-ribbon.js:248 使用TypeText方法插入文本
-ribbon.js:542 插入处理结果: 成功
+​ API请求成功，返回546字符的润色结果
+​ 文本润色API调用完成，结果长度: 546
+​ 插入处理结果: 成功
+​ polish处理完成, 结束时间: 2025-05-13T02:50:55.607Z
