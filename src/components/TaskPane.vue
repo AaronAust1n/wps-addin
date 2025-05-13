@@ -682,12 +682,18 @@ export default {
   height: 100vh;
   font-family: 'Microsoft YaHei', sans-serif;
   overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .taskpane-header {
   padding: 15px;
-  background-color: #2b579a;
+  background-color: rgba(43, 87, 154, 0.9);
   color: white;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .taskpane-header h2 {
@@ -745,8 +751,10 @@ export default {
 
 .taskpane-footer {
   padding: 10px 15px;
-  background-color: #f0f0f0;
-  border-top: 1px solid #ddd;
+  background-color: rgba(240, 240, 240, 0.7);
+  border-top: 1px solid rgba(221, 221, 221, 0.5);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .status-bar {
@@ -760,6 +768,11 @@ export default {
   height: 100%;
   display: flex;
   flex-direction: column;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(200, 200, 200, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .sidebar-header {
@@ -767,6 +780,11 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
+  padding: 10px 15px;
+  background-color: rgba(43, 87, 154, 0.8);
+  color: white;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .sidebar-header h3 {
@@ -790,10 +808,13 @@ export default {
   flex: 1;
   overflow-y: auto;
   margin-bottom: 15px;
-  border: 1px solid #eee;
+  border: 1px solid rgba(238, 238, 238, 0.6);
   border-radius: 5px;
   padding: 10px;
   max-height: calc(100vh - 200px);
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .qa-item {
@@ -803,13 +824,15 @@ export default {
 }
 
 .qa-item.user {
-  background-color: #f0f7ff;
+  background-color: rgba(240, 247, 255, 0.8);
   align-self: flex-end;
+  border: 1px solid rgba(200, 220, 240, 0.5);
 }
 
 .qa-item.assistant {
-  background-color: #f5f5f5;
+  background-color: rgba(245, 245, 245, 0.8);
   align-self: flex-start;
+  border: 1px solid rgba(220, 220, 220, 0.5);
 }
 
 .qa-role {
@@ -856,10 +879,13 @@ export default {
   flex: 1;
   overflow-y: auto;
   margin-bottom: 15px;
-  border: 1px solid #eee;
+  border: 1px solid rgba(238, 238, 238, 0.6);
   border-radius: 5px;
   padding: 15px;
   max-height: calc(100vh - 200px);
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .summary-text {
@@ -912,7 +938,10 @@ export default {
   display: flex;
   justify-content: space-between;
   padding: 10px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid rgba(238, 238, 238, 0.6);
+  background-color: rgba(250, 250, 250, 0.5);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .refresh-btn, .copy-btn {

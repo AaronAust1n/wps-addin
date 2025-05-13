@@ -69,7 +69,12 @@
       </div>
       <div class="advanced-settings">
         <div class="section-title" @click="toggleAdvanced">
-          高级设置 <span class="toggle-icon">{{ advancedOpen ? '▼' : '►' }}</span>
+          <span class="title-text">高级设置</span>
+          <span class="toggle-icon" :class="{ 'expanded': advancedOpen }">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
         </div>
         <div class="advanced-content" v-if="advancedOpen">
           <div class="form-group">
@@ -137,11 +142,11 @@
         </div>
       </div>
       <div class="dialog-footer">
-        <div class="save-status" v-if="testStatus === 'success' && testMessage.includes('已成功保存')">
-          <span class="success">{{ testMessage }}</span>
-        </div>
         <div class="action-buttons">
           <button @click="saveConfig" class="btn-primary">保存</button>
+          <span v-if="testStatus === 'success' && testMessage.includes('已成功保存')" class="save-status success">
+            {{ testMessage }}
+          </span>
           <button @click="closeDialog" class="btn-secondary">取消</button>
         </div>
       </div>
@@ -457,12 +462,23 @@ export default {
 .dialog-container {
   padding: 20px;
   font-family: 'Microsoft YaHei', sans-serif;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .dialog-header {
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(238, 238, 238, 0.5);
+}
+
+.dialog-header h2 {
+  color: #2b579a;
+  margin: 0;
 }
 
 .dialog-content {
@@ -511,24 +527,45 @@ label {
 
 .advanced-settings {
   margin-top: 20px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .section-title {
   font-weight: bold;
   cursor: pointer;
-  padding: 5px 0;
-  border-bottom: 1px solid #eee;
+  padding: 12px 15px;
+  background-color: #f5f7fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.section-title:hover {
+  background-color: #e8f1ff;
+}
+
+.title-text {
+  font-size: 15px;
+  color: #2b579a;
 }
 
 .toggle-icon {
-  float: right;
+  transition: transform 0.3s ease;
+}
+
+.toggle-icon.expanded {
+  transform: rotate(180deg);
 }
 
 .advanced-content {
-  margin-top: 10px;
-  padding: 10px;
+  margin-top: 0;
+  padding: 15px;
   background-color: #f9f9f9;
-  border-radius: 4px;
+  border-top: 1px solid #e8e8e8;
 }
 
 .sub-setting {
@@ -546,7 +583,7 @@ label {
 
 .dialog-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding-top: 10px;
   border-top: 1px solid #eee;
@@ -554,11 +591,12 @@ label {
 
 .action-buttons {
   display: flex;
+  align-items: center;
 }
 
 .save-status {
   font-size: 14px;
-  margin-right: 10px;
+  margin: 0 10px;
 }
 
 button {
