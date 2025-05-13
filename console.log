@@ -1,44 +1,3 @@
-按钮点击: btnDocumentQA
-​ 准备处理文档问答功能...
-​ 文档问答功能被触发
-​ 检查API配置...
-​ 尝试读取API配置...
-​ 成功加载配置 Object
-​ 配置检查通过 Object
-2​ 通过Selection对象获取选中文本成功，长度: 123
-​ 创建侧边栏失败: Error: An exception occurred during the jsapi EXECUTE call.
-    at createTaskpane (src/components/ribbon.js:347:41)
-    at handleDocumentQA (src/components/ribbon.js:898:22)
-    at Object.OnAction (src/components/ribbon.js:63:7)
-    at <anonymous>:1:22
-console.error @ src/components/js/util.js:191
-​ 已使用window.open作为替代方法
-​ 文档问答侧边栏已创建
-​ 按钮点击: btnSummarizeDoc
-​ 准备处理全文总结功能...
-​ 全文总结功能被触发
-​ 检查API配置...
-​ 尝试读取API配置...
-​ 成功加载配置 Object
-​ 配置检查通过 Object
-2​ 通过Selection对象获取选中文本成功，长度: 123
-​ 创建侧边栏失败: Error: An exception occurred during the jsapi EXECUTE call.
-    at createTaskpane (src/components/ribbon.js:347:41)
-    at handleSummarizeDoc (src/components/ribbon.js:936:22)
-    at Object.OnAction (src/components/ribbon.js:67:7)
-    at <anonymous>:1:22
-console.error @ src/components/js/util.js:191
-​ 已使用window.open作为替代方法
-​ 文档摘要侧边栏已创建
-​ 按钮点击: btnDocumentQA
-​ 准备处理文档问答功能...
-​ 文档问答功能被触发
-​ 检查API配置...
-​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
-​ 通过Selection对象获取选中文本成功，长度: 123
-​ 通过Selection对象获取选中文本成功，长度: 123
 ​ 创建侧边栏失败: Error: An exception occurred during the jsapi EXECUTE call.
     at createTaskpane (src/components/ribbon.js:347:41)
     at handleDocumentQA (src/components/ribbon.js:898:22)
@@ -48,6 +7,101 @@ console.error @ src/components/js/util.js:191
 createTaskpane @ src/components/ribbon.js:354
 handleDocumentQA @ src/components/ribbon.js:898
 OnAction @ src/components/ribbon.js:63
-(anonymous) @ VM78:1
+(anonymous) @ VM145:1
 ​ 已使用window.open作为替代方法
 ​ 文档问答侧边栏已创建
+​ WPS AI助手应用已加载
+​ WPS AI助手应用已加载
+​ 按钮点击: btnSummarizeDoc
+​ 准备处理全文总结功能...
+​ 全文总结功能被触发
+​ 检查API配置...
+​ 尝试读取API配置...
+​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
+​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
+​ 通过Selection对象获取选中文本成功，长度: 1
+​ 通过Selection对象获取选中文本成功，长度: 1
+​ 已使用window.open创建侧边栏
+​ 创建侧边栏失败: Error: 创建窗口失败，可能被浏览器拦截
+    at createTaskpane (ribbon.js:365:13)
+    at handleSummarizeDoc (ribbon.js:942:22)
+    at Object.OnAction (ribbon.js:67:7)
+    at <anonymous>:1:22
+console.error @ src/components/js/util.js:191
+createTaskpane @ ribbon.js:368
+handleSummarizeDoc @ ribbon.js:942
+OnAction @ ribbon.js:67
+(anonymous) @ VM150:1
+​ Alert: 无法创建侧边栏: 创建窗口失败，可能被浏览器拦截
+​ 创建文档摘要侧边栏失败: Error: 创建侧边栏失败
+    at handleSummarizeDoc (ribbon.js:950:13)
+    at Object.OnAction (ribbon.js:67:7)
+    at <anonymous>:1:22
+console.error @ src/components/js/util.js:191
+handleSummarizeDoc @ ribbon.js:953
+OnAction @ ribbon.js:67
+(anonymous) @ VM150:1
+​ 安全警告: 启动全文总结功能失败: 创建侧边栏失败
+​ Alert: 启动全文总结功能失败: 创建侧边栏失败
+​ 按钮点击: btnSummarizeDoc
+​ 准备处理全文总结功能...
+​ 全文总结功能被触发
+​ 检查API配置...
+​ 尝试读取API配置...
+​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
+​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
+​ 通过Selection对象获取选中文本成功，长度: 119
+​ 通过Selection对象获取选中文本成功，长度: 119
+​ 已使用window.open创建侧边栏
+​ 创建侧边栏失败: Error: 创建窗口失败，可能被浏览器拦截
+    at createTaskpane (ribbon.js:365:13)
+    at handleSummarizeDoc (ribbon.js:942:22)
+    at Object.OnAction (ribbon.js:67:7)
+    at <anonymous>:1:22
+console.error @ src/components/js/util.js:191
+createTaskpane @ ribbon.js:368
+handleSummarizeDoc @ ribbon.js:942
+OnAction @ ribbon.js:67
+(anonymous) @ VM151:1
+​ Alert: 无法创建侧边栏: 创建窗口失败，可能被浏览器拦截
+​ 创建文档摘要侧边栏失败: Error: 创建侧边栏失败
+    at handleSummarizeDoc (ribbon.js:950:13)
+    at Object.OnAction (ribbon.js:67:7)
+    at <anonymous>:1:22
+console.error @ src/components/js/util.js:191
+handleSummarizeDoc @ ribbon.js:953
+OnAction @ ribbon.js:67
+(anonymous) @ VM151:1
+​ 安全警告: 启动全文总结功能失败: 创建侧边栏失败
+​ Alert: 启动全文总结功能失败: 创建侧边栏失败
+​ 按钮点击: btnDocumentQA
+​ 准备处理文档问答功能...
+​ 文档问答功能被触发
+​ 检查API配置...
+​ 尝试读取API配置...
+​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
+​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
+​ 通过Selection对象获取选中文本成功，长度: 119
+​ 通过Selection对象获取选中文本成功，长度: 119
+​ 已使用window.open创建侧边栏
+​ 创建侧边栏失败: Error: 创建窗口失败，可能被浏览器拦截
+    at createTaskpane (ribbon.js:365:13)
+    at handleDocumentQA (ribbon.js:904:22)
+    at Object.OnAction (ribbon.js:63:7)
+    at <anonymous>:1:22
+console.error @ src/components/js/util.js:191
+createTaskpane @ ribbon.js:368
+handleDocumentQA @ ribbon.js:904
+OnAction @ ribbon.js:63
+(anonymous) @ VM152:1
+​ Alert: 无法创建侧边栏: 创建窗口失败，可能被浏览器拦截
+​ 创建文档问答侧边栏失败: Error: 创建侧边栏失败
+    at handleDocumentQA (ribbon.js:912:13)
+    at Object.OnAction (ribbon.js:63:7)
+    at <anonymous>:1:22
+console.error @ src/components/js/util.js:191
+handleDocumentQA @ ribbon.js:915
+OnAction @ ribbon.js:63
+(anonymous) @ VM152:1
+​ 安全警告: 启动文档问答功能失败: 创建侧边栏失败
+​ Alert: 启动文档问答功能失败: 创建侧边栏失败
