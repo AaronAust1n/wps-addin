@@ -26,7 +26,7 @@ const router = createRouter({
     {
       path: '/qa',
       name: '文档问答',
-      component: () => import('../components/TaskPane.vue')
+      component: () => import('../components/DocumentQA.vue')
     },
     {
       path: '/summary',
@@ -37,6 +37,11 @@ const router = createRouter({
       path: '/help',
       name: '帮助',
       component: () => import('../components/Dialog.vue')
+    },
+    {
+      path: '/history',
+      name: '历史记录',
+      component: () => import('../components/History.vue')
     }
   ]
 })

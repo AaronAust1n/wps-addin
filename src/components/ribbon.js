@@ -70,6 +70,10 @@ function OnAction(control) {
       console.log('准备打开设置对话框...');
       handleSettings()
       break
+    case 'btnHistory':
+      console.log('准备打开历史记录...');
+      handleHistory()
+      break
     case 'btnHelp':
       console.log('准备打开帮助对话框...');
       handleHelp()
@@ -582,6 +586,9 @@ async function processText(action, text, actionSource = 'selection') {
             details: '请检查文档是否可编辑或者是否有足够权限'
           };
         }
+        
+        // 保存到历史记录
+        saveHistory(action, text, result);
       } catch (docError) {
         // 文档操作错误处理
         if (docError.type === ERROR_TYPES.DOCUMENT) {
@@ -805,6 +812,47 @@ function getActionName(action) {
   }
 }
 
+// 保存历史记录
+function saveHistory(type, input, output) {
+  try {
+    if (window.Application && window.Application.PluginStorage) {
+      console.log('保存历史记录:', type);
+      
+      // 获取现有历史记录
+      let history = [];
+      const historyStr = window.Application.PluginStorage.getItem('aiHistory');
+      if (historyStr) {
+        try {
+          history = JSON.parse(historyStr);
+        } catch (e) {
+          console.error('解析历史记录失败:', e);
+          history = [];
+        }
+      }
+      
+      // 添加新记录
+      const newRecord = {
+        type,
+        input,
+        output,
+        timestamp: new Date().getTime()
+      };
+      
+      // 限制历史记录数量，保留最新的50条
+      history.unshift(newRecord);
+      if (history.length > 50) {
+        history = history.slice(0, 50);
+      }
+      
+      // 保存回存储
+      window.Application.PluginStorage.setItem('aiHistory', JSON.stringify(history));
+      console.log('历史记录已保存，当前共', history.length, '条记录');
+    }
+  } catch (e) {
+    console.error('保存历史记录失败:', e);
+  }
+}
+
 // 文档问答功能
 async function handleDocumentQA() {
   console.log('文档问答功能被触发');
@@ -822,177 +870,55 @@ async function handleDocumentQA() {
   }
   
   try {
+    // 直接在文档中创建一个问答对话框，而不是使用prompt/confirm
     // 检查是否有选中文本
     const selectedText = getSelectedText();
+    const hasSelection = selectedText && selectedText.trim() !== '';
     
-    if (selectedText && selectedText.trim() !== '') {
-      // 如果有选中文本，直接在文档中进行问答
-      console.log('对选中部分进行问答，长度:', selectedText.length);
-      
-      // 显示输入对话框，获取用户问题
-      let question = '';
-      try {
-        question = window.prompt('请输入您对选中文本的问题:', '');
-      } catch (promptError) {
-        // 如果原生prompt不可用，则使用alert提示
-        console.warn('Prompt方法不可用，尝试替代方法:', promptError);
-        window.Application.Alert('请准备您的问题，点击确定后会弹出对话框');
-        
-        // 创建一个简单的DOM对话框
-        const questionDialog = document.createElement('div');
-        questionDialog.style.cssText = `
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background: white;
-          padding: 20px;
-          border: 1px solid #ccc;
-          box-shadow: 0 0 10px rgba(0,0,0,0.2);
-          z-index: 9999;
-          width: 400px;
-        `;
-        
-        const label = document.createElement('div');
-        label.textContent = '请输入您对选中文本的问题:';
-        label.style.marginBottom = '10px';
-        
-        const input = document.createElement('textarea');
-        input.style.width = '100%';
-        input.style.height = '80px';
-        input.style.marginBottom = '10px';
-        
-        const buttonDiv = document.createElement('div');
-        buttonDiv.style.textAlign = 'right';
-        
-        const okButton = document.createElement('button');
-        okButton.textContent = '确定';
-        okButton.style.marginRight = '10px';
-        okButton.onclick = () => {
-          question = input.value;
-          document.body.removeChild(questionDialog);
-        };
-        
-        const cancelButton = document.createElement('button');
-        cancelButton.textContent = '取消';
-        cancelButton.onclick = () => {
-          document.body.removeChild(questionDialog);
-        };
-        
-        buttonDiv.appendChild(okButton);
-        buttonDiv.appendChild(cancelButton);
-        
-        questionDialog.appendChild(label);
-        questionDialog.appendChild(input);
-        questionDialog.appendChild(buttonDiv);
-        
-        document.body.appendChild(questionDialog);
-        
-        // 等待用户输入
-        setTimeout(() => {
-          if (questionDialog.parentNode) {
-            input.focus();
-          }
-        }, 100);
-      }
-      
-      if (!question || question.trim() === '') {
-        console.log('用户取消了问答或未输入问题');
-        return;
-      }
-      
-      // 显示加载状态
-      console.log('处理问题:', question);
-      
-      // 使用API进行问答
-      try {
-        const result = await apiClient.documentQA(selectedText, question);
-        console.log('文档问答完成，结果长度:', result.length);
-        
-        // 插入问答结果
-        const questionAndAnswer = `\n问题: ${question}\n答案: ${result}\n`;
-        await insertTextAtCursor(questionAndAnswer);
-      } catch (apiError) {
-        console.error('文档问答API调用失败:', apiError);
-        window.Application.Alert('文档问答失败: ' + apiError.message);
-      }
-    } else {
-      // 无选中文本，询问用户是否要获取整个文档进行问答
-      let useWholeDocument = false;
-      try {
-        useWholeDocument = window.confirm('未选中任何文本，是否要对整个文档进行问答？这可能需要较长时间处理。');
-      } catch (confirmError) {
-        console.warn('Confirm方法不可用，默认使用整个文档');
-        useWholeDocument = true;
-      }
-      
-      if (!useWholeDocument) {
-        console.log('用户取消了全文问答');
-        return;
-      }
-      
-      console.log('进行全文问答');
-      
-      // 获取全文
-      const docText = getDocumentText();
-      if (!docText || docText.trim() === '') {
-        console.warn('文档内容为空');
-        window.Application.Alert('文档内容为空，无法进行问答');
-        return;
-      }
-      
-      // 显示输入对话框，获取用户问题
-      let question = '';
-      try {
-        question = window.prompt('请输入您对整个文档的问题:', '');
-      } catch (promptError) {
-        // 如果原生prompt不可用，采用DOM对话框或其他替代方案
-        console.warn('Prompt方法不可用，尝试替代方法:', promptError);
-        window.Application.Alert('请准备您的问题，点击确定后将进行处理');
-        
-        // 简化处理：使用默认问题
-        question = '请总结这篇文档的主要内容。';
-      }
-      
-      if (!question || question.trim() === '') {
-        console.log('用户取消了问答或未输入问题');
-        return;
-      }
-      
-      // 显示加载状态
-      console.log('处理整个文档的问题:', question);
-      
-      // 使用API进行问答
-      try {
-        // 长文本处理：如果文档过长，进行智能截断
-        const maxLength = 8000; // 根据模型容量调整
-        let processedText = docText;
-        
-        if (docText.length > maxLength) {
-          console.warn(`文档内容过长(${docText.length}字符)，将进行智能截断`);
-          
-          // 简单截断策略：保留前后部分
-          const frontPart = docText.substring(0, maxLength / 2);
-          const backPart = docText.substring(docText.length - maxLength / 2);
-          processedText = `${frontPart}\n...(中间内容已省略)...\n${backPart}`;
-          
-          console.log('截断后文本长度:', processedText.length);
-        }
-        
-        const result = await apiClient.documentQA(processedText, question);
-        console.log('全文问答完成，结果长度:', result.length);
-        
-        // 插入问答结果
-        const questionAndAnswer = `\n问题: ${question}\n答案: ${result}\n`;
-        await insertTextAtCursor(questionAndAnswer);
-      } catch (apiError) {
-        console.error('全文问答API调用失败:', apiError);
-        window.Application.Alert('全文问答失败: ' + apiError.message);
-      }
-    }
+    // 创建一个自定义对话框
+    const dialogId = window.Application.ShowDialog(
+      Util.GetUrlPath() + Util.GetRouterHash() + '/qa',
+      `文档问答 - ${hasSelection ? '选中文本' : '整个文档'}`,
+      600,
+      500,
+      false
+    );
+    
+    console.log('文档问答对话框已创建，ID:', dialogId);
   } catch (e) {
-    console.error('文档问答功能出错:', e);
+    console.error('创建文档问答对话框失败:', e);
     window.Application.Alert('启动文档问答功能失败: ' + e.message);
+    
+    // 尝试使用备用方法 - 直接在文档中问答
+    try {
+      const selectedText = getSelectedText();
+      if (selectedText && selectedText.trim() !== '') {
+        // 有选中文本时
+        const question = window.prompt('请输入您对选中文本的问题:', '');
+        if (question && question.trim() !== '') {
+          // 显示加载中提示
+          window.Application.Alert('正在处理您的问题，请稍候...');
+          
+          try {
+            // 调用API获取答案
+            const result = await apiClient.documentQA(selectedText, question);
+            
+            // 插入结果
+            const qaResult = `\n问题: ${question}\n答案: ${result}\n`;
+            await insertTextAtCursor(qaResult);
+            
+            // 保存历史记录
+            saveHistory('qa', question, result);
+          } catch (apiError) {
+            window.Application.Alert('文档问答失败: ' + apiError.message);
+          }
+        }
+      } else {
+        window.Application.Alert('请先选择要询问的文本内容');
+      }
+    } catch (backupError) {
+      console.error('备用文档问答方法也失败:', backupError);
+    }
   }
 }
 
@@ -1307,6 +1233,25 @@ async function handlePolishText() {
   }
 }
 
+// 历史记录功能
+function handleHistory() {
+  console.log('打开历史记录');
+  
+  try {
+    window.Application.ShowDialog(
+      Util.GetUrlPath() + Util.GetRouterHash() + '/history',
+      'WPS AI助手 - 历史记录',
+      700,
+      600,
+      false
+    );
+    console.log('历史记录对话框已创建');
+  } catch (e) {
+    console.error('创建历史记录对话框失败:', e);
+    window.Application.Alert('无法打开历史记录: ' + e.message);
+  }
+}
+
 function GetImage(control) {
   const eleId = control.Id
   switch (eleId) {
@@ -1320,6 +1265,8 @@ function GetImage(control) {
       return 'images/qa.svg'
     case 'btnSummarizeDoc':
       return 'images/doc_summarize.svg'
+    case 'btnHistory':
+      return 'images/history.svg'
     case 'btnSettings':
       return 'images/settings.svg'
     case 'btnHelp':
