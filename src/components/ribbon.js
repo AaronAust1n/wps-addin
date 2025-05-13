@@ -139,26 +139,58 @@ function checkConfigured() {
 // 获取选中文本
 function getSelectedText() {
   try {
-    const selection = window.Application.ActiveDocument.Range
-    if (selection) {
-      const text = selection.Text;
-      
-      // 检查是否有实际内容
-      if (text && text.trim().length > 0) {
-        console.log('成功获取选中文本，长度:', text.length);
-        return text;
-      } else {
-        console.log('选中文本为空或仅包含空白字符');
-        return null;
+    // 尝试多种方法获取选中文本
+    let text = '';
+    const doc = window.Application.ActiveDocument;
+    
+    // 方法1: 使用Selection对象
+    try {
+      if (doc.Application && doc.Application.Selection) {
+        text = doc.Application.Selection.Text;
+        if (text && text.trim().length > 0) {
+          console.log('通过Selection对象获取选中文本成功，长度:', text.length);
+          return text;
+        }
       }
-    } else {
-      console.warn('未获取到选择范围');
-      return null
+    } catch (e1) {
+      console.warn('通过Selection对象获取选中文本失败:', e1);
     }
+    
+    // 方法2: 使用Range对象
+    try {
+      const selection = doc.Range;
+      if (selection) {
+        text = selection.Text;
+        // 有些版本的WPS在没有选中文本时也会返回文本，需要进一步判断
+        if (text && text.trim().length > 0) {
+          // 判断是否真的选中了文本
+          const selLength = selection.End - selection.Start;
+          if (selLength > 1) { // 真正有选中内容
+            console.log('通过Range对象获取选中文本成功，长度:', text.length);
+            return text;
+          } else {
+            console.log('Range对象显示未选中文本(长度不足)');
+          }
+        }
+      }
+    } catch (e2) {
+      console.warn('通过Range对象获取选中文本失败:', e2);
+    }
+    
+    // 方法3: 尝试获取系统剪贴板(在某些情况下可以作为备选)
+    try {
+      // 此方法需要用户预先复制选中内容，仅作为参考
+      // 实际应用时可能不适用，取决于WPS API和用户操作习惯
+    } catch (e3) {
+      console.warn('通过剪贴板获取选中文本失败:', e3);
+    }
+    
+    console.log('选中文本为空或仅包含空白字符');
+    return null;
   } catch (e) {
-    console.error('获取选中文本失败:', e)
-    window.Application.Alert('获取选中文本失败: ' + e.message)
-    return null
+    console.error('获取选中文本失败:', e);
+    window.Application.Alert('获取选中文本失败: ' + e.message);
+    return null;
   }
 }
 
@@ -225,18 +257,29 @@ function getDocumentText() {
 // 在光标位置插入文本
 function insertTextAtCursor(text) {
   try {
-    const selection = window.Application.ActiveDocument.Range
+    const selection = window.Application.ActiveDocument.Range;
+    
+    // 尝试开始撤销组(事务)，使整段文本作为一个撤销单位
+    try {
+      if (window.Application.ActiveDocument.Application && 
+          typeof window.Application.ActiveDocument.Application.StartTransaction === 'function') {
+        window.Application.ActiveDocument.Application.StartTransaction("AI文本插入");
+        console.log('开始撤销事务组');
+      }
+    } catch (txError) {
+      console.warn('无法创建撤销事务组:', txError);
+    }
     
     // 检查Collapse方法是否存在
     if (typeof selection.Collapse === 'function') {
-      selection.Collapse() // 确保光标折叠（不是选区）
+      selection.Collapse(); // 确保光标折叠（不是选区）
     } else {
       console.warn('Selection.Collapse方法不可用，尝试替代方法');
     }
     
     // 检查InsertAfter方法是否存在
     if (typeof selection.InsertAfter === 'function') {
-      selection.InsertAfter(text)
+      selection.InsertAfter(text);
     } else {
       console.warn('Selection.InsertAfter方法不可用，尝试替代方法');
       
@@ -257,13 +300,32 @@ function insertTextAtCursor(text) {
       }
     }
     
-    return true
+    // 尝试结束撤销组(事务)
+    try {
+      if (window.Application.ActiveDocument.Application && 
+          typeof window.Application.ActiveDocument.Application.EndTransaction === 'function') {
+        window.Application.ActiveDocument.Application.EndTransaction();
+        console.log('结束撤销事务组');
+      }
+    } catch (txError) {
+      console.warn('无法结束撤销事务组:', txError);
+    }
+    
+    return true;
   } catch (e) {
-    console.error('插入文本失败:', e)
+    console.error('插入文本失败:', e);
+    
+    // 结束可能未完成的事务
+    try {
+      if (window.Application.ActiveDocument.Application && 
+          typeof window.Application.ActiveDocument.Application.EndTransaction === 'function') {
+        window.Application.ActiveDocument.Application.EndTransaction();
+      }
+    } catch (txError) {}
     
     // 不要使用Alert，它可能已经出错
-    console.error('插入文本失败: ' + e.message)
-    return false
+    console.error('插入文本失败: ' + e.message);
+    return false;
   }
 }
 
@@ -420,138 +482,9 @@ const ERROR_TYPES = {
   GENERAL: 'general_error'
 };
 
-// 添加创建悬浮提示框的函数
-function createFloatingBox(message, isLoading = false) {
-  // 移除旧的悬浮框
-  const oldBox = document.getElementById('wps-floating-box');
-  if (oldBox) {
-    oldBox.remove();
-  }
-
-  // 创建新的悬浮框
-  const floatingBox = document.createElement('div');
-  floatingBox.id = 'wps-floating-box';
-  floatingBox.style.cssText = `
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 15px;
-    border-radius: 5px;
-    max-width: 400px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    z-index: 9999;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    backdrop-filter: blur(5px);
-    transition: opacity 0.3s;
-    opacity: 0.9;
-  `;
-  
-  // 添加消息
-  const messageDiv = document.createElement('div');
-  messageDiv.textContent = message;
-  floatingBox.appendChild(messageDiv);
-  
-  // 如果是加载状态，添加加载动画
-  if (isLoading) {
-    const loadingDiv = document.createElement('div');
-    loadingDiv.style.cssText = `
-      margin-top: 10px;
-      text-align: center;
-    `;
-    
-    const spinner = document.createElement('div');
-    spinner.style.cssText = `
-      width: 20px;
-      height: 20px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-radius: 50%;
-      border-top-color: white;
-      animation: spin 1s linear infinite;
-      margin: 0 auto;
-    `;
-    
-    // 添加动画样式
-    if (!document.getElementById('floating-box-styles')) {
-      const style = document.createElement('style');
-      style.id = 'floating-box-styles';
-      style.textContent = `
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        #wps-floating-box:hover {
-          opacity: 1;
-        }
-      `;
-      document.head.appendChild(style);
-    }
-    
-    loadingDiv.appendChild(spinner);
-    floatingBox.appendChild(loadingDiv);
-  }
-  
-  // 添加关闭按钮
-  const closeButton = document.createElement('div');
-  closeButton.textContent = '×';
-  closeButton.style.cssText = `
-    position: absolute;
-    top: 5px;
-    right: 10px;
-    cursor: pointer;
-    font-size: 18px;
-    color: #ccc;
-  `;
-  closeButton.onclick = () => floatingBox.remove();
-  floatingBox.appendChild(closeButton);
-  
-  document.body.appendChild(floatingBox);
-  
-  // 自动淡出
-  if (!isLoading) {
-    setTimeout(() => {
-      floatingBox.style.opacity = '0';
-      setTimeout(() => floatingBox.remove(), 300);
-    }, 5000);
-  }
-  
-  return floatingBox;
-}
-
-// 更新悬浮框内容
-function updateFloatingBox(text, isComplete = false) {
-  const floatingBox = document.getElementById('wps-floating-box');
-  if (!floatingBox) return;
-  
-  // 更新消息
-  const messageDiv = floatingBox.querySelector('div');
-  if (messageDiv) {
-    messageDiv.textContent = text;
-  }
-  
-  // 如果完成，移除加载动画
-  if (isComplete) {
-    const loadingDiv = floatingBox.querySelector('div:nth-child(2)');
-    if (loadingDiv) {
-      loadingDiv.remove();
-    }
-    
-    // 设置自动淡出
-    setTimeout(() => {
-      floatingBox.style.opacity = '0';
-      setTimeout(() => floatingBox.remove(), 300);
-    }, 5000);
-  }
-}
-
 // 处理文本的通用方法 (整合了processSelection和processParagraph)
 async function processText(action, text, actionSource = 'selection') {
   console.log(`开始处理${actionSource === 'selection' ? '选中文本' : '段落'}: ${action}, 文本长度: ${text.length}`);
-  
-  // 创建半透明悬浮框显示加载状态
-  createFloatingBox(`WPS AI助手正在${getActionName(action)}...`, true);
   
   try {
     // 获取并验证API配置
@@ -626,20 +559,18 @@ async function processText(action, text, actionSource = 'selection') {
       }
     }
     
-    // 插入处理结果到文档 - 使用流式输出
+    // 插入处理结果到文档 - 直接一次性插入以支持撤销
     if (result && result.length > 0) {
-      // 更新悬浮框显示正在插入文本
-      updateFloatingBox(`正在插入${getActionName(action)}结果...`, true);
+      console.log(`准备插入${getActionName(action)}结果...`);
       
-      // 流式插入文本
       let insertSuccess = false;
       try {
         if (action === 'continue') {
           // 续写是在原文后添加内容
-          insertSuccess = await streamText(result);
+          insertSuccess = await insertTextAtCursor(result);
         } else {
           // 校对和润色是替换原文或添加新行
-          insertSuccess = await streamText('\n' + result);
+          insertSuccess = await insertTextAtCursor('\n' + result);
         }
         
         console.log('插入处理结果:', insertSuccess ? '成功' : '失败');
@@ -665,9 +596,6 @@ async function processText(action, text, actionSource = 'selection') {
         }
       }
     }
-    
-    // 更新悬浮框显示完成信息
-    updateFloatingBox(`${getActionName(action)}完成！`, true);
     
     console.log(`${action}处理完成, 结束时间:`, new Date().toISOString());
     
@@ -724,9 +652,6 @@ async function processText(action, text, actionSource = 'selection') {
     // 显示错误信息给用户
     const fullErrorMessage = errorDetails ? `${errorMessage}\n\n${errorDetails}` : errorMessage;
     
-    // 更新悬浮框显示错误信息
-    updateFloatingBox(`${errorTitle}: ${errorMessage}`, true);
-    
     try {
       window.Application.Alert(`${errorTitle}: ${fullErrorMessage}`);
     } catch (alertError) {
@@ -741,6 +666,43 @@ async function processText(action, text, actionSource = 'selection') {
 // 流式插入文本
 async function streamText(text) {
   return new Promise((resolve) => {
+    // 尝试开始撤销组(事务)，使整段文本作为一个撤销单位
+    try {
+      if (window.Application.ActiveDocument.Application && 
+          typeof window.Application.ActiveDocument.Application.StartTransaction === 'function') {
+        window.Application.ActiveDocument.Application.StartTransaction("AI文本流式插入");
+        console.log('开始流式插入撤销事务组');
+      }
+    } catch (txError) {
+      console.warn('无法创建流式插入撤销事务组:', txError);
+    }
+    
+    // 使用一次性插入而非流式，以支持撤销
+    try {
+      const selection = window.Application.ActiveDocument.Application.Selection;
+      if (selection && typeof selection.TypeText === 'function') {
+        selection.TypeText(text);
+        console.log('使用一次性TypeText插入全部文本以支持撤销');
+        
+        // 结束撤销组
+        try {
+          if (window.Application.ActiveDocument.Application && 
+              typeof window.Application.ActiveDocument.Application.EndTransaction === 'function') {
+            window.Application.ActiveDocument.Application.EndTransaction();
+            console.log('结束流式插入撤销事务组');
+          }
+        } catch (txError) {
+          console.warn('无法结束流式插入撤销事务组:', txError);
+        }
+        
+        resolve(true);
+        return;
+      }
+    } catch (e) {
+      console.warn('一次性TypeText插入失败，尝试备选方法:', e);
+    }
+    
+    // 如果一次性插入失败，再尝试流式插入
     // 每次插入的字符数
     const chunkSize = 10;
     // 插入间隔时间(毫秒)
@@ -766,12 +728,30 @@ async function streamText(text) {
             console.warn('TypeText方法不可用，尝试一次性插入');
             insertTextAtCursor(text.substring(position));
             clearInterval(insertInterval);
+            
+            // 结束撤销组
+            try {
+              if (window.Application.ActiveDocument.Application && 
+                  typeof window.Application.ActiveDocument.Application.EndTransaction === 'function') {
+                window.Application.ActiveDocument.Application.EndTransaction();
+              }
+            } catch (txError) {}
+            
             resolve(true);
             return;
           }
         } catch (e) {
           console.error('流式插入文本块失败:', e);
           clearInterval(insertInterval);
+          
+          // 结束撤销组
+          try {
+            if (window.Application.ActiveDocument.Application && 
+                typeof window.Application.ActiveDocument.Application.EndTransaction === 'function') {
+              window.Application.ActiveDocument.Application.EndTransaction();
+            }
+          } catch (txError) {}
+          
           resolve(false);
           return;
         }
@@ -783,6 +763,18 @@ async function streamText(text) {
       // 如果已经插入完所有文本，清除定时器
       if (position >= totalLength) {
         clearInterval(insertInterval);
+        
+        // 结束撤销组
+        try {
+          if (window.Application.ActiveDocument.Application && 
+              typeof window.Application.ActiveDocument.Application.EndTransaction === 'function') {
+            window.Application.ActiveDocument.Application.EndTransaction();
+            console.log('结束流式插入撤销事务组');
+          }
+        } catch (txError) {
+          console.warn('无法结束流式插入撤销事务组:', txError);
+        }
+        
         resolve(true);
       }
     }, delay);
@@ -830,17 +822,39 @@ function handleDocumentQA() {
   }
   
   try {
-    // 创建侧边栏并导航到文档问答页面
-    console.log('尝试创建文档问答侧边栏');
-    const taskpaneUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/qa'
-    console.log('侧边栏URL:', taskpaneUrl);
+    // 检查是否有选中文本
+    const selectedText = getSelectedText();
     
-    const taskpane = createTaskpane(taskpaneUrl)
-    
-    if (taskpane) {
-      console.log('文档问答侧边栏已创建成功');
+    if (selectedText && selectedText.trim() !== '') {
+      // 如果有选中文本，创建侧边栏处理选中部分
+      console.log('对选中部分进行问答，长度:', selectedText.length);
+      
+      // 创建侧边栏并导航到选中文本问答页面
+      const taskpaneUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/qa?mode=selection';
+      console.log('侧边栏URL:', taskpaneUrl);
+      
+      const taskpane = createTaskpane(taskpaneUrl);
+      
+      if (taskpane) {
+        console.log('选中文本问答侧边栏已创建成功');
+      } else {
+        console.error('创建选中文本问答侧边栏失败');
+      }
     } else {
-      console.error('创建文档问答侧边栏失败');
+      // 无选中文本，进行全文问答
+      console.log('进行全文问答');
+      
+      // 创建侧边栏并导航到全文问答页面
+      const taskpaneUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/qa?mode=document';
+      console.log('侧边栏URL:', taskpaneUrl);
+      
+      const taskpane = createTaskpane(taskpaneUrl);
+      
+      if (taskpane) {
+        console.log('全文问答侧边栏已创建成功');
+      } else {
+        console.error('创建全文问答侧边栏失败');
+      }
     }
   } catch (e) {
     console.error('文档问答功能出错:', e);
