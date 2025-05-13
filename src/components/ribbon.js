@@ -334,40 +334,119 @@ function insertTextAtCursor(text) {
 }
 
 // 创建侧边栏
+/* 
+ * 创建任务窗格 - 优先使用WPS API，失败时回退到window.open
+ * 
+ * WPS任务窗格API参考文档:
+ * 1. CreateTaskPane: https://open.wps.cn/documents/app-integration-dev/client/wpsoffice/jsapi/addin-api/Application/member/CreateTaskpane.html
+ * 2. TaskPane对象: https://open.wps.cn/documents/app-integration-dev/client/wpsoffice/jsapi/addin-api/TaskPane/obj.html
+ * 3. TaskPane.DockPosition: https://open.wps.cn/documents/app-integration-dev/client/wpsoffice/jsapi/addin-api/TaskPane/member/DockPosition.html
+ * 
+ * 实现策略:
+ * 1. 首先尝试调用WPS原生的CreateTaskPane API
+ * 2. 正确设置任务窗格属性(DockPosition, Width等)
+ * 3. 导航到指定URL并设置为可见
+ * 4. 如果WPS API失败，回退到window.open方法模拟侧边栏
+ * 5. 对不同应用场景提供统一API接口
+ */
 function createTaskpane(url, width = 300) {
   try {
-    // 直接使用window.open作为实现方法
-    const height = 600;
-    const left = window.screen.width - width;
-    const top = 100;
+    console.log('开始创建任务窗格...');
     
-    // 使用窗口特性，让其看起来像侧边栏
-    const windowFeatures = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no,location=no,toolbar=no,menubar=no`;
-    
-    const taskWin = window.open(url, '_blank', windowFeatures);
-    console.log('已使用window.open创建侧边栏');
-    
-    // 确保窗口已成功创建
-    if (taskWin) {
-      // 尝试设置窗口样式使其更像侧边栏
-      setTimeout(() => {
-        try {
-          if (taskWin.document) {
-            taskWin.document.title = 'WPS AI助手 - 侧边栏';
-          }
-        } catch (styleErr) {
-          console.warn('设置窗口样式失败，可能是跨域限制:', styleErr);
-        }
-      }, 1000);
-      
-      return { success: true, method: 'window.open', window: taskWin };
-    } else {
-      throw new Error('创建窗口失败，可能被浏览器拦截');
+    // 使用正确的WPS API创建任务窗格
+    if (!window.Application) {
+      throw new Error('window.Application对象不可用');
     }
+    
+    // 避免方法名大小写错误
+    const createMethod = window.Application.CreateTaskPane || window.Application.CreateTaskpane;
+    if (typeof createMethod !== 'function') {
+      throw new Error('CreateTaskPane方法不可用');
+    }
+    
+    // 创建任务窗格
+    const taskpane = createMethod();
+    if (!taskpane) {
+      throw new Error('任务窗格创建失败，返回为空');
+    }
+    
+    console.log('任务窗格已创建，设置属性...');
+    
+    // 设置任务窗格属性
+    // 使用常量或枚举值设置停靠位置（右侧）
+    // msoCTPDockPositionRight常量值为2
+    const dockPositionRight = 
+      (window.Application.Enum && window.Application.Enum.msoCTPDockPositionRight) || 2;
+    
+    taskpane.DockPosition = dockPositionRight;
+    console.log('已设置任务窗格停靠位置: 右侧');
+    
+    // 设置宽度
+    taskpane.Width = width;
+    console.log('已设置任务窗格宽度:', width);
+    
+    // 导航到指定URL
+    taskpane.Navigate(url);
+    console.log('已导航到URL:', url);
+    
+    // 设置可见
+    taskpane.Visible = true;
+    console.log('已设置任务窗格为可见');
+    
+    return taskpane;
   } catch (e) {
-    console.error('创建侧边栏失败:', e);
-    window.Application.Alert('无法创建侧边栏: ' + e.message);
-    return null;
+    console.error('创建任务窗格失败:', e);
+    
+    // 尝试使用window.open作为备选方案
+    try {
+      console.log('尝试使用window.open作为备选方案...');
+      const height = 600;
+      const left = window.screen.width - width - 20; // 留出一些边距
+      const top = 80; // 顶部留出一些空间
+      
+      // 使用特定的窗口特性，让其外观更像侧边栏
+      const windowFeatures = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no,location=no,menubar=no,toolbar=no`;
+      
+      // 使用_blank而不是特定名称，避免重用现有窗口
+      const taskWin = window.open(url, '_blank', windowFeatures);
+      
+      if (!taskWin) {
+        throw new Error('备选方案window.open创建窗口失败，可能被浏览器拦截');
+      }
+      
+      console.log('使用window.open创建窗口成功');
+      
+      // 返回一个类似TaskPane的对象，以保持API兼容性
+      return {
+        _window: taskWin,
+        _method: 'window.open',
+        DockPosition: dockPositionRight,
+        Width: width,
+        Visible: true,
+        
+        // 模拟Navigate方法
+        Navigate: function(newUrl) {
+          try {
+            this._window.location.href = newUrl;
+            return true;
+          } catch (navigateErr) {
+            console.error('窗口导航失败:', navigateErr);
+            return false;
+          }
+        }
+      };
+    } catch (fallbackErr) {
+      console.error('备选方案也失败:', fallbackErr);
+      
+      // 此处不使用safeAlert，因为可能导致循环
+      if (window.Application && window.Application.Alert) {
+        window.Application.Alert('无法创建侧边栏: ' + e.message);
+      } else {
+        try { alert('无法创建侧边栏: ' + e.message); } catch (alertErr) {}
+      }
+      
+      throw new Error('创建侧边栏失败');
+    }
   }
 }
 
@@ -896,23 +975,53 @@ async function handleDocumentQA() {
   }
   
   try {
+    // 检查是否已有文档问答任务窗格
+    let taskpane = null;
+    
+    // 尝试获取已存在的任务窗格
+    if (window._qaTaskpaneId) {
+      taskpane = getExistingTaskpane(window._qaTaskpaneId);
+      if (taskpane) {
+        console.log('找到现有的文档问答任务窗格，重新激活');
+        
+        // 刷新URL以更新状态
+        const qaUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/taskpane?function=qa&refresh=' + new Date().getTime();
+        taskpane.Navigate(qaUrl);
+        
+        // 确保任务窗格可见
+        taskpane.Visible = true;
+        
+        return;
+      }
+    }
+    
+    // 没有找到现有任务窗格，创建新的
+    console.log('未找到现有任务窗格，创建新的');
+    
     // 检查是否有选中文本
     const selectedText = getSelectedText();
     console.log('通过Selection对象获取选中文本成功，长度:', selectedText ? selectedText.length : 0);
     
-    // 创建侧边栏
-    const taskpane = createTaskpane(
-      Util.GetUrlPath() + Util.GetRouterHash() + '/taskpane',
-      350
-    );
+    // 创建任务窗格 - 添加特殊参数以区分不同功能的任务窗格
+    const qaUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/taskpane?function=qa';
+    taskpane = createTaskpane(qaUrl, 350);
     
     if (taskpane) {
-      console.log('文档问答侧边栏已创建');
+      console.log('文档问答任务窗格已创建');
+      
+      // 如果是window.open方式创建的，保存窗口引用
+      if (taskpane._method === 'window.open') {
+        console.log('使用window.open模拟任务窗格');
+      } else {
+        // 保存任务窗格ID以便后续使用
+        window._qaTaskpaneId = taskpane.ID;
+        console.log('保存任务窗格ID:', taskpane.ID);
+      }
     } else {
-      throw new Error('创建侧边栏失败');
+      throw new Error('任务窗格创建失败');
     }
   } catch (e) {
-    console.error('创建文档问答侧边栏失败:', e);
+    console.error('创建文档问答任务窗格失败:', e);
     safeAlert('启动文档问答功能失败: ' + e.message);
   }
 }
@@ -934,23 +1043,53 @@ async function handleSummarizeDoc() {
   }
   
   try {
+    // 检查是否已有文档总结任务窗格
+    let taskpane = null;
+    
+    // 尝试获取已存在的任务窗格
+    if (window._summaryTaskpaneId) {
+      taskpane = getExistingTaskpane(window._summaryTaskpaneId);
+      if (taskpane) {
+        console.log('找到现有的文档摘要任务窗格，重新激活');
+        
+        // 刷新URL以更新状态
+        const summaryUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/taskpane?function=summary&refresh=' + new Date().getTime();
+        taskpane.Navigate(summaryUrl);
+        
+        // 确保任务窗格可见
+        taskpane.Visible = true;
+        
+        return;
+      }
+    }
+    
+    // 没有找到现有任务窗格，创建新的
+    console.log('未找到现有任务窗格，创建新的');
+    
     // 检查是否有选中文本
     const selectedText = getSelectedText();
     console.log('通过Selection对象获取选中文本成功，长度:', selectedText ? selectedText.length : 0);
     
-    // 创建侧边栏
-    const taskpane = createTaskpane(
-      Util.GetUrlPath() + Util.GetRouterHash() + '/taskpane',
-      350
-    );
+    // 创建任务窗格 - 添加特殊参数以区分不同功能的任务窗格
+    const summaryUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/taskpane?function=summary';
+    taskpane = createTaskpane(summaryUrl, 350);
     
     if (taskpane) {
-      console.log('文档摘要侧边栏已创建');
+      console.log('文档摘要任务窗格已创建');
+      
+      // 如果是window.open方式创建的，保存窗口引用
+      if (taskpane._method === 'window.open') {
+        console.log('使用window.open模拟任务窗格');
+      } else {
+        // 保存任务窗格ID以便后续使用
+        window._summaryTaskpaneId = taskpane.ID;
+        console.log('保存任务窗格ID:', taskpane.ID);
+      }
     } else {
-      throw new Error('创建侧边栏失败');
+      throw new Error('任务窗格创建失败');
     }
   } catch (e) {
-    console.error('创建文档摘要侧边栏失败:', e);
+    console.error('创建文档摘要任务窗格失败:', e);
     safeAlert('启动全文总结功能失败: ' + e.message);
   }
 }
@@ -1194,4 +1333,34 @@ export default {
   OnGetEnabled,
   OnGetVisible,
   OnGetLabel
+}
+
+// 获取已存在的任务窗格
+function getExistingTaskpane(id) {
+  try {
+    if (!window.Application) {
+      return null;
+    }
+    
+    // 检查GetTaskpane方法是否存在
+    const getMethod = window.Application.GetTaskpane || window.Application.GetTaskPane;
+    if (typeof getMethod !== 'function') {
+      console.warn('GetTaskpane方法不可用');
+      return null;
+    }
+    
+    // 尝试通过ID获取任务窗格
+    const taskpane = getMethod(id);
+    
+    if (taskpane) {
+      console.log('成功获取ID为', id, '的任务窗格');
+      return taskpane;
+    }
+    
+    console.log('未找到ID为', id, '的任务窗格');
+    return null;
+  } catch (e) {
+    console.error('获取任务窗格失败:', e);
+    return null;
+  }
 } 
