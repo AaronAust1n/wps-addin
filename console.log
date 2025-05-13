@@ -1,66 +1,61 @@
 WPS AI助手应用已加载
-​ 按钮点击: btnDocumentQA
-​ 准备处理文档问答功能...
-​ 文档问答功能被触发
-​ 检查API配置...
-​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
-​ 未找到现有任务窗格，创建新的
-​ 通过Selection对象获取选中文本成功，长度: 119
-​ 通过Selection对象获取选中文本成功，长度: 119
-​ 开始创建任务窗格...
-​ 使用CreateTaskPane方法(大写P)成功创建任务窗格
-​ 任务窗格已创建，设置属性...
-​ 已设置任务窗格停靠位置: 右侧
-​ 已设置任务窗格宽度: 350
-​ 已导航到URL: http://127.0.0.1:3889/#/taskpane?function=qa
-​ 已设置任务窗格为可见
-​ 文档问答任务窗格已创建
-​ 保存任务窗格ID: 1
+​ 初始化WPS AI助手 - 调试模式
+​ WPS AI助手加载项已加载
+​ 调试控制台已启动
+​ 按钮点击: btnSettings
+​ 准备打开设置对话框...
+​ 打开设置对话框
+​ 设置对话框已创建
 ​ 按钮点击: btnSummarizeDoc
 ​ 准备处理全文总结功能...
 ​ 全文总结功能被触发
 ​ 检查API配置...
 ​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
-​ 未找到现有任务窗格，创建新的
-​ 通过Selection对象获取选中文本成功，长度: 119
-​ 通过Selection对象获取选中文本成功，长度: 119
+​ 未找到保存的配置
+console.warn @ src/components/js/util.js:196
+​ 未找到API配置
+console.error @ src/components/js/util.js:191
+​ Alert: 请先配置API设置
+​ 打开设置对话框
+​ 设置对话框已创建
+​ API未配置，无法使用全文总结功能
+console.warn @ src/components/js/util.js:196
+​ 按钮点击: btnSummarizeDoc
+​ 准备处理全文总结功能...
+​ 全文总结功能被触发
+​ 检查API配置...
+​ 尝试读取API配置...
+​ 成功加载配置 Object
+​ 配置检查通过 Object
+​ 尝试关闭所有任务窗格
+2​ 通过Selection对象获取选中文本成功，长度: 118
 ​ 开始创建任务窗格...
 ​ 使用CreateTaskPane方法(大写P)成功创建任务窗格
 ​ 任务窗格已创建，设置属性...
 ​ 已设置任务窗格停靠位置: 右侧
-​ 已设置任务窗格宽度: 350
-​ 已导航到URL: http://127.0.0.1:3889/#/taskpane?function=summary
+​ 已设置任务窗格宽度: 450
+​ 已导航到URL: http://127.0.0.1:3889/#/taskpane?function=summary&direct=true&selection=true
 ​ 已设置任务窗格为可见
 ​ 文档摘要任务窗格已创建
-​ 保存任务窗格ID: 2
-​ 按钮点击: btnSummarizeDoc
-​ 准备处理全文总结功能...
-​ 全文总结功能被触发
-​ 检查API配置...
-​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
-​ 使用GetTaskPane方法成功获取任务窗格
-​ 找到现有的文档摘要任务窗格，重新激活
-​ 按钮点击: btnSummarizeDoc
-​ 准备处理全文总结功能...
-​ 全文总结功能被触发
-​ 检查API配置...
-​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
-​ 使用GetTaskPane方法成功获取任务窗格
-​ 找到现有的文档摘要任务窗格，重新激活
+​ 保存文档摘要任务窗格ID: 1
 ​ 按钮点击: btnDocumentQA
 ​ 准备处理文档问答功能...
 ​ 文档问答功能被触发
 ​ 检查API配置...
 ​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
-​ 使用GetTaskPane方法成功获取任务窗格
-​ 找到现有的文档问答任务窗格，重新激活
+​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+​ 尝试关闭所有任务窗格
+​ 找到任务窗格，准备删除: 1
+​ 成功删除任务窗格: 1
+​ 通过Selection对象获取选中文本成功，长度: 118
+​ 通过Selection对象获取选中文本成功，长度: 118
+​ 开始创建任务窗格...
+​ 使用CreateTaskPane方法(大写P)成功创建任务窗格
+​ 任务窗格已创建，设置属性...
+​ 已设置任务窗格停靠位置: 右侧
+​ 已设置任务窗格宽度: 450
+​ 已导航到URL: http://127.0.0.1:3889/#/taskpane?function=qa&direct=true&selection=true
+​ 已设置任务窗格为可见
+​ 文档问答任务窗格已创建
+​ 保存文档问答任务窗格ID: 2
