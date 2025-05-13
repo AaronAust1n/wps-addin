@@ -395,6 +395,8 @@ export default {
     const askQuestion = async () => {
       if (!question.value.trim()) return
       
+      console.log('开始处理问题:', question.value);
+      
       // 添加用户问题到历史
       qaHistory.value.push({
         role: 'user',
@@ -404,22 +406,39 @@ export default {
       const userQuestion = question.value
       question.value = ''
       isProcessing.value = true
+      statusMessage.value = '正在处理问题...'
       
       try {
+        console.log('获取文档内容...');
         // 获取文档内容（选中内容或全文）
-        const selectedText = getSelectedText()
-        const docContent = selectedText && selectedText.trim() ? selectedText : getDocumentText()
+        const selectedText = getSelectedText();
+        console.log(`选中文本状态: ${selectedText ? '有选中文本, 长度:' + selectedText.length : '无选中文本'}`);
+        
+        let docContent;
+        if (selectedText && selectedText.trim()) {
+          docContent = selectedText;
+          console.log('使用选中文本进行问答');
+        } else {
+          docContent = getDocumentText();
+          console.log('使用全文进行问答, 文本长度:', docContent ? docContent.length : 0);
+        }
         
         if (!docContent) {
           throw new Error('无法获取文档内容')
         }
         
         // 更新API客户端配置
+        console.log('更新API配置...');
         const config = getConfig()
+        if (!config) {
+          throw new Error('无法获取API配置，请先在设置中配置API');
+        }
         apiClient.updateConfig(config)
         
+        console.log('发送问答请求...');
         // 调用API获取回答
         const answer = await apiClient.documentQA(docContent, userQuestion)
+        console.log('问答完成，答案长度:', answer.length);
         
         // 添加回答到历史
         qaHistory.value.push({
@@ -429,9 +448,12 @@ export default {
         
         // 滚动到底部
         await nextTick()
-        if (qaHistory.value) {
-          const element = document.querySelector('.qa-history')
-          if (element) element.scrollTop = element.scrollHeight
+        const element = document.querySelector('.qa-history')
+        if (element) {
+          console.log('滚动到底部');
+          element.scrollTop = element.scrollHeight
+        } else {
+          console.warn('未找到.qa-history元素，无法滚动');
         }
         
         statusMessage.value = '问题回答完成'

@@ -559,17 +559,40 @@ class AIAPIClient {
    * @returns {Promise<string>} - 问答结果
    */
   async documentQA(docContent, question) {
+    // 添加验证参数
+    if (!docContent) {
+      console.error('文档内容为空');
+      throw new Error('文档内容不能为空');
+    }
+    
+    if (!question) {
+      console.error('问题为空');
+      throw new Error('问题不能为空');
+    }
+    
+    // 检查配置
+    if (!this.config || !this.config.apiUrl) {
+      console.error('API配置缺失');
+      throw new Error('API未正确配置，请先完成API设置');
+    }
+
     const model = this.config.models?.qaModel || this.config.models?.defaultModel
     
     // 记录有关模型和请求的信息
     console.log(`使用模型"${model}"执行文档问答，文档长度: ${docContent.length}字符，问题: "${question}"`);
+    console.log(`API基础URL: ${this.axios.defaults.baseURL}`);
     
     // 检查文本是否太长
     if (docContent.length > 8000) {
       console.warn(`文档内容超过8000字符(${docContent.length})，可能导致模型输入截断，将尝试提取相关部分`);
       
-      // 这里可以添加智能提取逻辑，例如根据问题关键词提取相关段落
-      // 或者根据文档结构进行分段处理
+      // 使用简单的截断策略来处理长文本
+      const maxLength = 7000;
+      docContent = docContent.substring(0, maxLength) + 
+        "\n...(文档内容过长，部分内容已省略)...\n" + 
+        docContent.substring(docContent.length - maxLength);
+      
+      console.log(`已截断文档内容，现在长度: ${docContent.length}字符`);
     }
     
     const data = {
@@ -583,18 +606,20 @@ class AIAPIClient {
     }
 
     try {
+      console.log('发送文档问答请求...');
       // 使用统一的请求方法发送请求
       const response = await this.sendRequest('/v1/chat/completions', data, {
         timeout: 120000 // 增加到120秒
       });
       
       // 记录响应信息
-      if (response.data && response.data.choices && response.data.choices.length > 0) {
+      if (response && response.data && response.data.choices && response.data.choices.length > 0 &&
+          response.data.choices[0].message && response.data.choices[0].message.content) {
         const result = response.data.choices[0].message.content;
         console.log(`API请求成功，返回${result.length}字符的问答结果`);
         return result;
       } else {
-        console.error('API响应格式不正确:', response.data);
+        console.error('API响应格式不正确:', response?.data || response);
         throw new Error('API返回了不正确的响应格式');
       }
     } catch (error) {
@@ -605,13 +630,18 @@ class AIAPIClient {
       console.error('详细错误信息:', errorDetails);
       
       // 记录更多上下文信息以便调试
-      console.error('API配置:', {
-        url: this.axios.defaults.baseURL,
-        model: model,
-        hasAuth: !!this.axios.defaults.headers['Authorization']
+      console.error('API配置详情:', {
+        url: this.axios.defaults.baseURL || '未设置',
+        model: model || '未设置',
+        hasApiKey: !!this.config.apiKey,
+        hasAuth: !!(this.axios.defaults.headers && this.axios.defaults.headers['Authorization']),
+        contentType: this.axios.defaults.headers && this.axios.defaults.headers['Content-Type']
       });
       
-      throw new Error(`文档问答失败: ${errorDetails}`);
+      // 添加重试逻辑
+      // 此处可以添加自动重试逻辑，但为避免过度复杂，目前仅记录错误
+      
+      throw new Error(`文档问答失败: ${errorDetails}，请确保API设置正确`);
     }
   }
 

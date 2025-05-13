@@ -391,21 +391,45 @@ export default {
             console.log('验证保存的配置:', savedConfig);
           }
           
-          window.Application.Alert('配置已保存')
-          closeDialog()
+          // 提示用户保存成功并关闭对话框
+          testStatus.value = 'success';
+          testMessage.value = '配置已成功保存!';
+          
+          // 延迟关闭对话框，让用户有时间看到保存成功提示
+          setTimeout(() => {
+            window.Application.Alert('配置已成功保存')
+            closeDialog()
+          }, 1000);
         } catch (e) {
           console.error('配置保存失败', e)
+          testStatus.value = 'error';
+          testMessage.value = '配置保存失败: ' + e.message;
           window.Application.Alert('配置保存失败: ' + e.message)
         }
       } else {
         console.error('PluginStorage不可用，无法保存配置');
+        testStatus.value = 'error';
+        testMessage.value = '无法访问存储，配置保存失败';
         window.Application.Alert('无法访问存储，配置保存失败')
       }
     }
 
     const closeDialog = () => {
-      if (window.Application) {
-        window.Application.CloseDialog()
+      // 确保关闭对话框
+      try {
+        console.log('正在关闭对话框...');
+        if (window.Application && typeof window.Application.CloseDialog === 'function') {
+          window.Application.CloseDialog();
+          console.log('对话框已关闭');
+        } else {
+          console.warn('CloseDialog方法不可用，尝试备选方法');
+          // 尝试备选方法
+          if (window.close) {
+            window.close();
+          }
+        }
+      } catch (e) {
+        console.error('关闭对话框失败:', e);
       }
     }
 

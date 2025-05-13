@@ -1107,7 +1107,7 @@ async function handleDocumentQA() {
                  (hasSelection ? '&selection=true' : '&selection=false');
     
     // 创建文档问答专用任务窗格
-    const taskpane = createTaskpane(qaUrl, 350);
+    const taskpane = createTaskpane(qaUrl, 450);
     
     if (taskpane) {
       console.log('文档问答任务窗格已创建');
@@ -1158,7 +1158,7 @@ async function handleSummarizeDoc() {
                       (hasSelection ? '&selection=true' : '&selection=false');
     
     // 创建文档总结专用任务窗格
-    const taskpane = createTaskpane(summaryUrl, 350);
+    const taskpane = createTaskpane(summaryUrl, 450);
     
     if (taskpane) {
       console.log('文档摘要任务窗格已创建');
