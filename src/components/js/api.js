@@ -99,6 +99,15 @@ class AIAPIClient {
    */
   async proofreadText(text) {
     const model = this.config.models?.proofreadingModel || this.config.models?.defaultModel
+    
+    // 记录有关模型和请求的信息
+    console.log(`使用模型"${model}"执行文本校对，输入长度: ${text.length}字符`);
+    
+    // 检查文本是否太长
+    if (text.length > 6000) {
+      console.warn(`输入文本超过6000字符(${text.length})，可能导致模型输入截断`);
+    }
+    
     const data = {
       model: model,
       messages: [
@@ -110,11 +119,37 @@ class AIAPIClient {
     }
 
     try {
-      const response = await this.axios.post('/v1/chat/completions', data)
-      return response.data.choices[0].message.content
+      console.log(`正在发送API请求到: ${this.axios.defaults.baseURL}/v1/chat/completions`);
+      
+      // 设置更长的超时时间，处理大型输入可能需要更多时间
+      const response = await this.axios.post('/v1/chat/completions', data, {
+        timeout: 120000 // 增加到120秒
+      });
+      
+      // 记录响应信息
+      if (response.data && response.data.choices && response.data.choices.length > 0) {
+        const result = response.data.choices[0].message.content;
+        console.log(`API请求成功，返回${result.length}字符的校对结果`);
+        return result;
+      } else {
+        console.error('API响应格式不正确:', response.data);
+        throw new Error('API返回了不正确的响应格式');
+      }
     } catch (error) {
-      console.error('文本校对请求失败:', error)
-      throw new Error(this.formatErrorMessage(error))
+      console.error('文本校对请求失败:', error);
+      
+      // 增强错误处理，添加更多调试信息
+      let errorDetails = this.formatErrorMessage(error);
+      console.error('详细错误信息:', errorDetails);
+      
+      // 记录更多上下文信息以便调试
+      console.error('API配置:', {
+        url: this.axios.defaults.baseURL,
+        model: model,
+        hasAuth: !!this.axios.defaults.headers['Authorization']
+      });
+      
+      throw new Error(`文本校对失败: ${errorDetails}`);
     }
   }
 
@@ -125,6 +160,15 @@ class AIAPIClient {
    */
   async polishText(text) {
     const model = this.config.models?.polishingModel || this.config.models?.defaultModel
+    
+    // 记录有关模型和请求的信息
+    console.log(`使用模型"${model}"执行文本润色，输入长度: ${text.length}字符`);
+    
+    // 检查文本是否太长
+    if (text.length > 6000) {
+      console.warn(`输入文本超过6000字符(${text.length})，可能导致模型输入截断`);
+    }
+    
     const data = {
       model: model,
       messages: [
@@ -136,11 +180,37 @@ class AIAPIClient {
     }
 
     try {
-      const response = await this.axios.post('/v1/chat/completions', data)
-      return response.data.choices[0].message.content
+      console.log(`正在发送API请求到: ${this.axios.defaults.baseURL}/v1/chat/completions`);
+      
+      // 设置更长的超时时间，处理大型输入可能需要更多时间
+      const response = await this.axios.post('/v1/chat/completions', data, {
+        timeout: 120000 // 增加到120秒
+      });
+      
+      // 记录响应信息
+      if (response.data && response.data.choices && response.data.choices.length > 0) {
+        const result = response.data.choices[0].message.content;
+        console.log(`API请求成功，返回${result.length}字符的润色结果`);
+        return result;
+      } else {
+        console.error('API响应格式不正确:', response.data);
+        throw new Error('API返回了不正确的响应格式');
+      }
     } catch (error) {
-      console.error('文本润色请求失败:', error)
-      throw new Error(this.formatErrorMessage(error))
+      console.error('文本润色请求失败:', error);
+      
+      // 增强错误处理，添加更多调试信息
+      let errorDetails = this.formatErrorMessage(error);
+      console.error('详细错误信息:', errorDetails);
+      
+      // 记录更多上下文信息以便调试
+      console.error('API配置:', {
+        url: this.axios.defaults.baseURL,
+        model: model,
+        hasAuth: !!this.axios.defaults.headers['Authorization']
+      });
+      
+      throw new Error(`文本润色失败: ${errorDetails}`);
     }
   }
 
@@ -151,6 +221,15 @@ class AIAPIClient {
    */
   async summarizeText(text) {
     const model = this.config.models?.summarizationModel || this.config.models?.defaultModel
+    
+    // 记录有关模型和请求的信息
+    console.log(`使用模型"${model}"执行文本摘要，输入长度: ${text.length}字符`);
+    
+    // 检查文本是否太长
+    if (text.length > 6000) {
+      console.warn(`输入文本超过6000字符(${text.length})，可能导致模型输入截断`);
+    }
+    
     const data = {
       model: model,
       messages: [
@@ -162,11 +241,37 @@ class AIAPIClient {
     }
 
     try {
-      const response = await this.axios.post('/v1/chat/completions', data)
-      return response.data.choices[0].message.content
+      console.log(`正在发送API请求到: ${this.axios.defaults.baseURL}/v1/chat/completions`);
+      
+      // 设置更长的超时时间，处理大型输入可能需要更多时间
+      const response = await this.axios.post('/v1/chat/completions', data, {
+        timeout: 120000 // 增加到120秒
+      });
+      
+      // 记录响应信息
+      if (response.data && response.data.choices && response.data.choices.length > 0) {
+        const result = response.data.choices[0].message.content;
+        console.log(`API请求成功，返回${result.length}字符的摘要结果`);
+        return result;
+      } else {
+        console.error('API响应格式不正确:', response.data);
+        throw new Error('API返回了不正确的响应格式');
+      }
     } catch (error) {
-      console.error('文本摘要请求失败:', error)
-      throw new Error(this.formatErrorMessage(error))
+      console.error('文本摘要请求失败:', error);
+      
+      // 增强错误处理，添加更多调试信息
+      let errorDetails = this.formatErrorMessage(error);
+      console.error('详细错误信息:', errorDetails);
+      
+      // 记录更多上下文信息以便调试
+      console.error('API配置:', {
+        url: this.axios.defaults.baseURL,
+        model: model,
+        hasAuth: !!this.axios.defaults.headers['Authorization']
+      });
+      
+      throw new Error(`生成摘要失败: ${errorDetails}`);
     }
   }
 
@@ -177,6 +282,18 @@ class AIAPIClient {
    */
   async summarizeDocument(text) {
     const model = this.config.models?.summarizationModel || this.config.models?.defaultModel
+    
+    // 记录有关模型和请求的信息
+    console.log(`使用模型"${model}"执行全文总结，输入长度: ${text.length}字符`);
+    
+    // 检查文本是否太长
+    if (text.length > 10000) {
+      console.warn(`输入文本超过10000字符(${text.length})，可能导致模型输入截断，将尝试分段处理`);
+      
+      // 这里可以添加分段处理逻辑，如果文档过长
+      // 例如：分割文档为多个部分，分别处理后合并结果
+    }
+    
     const data = {
       model: model,
       messages: [
@@ -188,11 +305,37 @@ class AIAPIClient {
     }
 
     try {
-      const response = await this.axios.post('/v1/chat/completions', data)
-      return response.data.choices[0].message.content
+      console.log(`正在发送API请求到: ${this.axios.defaults.baseURL}/v1/chat/completions`);
+      
+      // 设置更长的超时时间，处理大型输入可能需要更多时间
+      const response = await this.axios.post('/v1/chat/completions', data, {
+        timeout: 180000 // 增加到180秒，因为全文总结可能需要更长时间
+      });
+      
+      // 记录响应信息
+      if (response.data && response.data.choices && response.data.choices.length > 0) {
+        const result = response.data.choices[0].message.content;
+        console.log(`API请求成功，返回${result.length}字符的全文总结结果`);
+        return result;
+      } else {
+        console.error('API响应格式不正确:', response.data);
+        throw new Error('API返回了不正确的响应格式');
+      }
     } catch (error) {
-      console.error('全文总结请求失败:', error)
-      throw new Error(this.formatErrorMessage(error))
+      console.error('全文总结请求失败:', error);
+      
+      // 增强错误处理，添加更多调试信息
+      let errorDetails = this.formatErrorMessage(error);
+      console.error('详细错误信息:', errorDetails);
+      
+      // 记录更多上下文信息以便调试
+      console.error('API配置:', {
+        url: this.axios.defaults.baseURL,
+        model: model,
+        hasAuth: !!this.axios.defaults.headers['Authorization']
+      });
+      
+      throw new Error(`全文总结失败: ${errorDetails}`);
     }
   }
 
@@ -278,10 +421,22 @@ class AIAPIClient {
    */
   async documentQA(docContent, question) {
     const model = this.config.models?.qaModel || this.config.models?.defaultModel
+    
+    // 记录有关模型和请求的信息
+    console.log(`使用模型"${model}"执行文档问答，文档长度: ${docContent.length}字符，问题: "${question}"`);
+    
+    // 检查文本是否太长
+    if (docContent.length > 8000) {
+      console.warn(`文档内容超过8000字符(${docContent.length})，可能导致模型输入截断，将尝试提取相关部分`);
+      
+      // 这里可以添加智能提取逻辑，例如根据问题关键词提取相关段落
+      // 或者根据文档结构进行分段处理
+    }
+    
     const data = {
       model: model,
       messages: [
-        { role: 'system', content: '你是一个专业的文档助手，根据文档内容回答用户问题。' },
+        { role: 'system', content: '你是一个专业的文档助手，根据文档内容回答用户问题。请提供准确、简洁且有帮助的回答。' },
         { role: 'user', content: `文档内容：${docContent}\n\n问题：${question}` }
       ],
       max_tokens: this.config.options?.maxTokens || 2000,
@@ -289,11 +444,37 @@ class AIAPIClient {
     }
 
     try {
-      const response = await this.axios.post('/v1/chat/completions', data)
-      return response.data.choices[0].message.content
+      console.log(`正在发送API请求到: ${this.axios.defaults.baseURL}/v1/chat/completions`);
+      
+      // 设置更长的超时时间，处理大型输入可能需要更多时间
+      const response = await this.axios.post('/v1/chat/completions', data, {
+        timeout: 120000 // 增加到120秒
+      });
+      
+      // 记录响应信息
+      if (response.data && response.data.choices && response.data.choices.length > 0) {
+        const result = response.data.choices[0].message.content;
+        console.log(`API请求成功，返回${result.length}字符的问答结果`);
+        return result;
+      } else {
+        console.error('API响应格式不正确:', response.data);
+        throw new Error('API返回了不正确的响应格式');
+      }
     } catch (error) {
-      console.error('文档问答请求失败:', error)
-      throw new Error(this.formatErrorMessage(error))
+      console.error('文档问答请求失败:', error);
+      
+      // 增强错误处理，添加更多调试信息
+      let errorDetails = this.formatErrorMessage(error);
+      console.error('详细错误信息:', errorDetails);
+      
+      // 记录更多上下文信息以便调试
+      console.error('API配置:', {
+        url: this.axios.defaults.baseURL,
+        model: model,
+        hasAuth: !!this.axios.defaults.headers['Authorization']
+      });
+      
+      throw new Error(`文档问答失败: ${errorDetails}`);
     }
   }
 

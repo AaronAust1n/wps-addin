@@ -420,131 +420,373 @@ const ERROR_TYPES = {
   GENERAL: 'general_error'
 };
 
-// 新增悬浮框和流式展示辅助函数
-function showFloatingOverlay(message) {
-  const overlay = document.createElement('div');
-  overlay.id = 'floating-overlay-' + new Date().getTime();
-  overlay.style.position = 'fixed';
-  overlay.style.top = '10px';
-  overlay.style.right = '10px';
-  overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
-  overlay.style.color = '#fff';
-  overlay.style.padding = '10px';
-  overlay.style.borderRadius = '5px';
-  overlay.style.zIndex = 10000;
-  overlay.style.maxWidth = '40%';
-  overlay.style.fontSize = '14px';
-  overlay.innerHTML = message;
-  document.body.appendChild(overlay);
-  return overlay.id;
-}
-
-function updateFloatingOverlay(overlayId, content) {
-  const overlay = document.getElementById(overlayId);
-  if (overlay) {
-    overlay.innerHTML = content;
+// 添加创建悬浮提示框的函数
+function createFloatingBox(message, isLoading = false) {
+  // 移除旧的悬浮框
+  const oldBox = document.getElementById('wps-floating-box');
+  if (oldBox) {
+    oldBox.remove();
   }
-}
 
-function removeFloatingOverlay(overlayId) {
-  const overlay = document.getElementById(overlayId);
-  if (overlay) {
-    overlay.remove();
-  }
-}
-
-function streamText(overlayId, fullText, callback) {
-  let i = 0;
-  const interval = setInterval(() => {
-    i += 50;
-    if (i >= fullText.length) {
-      updateFloatingOverlay(overlayId, fullText);
-      clearInterval(interval);
-      if (callback) callback();
-    } else {
-      updateFloatingOverlay(overlayId, fullText.substring(0, i) + '...');
+  // 创建新的悬浮框
+  const floatingBox = document.createElement('div');
+  floatingBox.id = 'wps-floating-box';
+  floatingBox.style.cssText = `
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    max-width: 400px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    z-index: 9999;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    backdrop-filter: blur(5px);
+    transition: opacity 0.3s;
+    opacity: 0.9;
+  `;
+  
+  // 添加消息
+  const messageDiv = document.createElement('div');
+  messageDiv.textContent = message;
+  floatingBox.appendChild(messageDiv);
+  
+  // 如果是加载状态，添加加载动画
+  if (isLoading) {
+    const loadingDiv = document.createElement('div');
+    loadingDiv.style.cssText = `
+      margin-top: 10px;
+      text-align: center;
+    `;
+    
+    const spinner = document.createElement('div');
+    spinner.style.cssText = `
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    `;
+    
+    // 添加动画样式
+    if (!document.getElementById('floating-box-styles')) {
+      const style = document.createElement('style');
+      style.id = 'floating-box-styles';
+      style.textContent = `
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        #wps-floating-box:hover {
+          opacity: 1;
+        }
+      `;
+      document.head.appendChild(style);
     }
-  }, 50);
+    
+    loadingDiv.appendChild(spinner);
+    floatingBox.appendChild(loadingDiv);
+  }
+  
+  // 添加关闭按钮
+  const closeButton = document.createElement('div');
+  closeButton.textContent = '×';
+  closeButton.style.cssText = `
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 18px;
+    color: #ccc;
+  `;
+  closeButton.onclick = () => floatingBox.remove();
+  floatingBox.appendChild(closeButton);
+  
+  document.body.appendChild(floatingBox);
+  
+  // 自动淡出
+  if (!isLoading) {
+    setTimeout(() => {
+      floatingBox.style.opacity = '0';
+      setTimeout(() => floatingBox.remove(), 300);
+    }, 5000);
+  }
+  
+  return floatingBox;
 }
 
-// 修改 processText 函数，使用悬浮框及流式展示
+// 更新悬浮框内容
+function updateFloatingBox(text, isComplete = false) {
+  const floatingBox = document.getElementById('wps-floating-box');
+  if (!floatingBox) return;
+  
+  // 更新消息
+  const messageDiv = floatingBox.querySelector('div');
+  if (messageDiv) {
+    messageDiv.textContent = text;
+  }
+  
+  // 如果完成，移除加载动画
+  if (isComplete) {
+    const loadingDiv = floatingBox.querySelector('div:nth-child(2)');
+    if (loadingDiv) {
+      loadingDiv.remove();
+    }
+    
+    // 设置自动淡出
+    setTimeout(() => {
+      floatingBox.style.opacity = '0';
+      setTimeout(() => floatingBox.remove(), 300);
+    }, 5000);
+  }
+}
+
+// 处理文本的通用方法 (整合了processSelection和processParagraph)
 async function processText(action, text, actionSource = 'selection') {
   console.log(`开始处理${actionSource === 'selection' ? '选中文本' : '段落'}: ${action}, 文本长度: ${text.length}`);
   
-  // 1. 显示悬浮框而非模态加载对话框
-  let overlayId = showFloatingOverlay(`正在${getActionName(action)}...`);
+  // 创建半透明悬浮框显示加载状态
+  createFloatingBox(`WPS AI助手正在${getActionName(action)}...`, true);
   
-  // 2. 获取并验证API配置
-  console.log('加载API配置');
-  const config = getConfig();
-  if (!config) {
-    removeFloatingOverlay(overlayId);
-    throw { type: ERROR_TYPES.CONFIG, message: '无法获取API配置', details: '请检查是否已正确设置API' };
-  }
-  
-  apiClient.updateConfig(config);
-  console.log('API配置已更新', { 
-    apiUrl: config.apiUrl, 
-    model: config.models?.defaultModel || '未指定', 
-    specificModel: config.models?.[`${action}Model`] || '未指定'
-  });
-  
-  // 3. 调用相应的API处理文本
-  let result = '';
-  console.log(`调用API: ${action}, 开始时间:`, new Date().toISOString());
   try {
-    switch (action) {
-      case 'continue':
-        result = await apiClient.continueText(text);
-        console.log('文本续写API调用完成，结果长度:', result.length);
-        break;
-      case 'proofread':
-        result = await apiClient.proofreadText(text);
-        console.log('文本校对API调用完成，结果长度:', result.length);
-        break;
-      case 'polish':
-        result = await apiClient.polishText(text);
-        console.log('文本润色API调用完成，结果长度:', result.length);
-        break;
-      case 'summarize':
-        result = await apiClient.summarizeText(text);
-        console.log('文本摘要API调用完成，结果长度:', result.length);
-        break;
-      case 'summarizeDocument':
-        result = await apiClient.summarizeDocument(text);
-        console.log('全文总结API调用完成，结果长度:', result.length);
-        break;
-      default:
-        throw { type: ERROR_TYPES.GENERAL, message: `未知的处理类型: ${action}`, details: '请选择有效的文本处理类型' };
+    // 获取并验证API配置
+    console.log('加载API配置');
+    const config = getConfig();
+    if (!config) {
+      throw {
+        type: ERROR_TYPES.CONFIG,
+        message: '无法获取API配置',
+        details: '请检查是否已正确设置API'
+      };
     }
-  } catch (apiError) {
-    removeFloatingOverlay(overlayId);
-    console.error(`API调用失败: ${action}`, apiError);
-    if (apiError.request && !apiError.response) {
-      throw { type: ERROR_TYPES.NETWORK, message: '网络连接失败，无法连接到API服务器', details: apiError.message, originalError: apiError };
-    } else if (apiError.response) {
-      throw { type: ERROR_TYPES.API, message: `API服务器返回错误 (${apiError.response.status})`, details: apiError.response.data?.error?.message || JSON.stringify(apiError.response.data), originalError: apiError };
+    
+    apiClient.updateConfig(config);
+    console.log('API配置已更新', {
+      apiUrl: config.apiUrl,
+      model: config.models?.defaultModel || '未指定',
+      specificModel: config.models?.[`${action}Model`] || '未指定'
+    });
+    
+    // 调用相应的API处理文本
+    let result = '';
+    console.log(`调用API: ${action}, 开始时间:`, new Date().toISOString());
+    
+    try {
+      switch (action) {
+        case 'continue':
+          result = await apiClient.continueText(text);
+          console.log('文本续写API调用完成，结果长度:', result.length);
+          break;
+        case 'proofread':
+          result = await apiClient.proofreadText(text);
+          console.log('文本校对API调用完成，结果长度:', result.length);
+          break;
+        case 'polish':
+          result = await apiClient.polishText(text);
+          console.log('文本润色API调用完成，结果长度:', result.length);
+          break;
+        default:
+          throw {
+            type: ERROR_TYPES.GENERAL,
+            message: `未知的处理类型: ${action}`,
+            details: '请选择有效的文本处理类型'
+          };
+      }
+    } catch (apiError) {
+      // 处理API调用错误
+      console.error(`API调用失败: ${action}`, apiError);
+      
+      // 区分网络错误和API响应错误
+      if (apiError.request && !apiError.response) {
+        throw {
+          type: ERROR_TYPES.NETWORK,
+          message: '网络连接失败，无法连接到API服务器',
+          details: apiError.message,
+          originalError: apiError
+        };
+      } else if (apiError.response) {
+        throw {
+          type: ERROR_TYPES.API,
+          message: `API服务器返回错误 (${apiError.response.status})`,
+          details: apiError.response.data?.error?.message || JSON.stringify(apiError.response.data),
+          originalError: apiError
+        };
+      } else {
+        throw {
+          type: ERROR_TYPES.API,
+          message: '调用API时出错',
+          details: apiError.message,
+          originalError: apiError
+        };
+      }
+    }
+    
+    // 插入处理结果到文档 - 使用流式输出
+    if (result && result.length > 0) {
+      // 更新悬浮框显示正在插入文本
+      updateFloatingBox(`正在插入${getActionName(action)}结果...`, true);
+      
+      // 流式插入文本
+      let insertSuccess = false;
+      try {
+        if (action === 'continue') {
+          // 续写是在原文后添加内容
+          insertSuccess = await streamText(result);
+        } else {
+          // 校对和润色是替换原文或添加新行
+          insertSuccess = await streamText('\n' + result);
+        }
+        
+        console.log('插入处理结果:', insertSuccess ? '成功' : '失败');
+        
+        if (!insertSuccess) {
+          throw {
+            type: ERROR_TYPES.DOCUMENT,
+            message: '无法将处理结果插入文档',
+            details: '请检查文档是否可编辑或者是否有足够权限'
+          };
+        }
+      } catch (docError) {
+        // 文档操作错误处理
+        if (docError.type === ERROR_TYPES.DOCUMENT) {
+          throw docError; // 如果已经是格式化的错误对象，直接抛出
+        } else {
+          throw {
+            type: ERROR_TYPES.DOCUMENT,
+            message: '文档操作失败',
+            details: docError.message,
+            originalError: docError
+          };
+        }
+      }
+    }
+    
+    // 更新悬浮框显示完成信息
+    updateFloatingBox(`${getActionName(action)}完成！`, true);
+    
+    console.log(`${action}处理完成, 结束时间:`, new Date().toISOString());
+    
+    return true; // 处理成功
+  } catch (e) {
+    // 错误处理：区分不同类型的错误
+    console.error(`${action}处理出错:`, e);
+    
+    // 根据错误类型显示不同的错误消息
+    let errorTitle = `${getActionName(action)}失败`;
+    let errorMessage = '';
+    let errorDetails = '';
+    
+    // 格式化错误信息
+    if (e.type) {
+      // 已分类的错误
+      switch (e.type) {
+        case ERROR_TYPES.NETWORK:
+          errorTitle = '网络连接错误';
+          errorMessage = e.message;
+          errorDetails = e.details;
+          break;
+        case ERROR_TYPES.API:
+          errorTitle = 'API服务错误';
+          errorMessage = e.message;
+          errorDetails = e.details;
+          break;
+        case ERROR_TYPES.DOCUMENT:
+          errorTitle = '文档操作错误';
+          errorMessage = e.message;
+          errorDetails = e.details;
+          break;
+        case ERROR_TYPES.CONFIG:
+          errorTitle = '配置错误';
+          errorMessage = e.message;
+          errorDetails = e.details;
+          break;
+        default:
+          errorMessage = e.message;
+          errorDetails = e.details || '';
+      }
     } else {
-      throw { type: ERROR_TYPES.API, message: '调用API时出错', details: apiError.message, originalError: apiError };
+      // 未分类的错误
+      errorMessage = e.message || '未知错误';
+      
+      // 尝试分析错误类型
+      if (e.name === 'NetworkError' || (e.message && e.message.includes('network'))) {
+        errorTitle = '网络连接错误';
+      } else if (e.response || (e.message && e.message.includes('API'))) {
+        errorTitle = 'API服务错误';
+      }
     }
+    
+    // 显示错误信息给用户
+    const fullErrorMessage = errorDetails ? `${errorMessage}\n\n${errorDetails}` : errorMessage;
+    
+    // 更新悬浮框显示错误信息
+    updateFloatingBox(`${errorTitle}: ${errorMessage}`, true);
+    
+    try {
+      window.Application.Alert(`${errorTitle}: ${fullErrorMessage}`);
+    } catch (alertError) {
+      console.error('无法显示错误提示:', alertError);
+      console.log(`错误: ${errorTitle}: ${fullErrorMessage}`);
+    }
+    
+    return false; // 处理失败
   }
-  
-  // 4. 成功获取结果后，移除原悬浮框并启动流式展示新内容
-  removeFloatingOverlay(overlayId);
-  const streamOverlayId = showFloatingOverlay(getActionName(action) + '中...');
-  streamText(streamOverlayId, result, () => {
-    let insertSuccess = false;
-    if (action === 'continue') {
-      insertSuccess = insertTextAtCursor(result);
-    } else {
-      insertSuccess = insertTextAtCursor('\n' + result);
-    }
-    console.log('插入处理结果:', insertSuccess ? '成功' : '失败');
-    removeFloatingOverlay(streamOverlayId);
+}
+
+// 流式插入文本
+async function streamText(text) {
+  return new Promise((resolve) => {
+    // 每次插入的字符数
+    const chunkSize = 10;
+    // 插入间隔时间(毫秒)
+    const delay = 10;
+    
+    let position = 0;
+    const totalLength = text.length;
+    
+    // 定时器插入文本
+    const insertInterval = setInterval(() => {
+      // 计算当前应该插入的文本块
+      const end = Math.min(position + chunkSize, totalLength);
+      const chunk = text.substring(position, end);
+      
+      // 插入文本块
+      if (chunk) {
+        try {
+          const selection = window.Application.ActiveDocument.Application.Selection;
+          if (selection && typeof selection.TypeText === 'function') {
+            selection.TypeText(chunk);
+          } else {
+            // 如果TypeText不可用，尝试一次性插入剩余文本
+            console.warn('TypeText方法不可用，尝试一次性插入');
+            insertTextAtCursor(text.substring(position));
+            clearInterval(insertInterval);
+            resolve(true);
+            return;
+          }
+        } catch (e) {
+          console.error('流式插入文本块失败:', e);
+          clearInterval(insertInterval);
+          resolve(false);
+          return;
+        }
+      }
+      
+      // 更新位置
+      position = end;
+      
+      // 如果已经插入完所有文本，清除定时器
+      if (position >= totalLength) {
+        clearInterval(insertInterval);
+        resolve(true);
+      }
+    }, delay);
   });
-  
-  console.log(`${action}处理完成, 结束时间:`, new Date().toISOString());
-  return true;
 }
 
 // 处理选中文本的方法 (简化后的版本，调用通用处理函数)
@@ -566,10 +808,6 @@ function getActionName(action) {
       return '文本校对'
     case 'polish':
       return '文本润色'
-    case 'summarize':
-      return '文本摘要'
-    case 'summarizeDocument':
-      return '全文总结'
     default:
       return '处理'
   }
@@ -613,26 +851,57 @@ function handleDocumentQA() {
 // 全文总结功能
 function handleSummarizeDoc() {
   console.log('全文总结功能被触发');
-  const doc = window.Application.ActiveDocument;
+  
+  const doc = window.Application.ActiveDocument
   if (!doc) {
     console.error('没有打开文档');
-    window.Application.Alert('当前没有打开任何文档');
-    return;
+    window.Application.Alert('当前没有打开任何文档')
+    return
   }
   
   if (!checkConfigured()) {
     console.warn('API未配置，无法使用全文总结功能');
-    return;
+    return
   }
   
-  const selectedText = getSelectedText();
-  if (selectedText && selectedText.trim() !== '') {
-    console.log('检测到选中文本，将对选中部分进行摘要');
-    processText('summarize', selectedText, 'selection');
-  } else {
-    console.log('未选中文本，将对全文进行总结');
-    const fullText = getDocumentText();
-    processText('summarizeDocument', fullText, 'document');
+  try {
+    // 检查是否有选中文本
+    const selectedText = getSelectedText();
+    
+    if (selectedText && selectedText.trim() !== '') {
+      // 如果有选中文本，创建侧边栏处理选中部分
+      console.log('对选中部分进行总结，长度:', selectedText.length);
+      
+      // 创建侧边栏并导航到选中文本总结页面
+      const taskpaneUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/summary?mode=selection';
+      console.log('侧边栏URL:', taskpaneUrl);
+      
+      const taskpane = createTaskpane(taskpaneUrl);
+      
+      if (taskpane) {
+        console.log('选中文本总结侧边栏已创建成功');
+      } else {
+        console.error('创建选中文本总结侧边栏失败');
+      }
+    } else {
+      // 无选中文本，进行全文总结
+      console.log('进行全文总结');
+      
+      // 创建侧边栏并导航到全文总结页面
+      const taskpaneUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/summary?mode=document';
+      console.log('侧边栏URL:', taskpaneUrl);
+      
+      const taskpane = createTaskpane(taskpaneUrl);
+      
+      if (taskpane) {
+        console.log('全文总结侧边栏已创建成功');
+      } else {
+        console.error('创建全文总结侧边栏失败');
+      }
+    }
+  } catch (e) {
+    console.error('全文总结功能出错:', e);
+    window.Application.Alert('启动总结功能失败: ' + e.message);
   }
 }
 
@@ -692,7 +961,7 @@ async function handleContinueText() {
   
   try {
     // 检查是否有选中文本
-  const selectedText = getSelectedText()
+    const selectedText = getSelectedText()
     console.log(`选中文本检查: ${selectedText ? '有选中文本' : '无选中文本'}`);
     
     if (!selectedText || selectedText.trim() === '') {
@@ -738,7 +1007,7 @@ async function handleProofreadText() {
   
   try {
     // 检查是否有选中文本
-  const selectedText = getSelectedText()
+    const selectedText = getSelectedText()
     console.log(`选中文本检查: ${selectedText ? '有选中文本' : '无选中文本'}`);
     
     if (!selectedText || selectedText.trim() === '') {
