@@ -358,14 +358,35 @@ function createTaskpane(url, width = 300) {
       throw new Error('window.Application对象不可用');
     }
     
-    // 避免方法名大小写错误
-    const createMethod = window.Application.CreateTaskPane || window.Application.CreateTaskpane;
-    if (typeof createMethod !== 'function') {
-      throw new Error('CreateTaskPane方法不可用');
+    // 尝试创建任务窗格 - 直接使用Application对象，不使用createMethod变量
+    // 根据WPS API文档，CreateTaskpane方法应该是带参数的
+    let taskpane = null;
+    
+    // 尝试使用不同的任务窗格创建方法
+    try {
+      // 使用标准API（根据文档规范）
+      if (typeof window.Application.CreateTaskpane === 'function') {
+        taskpane = window.Application.CreateTaskpane(url);
+        console.log('使用CreateTaskpane方法(带URL参数)成功创建任务窗格');
+      } 
+      // 尝试不带参数的版本
+      else if (typeof window.Application.CreateTaskpane === 'function') {
+        taskpane = window.Application.CreateTaskpane();
+        console.log('使用CreateTaskpane方法(无参数)成功创建任务窗格');
+      }
+      // 尝试大写版本
+      else if (typeof window.Application.CreateTaskPane === 'function') {
+        taskpane = window.Application.CreateTaskPane(url);
+        console.log('使用CreateTaskPane方法(大写P)成功创建任务窗格');
+      }
+      else {
+        throw new Error('CreateTaskpane方法不可用');
+      }
+    } catch (apiError) {
+      console.error('API创建任务窗格失败，详细错误:', apiError);
+      throw apiError;
     }
     
-    // 创建任务窗格
-    const taskpane = createMethod();
     if (!taskpane) {
       throw new Error('任务窗格创建失败，返回为空');
     }
@@ -385,9 +406,12 @@ function createTaskpane(url, width = 300) {
     taskpane.Width = width;
     console.log('已设置任务窗格宽度:', width);
     
-    // 导航到指定URL
-    taskpane.Navigate(url);
-    console.log('已导航到URL:', url);
+    // 如果是带参数创建的方式，不需要再次导航
+    if (url && taskpane.Navigate) {
+      // 导航到指定URL
+      taskpane.Navigate(url);
+      console.log('已导航到URL:', url);
+    }
     
     // 设置可见
     taskpane.Visible = true;
@@ -415,6 +439,10 @@ function createTaskpane(url, width = 300) {
       }
       
       console.log('使用window.open创建窗口成功');
+      
+      // 设置右侧停靠位置常量
+      const dockPositionRight = 
+        (window.Application && window.Application.Enum && window.Application.Enum.msoCTPDockPositionRight) || 2;
       
       // 返回一个类似TaskPane的对象，以保持API兼容性
       return {
@@ -941,20 +969,45 @@ function saveHistory(type, input, output) {
 // 安全的警告显示函数
 function safeAlert(message) {
   console.log('安全警告:', message);
-  try {
-    if (typeof window.Application.Alert === 'function') {
-      window.Application.Alert(message);
-    } else {
-      // 如果内置Alert不可用，使用原生alert
+  
+  // 防止循环触发
+  if (window._inSafeAlert) {
+    console.warn('避免递归调用safeAlert');
+    try {
       alert(message);
+    } catch (e) {
+      console.error('所有警告方式均失败');
+    }
+    return;
+  }
+  
+  window._inSafeAlert = true;
+  
+  try {
+    // 首选WPS官方的Alert方法
+    if (window.Application && typeof window.Application.Alert === 'function') {
+      window.Application.Alert(message);
+      console.log('使用WPS Alert显示警告成功');
+    } 
+    // 次选辅助方法alert
+    else if (typeof window.alert === 'function') {
+      window.alert(message);
+      console.log('使用window.alert显示警告成功');
+    }
+    // 最后选择console.error作为最后的提示方式
+    else {
+      console.error('警告:', message);
     }
   } catch (e) {
-    console.error('所有警告方法都失败:', e);
+    console.error('显示警告失败:', e);
     try {
       alert(message);
     } catch (alertError) {
-      console.error('原生alert也失败:', alertError);
+      console.error('所有警告方式均失败');
     }
+  } finally {
+    // 清除标记
+    window._inSafeAlert = false;
   }
 }
 
@@ -1339,26 +1392,39 @@ export default {
 function getExistingTaskpane(id) {
   try {
     if (!window.Application) {
+      console.warn('window.Application对象不可用');
       return null;
     }
     
-    // 检查GetTaskpane方法是否存在
-    const getMethod = window.Application.GetTaskpane || window.Application.GetTaskPane;
-    if (typeof getMethod !== 'function') {
-      console.warn('GetTaskpane方法不可用');
+    // 尝试通过不同名称获取任务窗格
+    let taskpane = null;
+    
+    try {
+      // 先尝试标准方法（小写p版本）
+      if (typeof window.Application.GetTaskpane === 'function') {
+        taskpane = window.Application.GetTaskpane(id);
+        if (taskpane) {
+          console.log('使用GetTaskpane方法成功获取任务窗格');
+          return taskpane;
+        }
+      }
+      
+      // 再尝试大写P版本
+      if (typeof window.Application.GetTaskPane === 'function') {
+        taskpane = window.Application.GetTaskPane(id);
+        if (taskpane) {
+          console.log('使用GetTaskPane方法成功获取任务窗格');
+          return taskpane;
+        }
+      }
+      
+      // 如果两种方法都不可用或没找到
+      console.log('未找到ID为', id, '的任务窗格');
+      return null;
+    } catch (apiError) {
+      console.error('API获取任务窗格失败:', apiError);
       return null;
     }
-    
-    // 尝试通过ID获取任务窗格
-    const taskpane = getMethod(id);
-    
-    if (taskpane) {
-      console.log('成功获取ID为', id, '的任务窗格');
-      return taskpane;
-    }
-    
-    console.log('未找到ID为', id, '的任务窗格');
-    return null;
   } catch (e) {
     console.error('获取任务窗格失败:', e);
     return null;
