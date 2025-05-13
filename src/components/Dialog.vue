@@ -137,8 +137,13 @@
         </div>
       </div>
       <div class="dialog-footer">
-        <button @click="saveConfig" class="btn-primary">保存</button>
-        <button @click="closeDialog" class="btn-secondary">取消</button>
+        <div class="save-status" v-if="testStatus === 'success' && testMessage.includes('已成功保存')">
+          <span class="success">{{ testMessage }}</span>
+        </div>
+        <div class="action-buttons">
+          <button @click="saveConfig" class="btn-primary">保存</button>
+          <button @click="closeDialog" class="btn-secondary">取消</button>
+        </div>
       </div>
     </div>
     
@@ -391,7 +396,7 @@ export default {
             console.log('验证保存的配置:', savedConfig);
           }
           
-          // 提示用户保存成功并关闭对话框
+          // 提示用户保存成功
           testStatus.value = 'success';
           testMessage.value = '配置已成功保存!';
           
@@ -540,9 +545,20 @@ label {
 }
 
 .dialog-footer {
-  text-align: right;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding-top: 10px;
   border-top: 1px solid #eee;
+}
+
+.action-buttons {
+  display: flex;
+}
+
+.save-status {
+  font-size: 14px;
+  margin-right: 10px;
 }
 
 button {

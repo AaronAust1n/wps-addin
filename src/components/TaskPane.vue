@@ -39,7 +39,7 @@
           <h3>文档问答</h3>
           <button @click="closePanel" class="close-btn">&times;</button>
         </div>
-        <div class="qa-history" ref="qaHistory">
+        <div class="qa-history" ref="qaHistoryRef">
           <div v-for="(item, index) in qaHistory" :key="index" :class="['qa-item', item.role]">
             <div class="qa-role">{{ item.role === 'user' ? '问题' : '回答' }}</div>
             <div class="qa-content">{{ item.content }}</div>
@@ -49,13 +49,14 @@
           <input 
             type="text" 
             v-model="question" 
-            @keyup.enter="askQuestion" 
+            @keydown.enter.prevent="submitQuestion" 
             placeholder="请输入问题..." 
             class="qa-input"
             :disabled="isProcessing"
+            ref="questionInput"
           />
           <button 
-            @click="askQuestion" 
+            @click="submitQuestion" 
             class="qa-submit" 
             :disabled="isProcessing || !question.trim()"
           >
@@ -88,6 +89,9 @@
         <div class="sidebar-footer">
           <button @click="refreshSummary" class="refresh-btn" :disabled="isSummarizing">
             {{ isSummarizing ? '生成中...' : '重新生成' }}
+          </button>
+          <button @click="copySummary" class="copy-btn" :disabled="!summaryContent">
+            复制内容
           </button>
         </div>
       </div>
@@ -391,9 +395,25 @@ export default {
       statusMessage.value = '文档问答已启动'
     }
 
+    // 问题提交处理函数
+    const submitQuestion = () => {
+      console.log('提交问题按钮被点击');
+      if (!question.value.trim() || isProcessing.value) {
+        console.log('问题为空或正在处理中，忽略提交');
+        return;
+      }
+      
+      // 调用问答处理函数
+      askQuestion();
+    }
+    
     // 发送问题
     const askQuestion = async () => {
-      if (!question.value.trim()) return
+      console.log('执行askQuestion函数');
+      if (!question.value.trim()) {
+        console.log('问题为空，放弃处理');
+        return;
+      }
       
       console.log('开始处理问题:', question.value);
       
@@ -424,51 +444,66 @@ export default {
         }
         
         if (!docContent) {
-          throw new Error('无法获取文档内容')
+          console.error('无法获取文档内容');
+          throw new Error('无法获取文档内容');
         }
         
         // 更新API客户端配置
         console.log('更新API配置...');
-        const config = getConfig()
+        const config = getConfig();
         if (!config) {
+          console.error('API配置未找到');
           throw new Error('无法获取API配置，请先在设置中配置API');
         }
-        apiClient.updateConfig(config)
+        apiClient.updateConfig(config);
         
-        console.log('发送问答请求...');
+        console.log('发送问答请求到API:', config.apiUrl);
         // 调用API获取回答
-        const answer = await apiClient.documentQA(docContent, userQuestion)
-        console.log('问答完成，答案长度:', answer.length);
+        const answer = await apiClient.documentQA(docContent, userQuestion);
+        console.log('问答完成，答案长度:', answer ? answer.length : 0);
+        
+        if (!answer) {
+          console.error('API返回空答案');
+          throw new Error('获取到的回答为空');
+        }
         
         // 添加回答到历史
         qaHistory.value.push({
           role: 'assistant',
           content: answer
-        })
+        });
         
         // 滚动到底部
-        await nextTick()
-        const element = document.querySelector('.qa-history')
+        console.log('尝试滚动到对话历史底部');
+        await nextTick();
+        const element = document.querySelector('.qa-history');
         if (element) {
           console.log('滚动到底部');
-          element.scrollTop = element.scrollHeight
+          element.scrollTop = element.scrollHeight;
         } else {
           console.warn('未找到.qa-history元素，无法滚动');
         }
         
-        statusMessage.value = '问题回答完成'
+        statusMessage.value = '问题回答完成';
+        
+        // 将焦点放回输入框
+        console.log('尝试将焦点放回输入框');
+        await nextTick();
+        if (document.querySelector('.qa-input')) {
+          document.querySelector('.qa-input').focus();
+        }
       } catch (e) {
-        console.error('问答失败:', e)
+        console.error('文档问答处理失败:', e);
         
         // 添加错误信息到历史
         qaHistory.value.push({
           role: 'assistant',
           content: '回答失败: ' + e.message
-        })
+        });
         
-        statusMessage.value = '问答失败: ' + e.message
+        statusMessage.value = '问答失败: ' + e.message;
       } finally {
-        isProcessing.value = false
+        isProcessing.value = false;
       }
     }
 
@@ -521,6 +556,56 @@ export default {
         statusMessage.value = '摘要生成失败: ' + e.message
       } finally {
         isSummarizing.value = false
+      }
+    }
+
+    // 复制摘要内容到剪贴板
+    const copySummary = () => {
+      if (!summaryContent.value) return
+      
+      try {
+        // 使用Clipboard API复制文本
+        navigator.clipboard.writeText(summaryContent.value)
+          .then(() => {
+            statusMessage.value = '摘要已复制到剪贴板'
+            setTimeout(() => {
+              statusMessage.value = '准备就绪'
+            }, 2000)
+          })
+          .catch(err => {
+            console.error('复制到剪贴板失败:', err)
+            statusMessage.value = '复制失败: ' + err.message
+            
+            // 备用方法：创建临时textarea
+            fallbackCopy(summaryContent.value)
+          })
+      } catch (e) {
+        console.error('复制摘要失败:', e)
+        statusMessage.value = '复制失败，请手动选择文本复制'
+        
+        // 尝试备用复制方法
+        fallbackCopy(summaryContent.value)
+      }
+    }
+    
+    // 备用复制方法
+    const fallbackCopy = (text) => {
+      try {
+        const textarea = document.createElement('textarea')
+        textarea.value = text
+        textarea.style.position = 'fixed'
+        textarea.style.left = '-9999px'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+        statusMessage.value = '摘要已复制到剪贴板'
+        setTimeout(() => {
+          statusMessage.value = '准备就绪'
+        }, 2000)
+      } catch (e) {
+        console.error('备用复制方法失败:', e)
+        statusMessage.value = '复制失败，请手动选择文本复制'
       }
     }
 
@@ -581,7 +666,9 @@ export default {
       handleDocumentQA,
       handleSummarizeDoc,
       askQuestion,
+      submitQuestion,
       refreshSummary,
+      copySummary,
       closePanel
     }
   }
@@ -823,20 +910,30 @@ export default {
 
 .sidebar-footer {
   display: flex;
-  justify-content: center;
-  margin-top: 10px;
+  justify-content: space-between;
+  padding: 10px;
+  border-top: 1px solid #eee;
 }
 
-.refresh-btn {
-  padding: 10px 20px;
-  background-color: #2b579a;
-  color: white;
+.refresh-btn, .copy-btn {
+  padding: 8px 15px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 14px;
 }
 
-.refresh-btn:disabled {
+.refresh-btn {
+  background-color: #2b579a;
+  color: white;
+}
+
+.copy-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+.refresh-btn:disabled, .copy-btn:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
 }
