@@ -138,46 +138,87 @@ class AIAPIClient {
   }
 
   /**
-   * 执行实际API请求
+   * 发送API请求的统一方法，包含错误处理和重试逻辑
+   * @param {string} endpoint - API端点，如'/v1/chat/completions'
    * @param {Object} data - 请求数据
-   * @param {Object} options - 请求选项
+   * @param {Object} options - 其他选项，如timeout
    * @returns {Promise<Object>} - API响应
    */
-  async callApi(data, options = {}) {
-    // 准备请求路径和数据
-    let endpoint = '/v1/chat/completions';
+  async sendRequest(endpoint, data, options = {}) {
+    const maxRetries = 2; // 最大重试次数
+    let retries = 0;
+    let lastError = null;
+    
+    // 准备请求数据和端点
     let requestData = this.formatRequestByApiType(data);
     
     // 根据API类型调整端点
+    let requestEndpoint = endpoint || '/v1/chat/completions';
     if (this.apiType === 'ollama') {
-      endpoint = this.ollamaEndpoint || '/api/generate';
+      requestEndpoint = this.ollamaEndpoint || '/api/generate';
     }
     
-    console.log(`使用端点 ${endpoint} 调用 ${this.apiType} API`);
+    // 确保endpoint开始不带斜杠
+    if (!requestEndpoint.startsWith('/')) {
+      requestEndpoint = '/' + requestEndpoint;
+    }
     
-    // 发送请求
-    const response = await this.axios.post(endpoint, requestData, options);
+    console.log(`使用端点 ${requestEndpoint} 调用 ${this.apiType || 'standard'} API`);
     
-    // 处理不同API类型的响应
-    if (this.apiType === 'ollama') {
-      // 将Ollama响应转换为OpenAI格式
-      return {
-        data: {
-          choices: [{
-            message: {
-              content: response.data.response || ''
+    while (retries <= maxRetries) {
+      try {
+        console.log(`正在发送API请求到: ${this.axios.defaults.baseURL}${requestEndpoint} (第${retries+1}次尝试)`);
+        
+        const requestTimeout = options.timeout || 60000;
+        console.log(`请求超时设置: ${requestTimeout/1000}秒`);
+        
+        // 尝试发送请求
+        const response = await this.axios.post(requestEndpoint, requestData, {
+          timeout: requestTimeout
+        });
+        
+        // 处理不同API类型的响应
+        if (this.apiType === 'ollama') {
+          // 将Ollama响应转换为OpenAI格式
+          return {
+            data: {
+              choices: [{
+                message: {
+                  content: response.data.response || ''
+                }
+              }]
             }
-          }]
+          };
         }
-      };
+        
+        return response;
+      } catch (error) {
+        lastError = error;
+        
+        // 对于网络错误或超时，可以进行重试
+        if ((error.code === 'ECONNABORTED' || error.message.includes('timeout') || 
+            error.message.includes('Network Error')) && retries < maxRetries) {
+          retries++;
+          console.warn(`请求失败，正在进行第${retries}次重试...`);
+          
+          // 延迟一段时间再重试
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          continue;
+        }
+        
+        // 无法处理的错误或已达到最大重试次数，抛出异常
+        break;
+      }
     }
     
-    return response;
+    // 所有重试都失败，抛出最后捕获的错误
+    console.error(`请求失败，已重试${retries}次`, lastError);
+    throw lastError;
   }
 
   /**
-   * 执行文本续写
-   * @param {string} text - 需要续写的文本
+   * 文本续写
+   * @param {string} text - 上下文文本
    * @returns {Promise<string>} - 续写结果
    */
   async continueText(text) {
@@ -187,29 +228,27 @@ class AIAPIClient {
     console.log(`使用模型"${model}"执行文本续写，输入长度: ${text.length}字符`);
     
     // 检查文本是否太长
-    if (text.length > 6000) {
-      console.warn(`输入文本超过6000字符(${text.length})，可能导致模型输入截断`);
+    if (text.length > 4000) {
+      console.warn(`输入文本超过4000字符(${text.length})，可能导致模型输入截断`);
     }
     
     const data = {
       model: model,
       messages: [
-        { role: 'system', content: '你是一个专业的文本续写助手，请根据用户提供的文本进行高质量的续写。' },
-        { role: 'user', content: `请帮我续写以下文本:\n${text}` }
+        { role: 'system', content: '你是一个专业的文字助手，你的任务是根据用户提供的上下文继续写作，保持风格一致，输出流畅自然。' },
+        { role: 'user', content: `请基于以下上下文，继续写作：\n\n${text}\n\n续写：` }
       ],
-      max_tokens: this.config.options?.maxTokens || 2000,
+      max_tokens: this.config.options?.maxTokens || 1500,
       temperature: this.config.options?.temperature || 0.7
     }
-
+    
     try {
-      console.log(`准备调用API续写文本`);
-      
-      // 使用通用API调用方法
-      const response = await this.callApi(data, {
-        timeout: 120000 // 增加到120秒
+      // 使用统一的请求方法发送请求
+      const response = await this.sendRequest('/v1/chat/completions', data, {
+        timeout: 60000 // 60秒超时
       });
       
-      // 处理响应
+      // 记录响应信息
       if (response.data && response.data.choices && response.data.choices.length > 0) {
         const result = response.data.choices[0].message.content;
         console.log(`API请求成功，返回${result.length}字符的续写结果`);
@@ -220,29 +259,17 @@ class AIAPIClient {
       }
     } catch (error) {
       console.error('文本续写请求失败:', error);
-      
-      // 增强错误处理，添加更多调试信息
-      let errorDetails = this.formatErrorMessage(error);
-      console.error('详细错误信息:', errorDetails);
-      
-      // 记录更多上下文信息以便调试
-      console.error('API配置:', {
-        url: this.axios.defaults.baseURL,
-        model: model,
-        hasAuth: !!this.axios.defaults.headers['Authorization']
-      });
-      
-      throw new Error(`文本续写失败: ${errorDetails}`);
+      throw new Error(`文本续写失败: ${this.formatErrorMessage(error)}`);
     }
   }
 
   /**
-   * 执行文本校对
+   * 文本校对
    * @param {string} text - 需要校对的文本
    * @returns {Promise<string>} - 校对结果
    */
   async proofreadText(text) {
-    const model = this.config.models?.proofreadingModel || this.config.models?.defaultModel
+    const model = this.config.models?.proofreadModel || this.config.models?.defaultModel
     
     // 记录有关模型和请求的信息
     console.log(`使用模型"${model}"执行文本校对，输入长度: ${text.length}字符`);
@@ -255,19 +282,17 @@ class AIAPIClient {
     const data = {
       model: model,
       messages: [
-        { role: 'system', content: '你是一个专业的文本校对助手，请检查并修正用户提供文本中的错误，包括拼写、语法和标点符号等问题。' },
-        { role: 'user', content: `请校对以下文本并返回修正后的完整内容:\n${text}` }
+        { role: 'system', content: '你是一个专业的文字校对助手，检查并修正文本中的语法错误、标点错误和用词不当，同时保持原文的风格和意思。' },
+        { role: 'user', content: `请对以下文本进行校对修正，修正语法和标点符号错误，使表达更通顺准确：\n\n${text}` }
       ],
       max_tokens: this.config.options?.maxTokens || 2000,
       temperature: this.config.options?.temperature || 0.3
     }
-
+    
     try {
-      console.log(`正在发送API请求到: ${this.axios.defaults.baseURL}/v1/chat/completions`);
-      
-      // 设置更长的超时时间，处理大型输入可能需要更多时间
-      const response = await this.axios.post('/v1/chat/completions', data, {
-        timeout: 120000 // 增加到120秒
+      // 使用统一的请求方法发送请求
+      const response = await this.sendRequest('/v1/chat/completions', data, {
+        timeout: 60000 // 60秒超时
       });
       
       // 记录响应信息
@@ -281,29 +306,17 @@ class AIAPIClient {
       }
     } catch (error) {
       console.error('文本校对请求失败:', error);
-      
-      // 增强错误处理，添加更多调试信息
-      let errorDetails = this.formatErrorMessage(error);
-      console.error('详细错误信息:', errorDetails);
-      
-      // 记录更多上下文信息以便调试
-      console.error('API配置:', {
-        url: this.axios.defaults.baseURL,
-        model: model,
-        hasAuth: !!this.axios.defaults.headers['Authorization']
-      });
-      
-      throw new Error(`文本校对失败: ${errorDetails}`);
+      throw new Error(`文本校对失败: ${this.formatErrorMessage(error)}`);
     }
   }
 
   /**
-   * 执行文本润色
+   * 文本润色
    * @param {string} text - 需要润色的文本
    * @returns {Promise<string>} - 润色结果
    */
   async polishText(text) {
-    const model = this.config.models?.polishingModel || this.config.models?.defaultModel
+    const model = this.config.models?.polishModel || this.config.models?.defaultModel
     
     // 记录有关模型和请求的信息
     console.log(`使用模型"${model}"执行文本润色，输入长度: ${text.length}字符`);
@@ -316,19 +329,17 @@ class AIAPIClient {
     const data = {
       model: model,
       messages: [
-        { role: 'system', content: '你是一个专业的文本润色助手，请改进用户提供的文本，使表达更加优雅、专业和流畅，但保持原有意思不变。' },
-        { role: 'user', content: `请润色以下文本并返回优化后的完整内容:\n${text}` }
+        { role: 'system', content: '你是一个专业的文字润色助手，帮助用户改进文本表达，使其更加优美、专业和有说服力，同时保持原意不变。' },
+        { role: 'user', content: `请对以下文本进行润色改进，使表达更加优美、专业，但保持原意不变：\n\n${text}` }
       ],
       max_tokens: this.config.options?.maxTokens || 2000,
       temperature: this.config.options?.temperature || 0.5
     }
-
+    
     try {
-      console.log(`正在发送API请求到: ${this.axios.defaults.baseURL}/v1/chat/completions`);
-      
-      // 设置更长的超时时间，处理大型输入可能需要更多时间
-      const response = await this.axios.post('/v1/chat/completions', data, {
-        timeout: 120000 // 增加到120秒
+      // 使用统一的请求方法发送请求
+      const response = await this.sendRequest('/v1/chat/completions', data, {
+        timeout: 60000 // 60秒超时
       });
       
       // 记录响应信息
@@ -342,19 +353,7 @@ class AIAPIClient {
       }
     } catch (error) {
       console.error('文本润色请求失败:', error);
-      
-      // 增强错误处理，添加更多调试信息
-      let errorDetails = this.formatErrorMessage(error);
-      console.error('详细错误信息:', errorDetails);
-      
-      // 记录更多上下文信息以便调试
-      console.error('API配置:', {
-        url: this.axios.defaults.baseURL,
-        model: model,
-        hasAuth: !!this.axios.defaults.headers['Authorization']
-      });
-      
-      throw new Error(`文本润色失败: ${errorDetails}`);
+      throw new Error(`文本润色失败: ${this.formatErrorMessage(error)}`);
     }
   }
 
@@ -383,13 +382,11 @@ class AIAPIClient {
       max_tokens: this.config.options?.maxTokens || 1000,
       temperature: this.config.options?.temperature || 0.3
     }
-
+    
     try {
-      console.log(`正在发送API请求到: ${this.axios.defaults.baseURL}/v1/chat/completions`);
-      
-      // 设置更长的超时时间，处理大型输入可能需要更多时间
-      const response = await this.axios.post('/v1/chat/completions', data, {
-        timeout: 120000 // 增加到120秒
+      // 使用统一的请求方法发送请求
+      const response = await this.sendRequest('/v1/chat/completions', data, {
+        timeout: 60000 // 60秒超时
       });
       
       // 记录响应信息
@@ -449,11 +446,9 @@ class AIAPIClient {
     }
 
     try {
-      console.log(`正在发送API请求到: ${this.axios.defaults.baseURL}/v1/chat/completions`);
-      
-      // 设置更长的超时时间，处理大型输入可能需要更多时间
-      const response = await this.axios.post('/v1/chat/completions', data, {
-        timeout: 180000 // 增加到180秒，因为全文总结可能需要更长时间
+      // 使用统一的请求方法发送请求
+      const response = await this.sendRequest('/v1/chat/completions', data, {
+        timeout: 180000 // 增加到180秒，因为全文总结可能需要更多时间
       });
       
       // 记录响应信息
@@ -525,8 +520,8 @@ class AIAPIClient {
       console.log('发送测试请求...');
       const startTime = Date.now();
       
-      // 设置较短的超时时间用于测试
-      const response = await this.axios.post('/v1/chat/completions', data, {
+      // 使用统一的请求方法发送请求
+      const response = await this.sendRequest('/v1/chat/completions', data, {
         timeout: 10000 // 10秒超时，仅用于测试
       });
       
@@ -588,10 +583,8 @@ class AIAPIClient {
     }
 
     try {
-      console.log(`正在发送API请求到: ${this.axios.defaults.baseURL}/v1/chat/completions`);
-      
-      // 设置更长的超时时间，处理大型输入可能需要更多时间
-      const response = await this.axios.post('/v1/chat/completions', data, {
+      // 使用统一的请求方法发送请求
+      const response = await this.sendRequest('/v1/chat/completions', data, {
         timeout: 120000 // 增加到120秒
       });
       

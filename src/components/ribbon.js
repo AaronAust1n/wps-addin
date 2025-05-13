@@ -890,55 +890,24 @@ async function handleDocumentQA() {
   }
   
   try {
-    // 直接在文档中创建一个问答对话框，而不是使用prompt/confirm
     // 检查是否有选中文本
     const selectedText = getSelectedText();
-    const hasSelection = selectedText && selectedText.trim() !== '';
+    console.log('通过Selection对象获取选中文本成功，长度:', selectedText ? selectedText.length : 0);
     
-    // 创建一个自定义对话框
-    const dialogId = window.Application.ShowDialog(
-      Util.GetUrlPath() + Util.GetRouterHash() + '/qa',
-      `文档问答 - ${hasSelection ? '选中文本' : '整个文档'}`,
-      600,
-      500,
-      false
+    // 创建侧边栏
+    const taskpane = createTaskpane(
+      Util.GetUrlPath() + Util.GetRouterHash() + '/taskpane',
+      350
     );
     
-    console.log('文档问答对话框已创建，ID:', dialogId);
-  } catch (e) {
-    console.error('创建文档问答对话框失败:', e);
-    safeAlert('启动文档问答功能失败: ' + e.message);
-    
-    // 尝试使用备用方法 - 直接在文档中问答
-    try {
-      const selectedText = getSelectedText();
-      if (selectedText && selectedText.trim() !== '') {
-        // 有选中文本时
-        const question = window.prompt('请输入您对选中文本的问题:', '');
-        if (question && question.trim() !== '') {
-          // 显示加载中提示
-          safeAlert('正在处理您的问题，请稍候...');
-          
-          try {
-            // 调用API获取答案
-            const result = await apiClient.documentQA(selectedText, question);
-            
-            // 插入结果
-            const qaResult = `\n问题: ${question}\n答案: ${result}\n`;
-            await insertTextAtCursor(qaResult);
-            
-            // 保存历史记录
-            saveHistory('qa', question, result);
-          } catch (apiError) {
-            safeAlert('文档问答失败: ' + apiError.message);
-          }
-        }
-      } else {
-        safeAlert('请先选择要询问的文本内容');
-      }
-    } catch (backupError) {
-      console.error('备用文档问答方法也失败:', backupError);
+    if (taskpane) {
+      console.log('文档问答侧边栏已创建');
+    } else {
+      throw new Error('创建侧边栏失败');
     }
+  } catch (e) {
+    console.error('创建文档问答侧边栏失败:', e);
+    safeAlert('启动文档问答功能失败: ' + e.message);
   }
 }
 
@@ -949,7 +918,7 @@ async function handleSummarizeDoc() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     console.error('没有打开文档');
-    safeAlert('当前没有打开任何文档');
+    safeAlert('当前没有打开任何文档')
     return
   }
   
@@ -961,82 +930,22 @@ async function handleSummarizeDoc() {
   try {
     // 检查是否有选中文本
     const selectedText = getSelectedText();
+    console.log('通过Selection对象获取选中文本成功，长度:', selectedText ? selectedText.length : 0);
     
-    let mode = 'document';
-    if (selectedText && selectedText.trim() !== '') {
-      console.log('对选中部分进行总结，长度:', selectedText.length);
-      mode = 'selection';
+    // 创建侧边栏
+    const taskpane = createTaskpane(
+      Util.GetUrlPath() + Util.GetRouterHash() + '/taskpane',
+      350
+    );
+    
+    if (taskpane) {
+      console.log('文档摘要侧边栏已创建');
     } else {
-      console.log('进行全文总结');
-    }
-    
-    // 创建一个自定义对话框
-    try {
-      const dialogId = window.Application.ShowDialog(
-        Util.GetUrlPath() + Util.GetRouterHash() + `/summary?mode=${mode}`,
-        `文档摘要 - ${mode === 'selection' ? '选中内容' : '全文'}`,
-        600,
-        500,
-        false
-      );
-      
-      console.log('文档摘要对话框已创建，ID:', dialogId);
-    } catch (dialogError) {
-      console.error('创建摘要对话框失败:', dialogError);
-      safeAlert('无法创建摘要对话框，请尝试直接在文档中生成摘要');
-      
-      // 回退到直接处理方式
-      if (mode === 'selection') {
-        // 显示加载状态
-        safeAlert('正在对选中文本进行摘要总结，请稍候...');
-        
-        // 使用API进行摘要总结
-        try {
-          const result = await apiClient.summarizeText(selectedText);
-          console.log('选中文本摘要完成，结果长度:', result.length);
-          
-          // 保存到历史记录
-          saveHistory('summarize', selectedText, result);
-          
-          // 插入摘要结果
-          const summary = `\n【摘要】\n${result}\n`;
-          await insertTextAtCursor(summary);
-        } catch (apiError) {
-          console.error('选中文本摘要API调用失败:', apiError);
-          safeAlert('选中文本摘要失败: ' + apiError.message);
-        }
-      } else {
-        // 获取全文
-        const docText = getDocumentText();
-        if (!docText || docText.trim() === '') {
-          console.warn('文档内容为空');
-          safeAlert('文档内容为空，无法进行总结');
-          return;
-        }
-        
-        // 显示加载状态
-        safeAlert('正在对整个文档进行总结，请稍候...');
-        
-        // 使用API进行全文总结
-        try {
-          const result = await apiClient.summarizeDocument(docText);
-          console.log('全文总结完成，结果长度:', result.length);
-          
-          // 保存到历史记录
-          saveHistory('summarize', '全文摘要', result);
-          
-          // 插入总结结果
-          const summary = `\n【全文总结】\n${result}\n`;
-          await insertTextAtCursor(summary);
-        } catch (apiError) {
-          console.error('全文总结API调用失败:', apiError);
-          safeAlert('全文总结失败: ' + apiError.message);
-        }
-      }
+      throw new Error('创建侧边栏失败');
     }
   } catch (e) {
-    console.error('全文总结功能出错:', e);
-    safeAlert('启动总结功能失败: ' + e.message);
+    console.error('创建文档摘要侧边栏失败:', e);
+    safeAlert('启动全文总结功能失败: ' + e.message);
   }
 }
 
