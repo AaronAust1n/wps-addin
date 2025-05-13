@@ -1,4 +1,5 @@
-按钮点击: btnDocumentQA
+WPS AI助手应用已加载
+​ 按钮点击: btnDocumentQA
 ​ 准备处理文档问答功能...
 ​ 文档问答功能被触发
 ​ 检查API配置...
@@ -9,39 +10,14 @@
 ​ 通过Selection对象获取选中文本成功，长度: 119
 ​ 通过Selection对象获取选中文本成功，长度: 119
 ​ 开始创建任务窗格...
-​ 创建任务窗格失败: Error: CreateTaskPane called on null or undefined
-    at createTaskpane (ribbon.js:368:22)
-    at handleDocumentQA (ribbon.js:1007:16)
-    at Object.OnAction (ribbon.js:63:7)
-    at <anonymous>:1:22
-console.error @ src/components/js/util.js:191
-createTaskpane @ ribbon.js:398
-handleDocumentQA @ ribbon.js:1007
-OnAction @ ribbon.js:63
-(anonymous) @ VM155:1
-​ 尝试使用window.open作为备选方案...
-​ 备选方案也失败: Error: 备选方案window.open创建窗口失败，可能被浏览器拦截
-    at createTaskpane (ribbon.js:414:15)
-    at handleDocumentQA (ribbon.js:1007:16)
-    at Object.OnAction (ribbon.js:63:7)
-    at <anonymous>:1:22
-console.error @ src/components/js/util.js:191
-createTaskpane @ ribbon.js:439
-handleDocumentQA @ ribbon.js:1007
-OnAction @ ribbon.js:63
-(anonymous) @ VM155:1
-​ Alert: 无法创建侧边栏: CreateTaskPane called on null or undefined
-​ 创建文档问答任务窗格失败: Error: 创建侧边栏失败
-    at createTaskpane (ribbon.js:448:13)
-    at handleDocumentQA (ribbon.js:1007:16)
-    at Object.OnAction (ribbon.js:63:7)
-    at <anonymous>:1:22
-console.error @ src/components/js/util.js:191
-handleDocumentQA @ ribbon.js:1024
-OnAction @ ribbon.js:63
-(anonymous) @ VM155:1
-​ 安全警告: 启动文档问答功能失败: 创建侧边栏失败
-​ Alert: 启动文档问答功能失败: 创建侧边栏失败
+​ 使用CreateTaskPane方法(大写P)成功创建任务窗格
+​ 任务窗格已创建，设置属性...
+​ 已设置任务窗格停靠位置: 右侧
+​ 已设置任务窗格宽度: 350
+​ 已导航到URL: http://127.0.0.1:3889/#/taskpane?function=qa
+​ 已设置任务窗格为可见
+​ 文档问答任务窗格已创建
+​ 保存任务窗格ID: 1
 ​ 按钮点击: btnSummarizeDoc
 ​ 准备处理全文总结功能...
 ​ 全文总结功能被触发
@@ -53,17 +29,38 @@ OnAction @ ribbon.js:63
 ​ 通过Selection对象获取选中文本成功，长度: 119
 ​ 通过Selection对象获取选中文本成功，长度: 119
 ​ 开始创建任务窗格...
-​ 创建任务窗格失败: 
-console.error @ src/components/js/util.js:191
-createTaskpane @ ribbon.js:398
-handleSummarizeDoc @ ribbon.js:1075
-OnAction @ ribbon.js:67
-(anonymous) @ VM156:1
-​ 尝试使用window.open作为备选方案...
-​ 备选方案也失败: 
-console.error @ src/components/js/util.js:191
-createTaskpane @ ribbon.js:439
-handleSummarizeDoc @ ribbon.js:1075
-OnAction @ ribbon.js:67
-(anonymous) @ VM156:1
-​ Alert: 无法创建侧边栏: CreateTaskPane called on null or undefined
+​ 使用CreateTaskPane方法(大写P)成功创建任务窗格
+​ 任务窗格已创建，设置属性...
+​ 已设置任务窗格停靠位置: 右侧
+​ 已设置任务窗格宽度: 350
+​ 已导航到URL: http://127.0.0.1:3889/#/taskpane?function=summary
+​ 已设置任务窗格为可见
+​ 文档摘要任务窗格已创建
+​ 保存任务窗格ID: 2
+​ 按钮点击: btnSummarizeDoc
+​ 准备处理全文总结功能...
+​ 全文总结功能被触发
+​ 检查API配置...
+​ 尝试读取API配置...
+​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
+​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
+​ 使用GetTaskPane方法成功获取任务窗格
+​ 找到现有的文档摘要任务窗格，重新激活
+​ 按钮点击: btnSummarizeDoc
+​ 准备处理全文总结功能...
+​ 全文总结功能被触发
+​ 检查API配置...
+​ 尝试读取API配置...
+​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
+​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
+​ 使用GetTaskPane方法成功获取任务窗格
+​ 找到现有的文档摘要任务窗格，重新激活
+​ 按钮点击: btnDocumentQA
+​ 准备处理文档问答功能...
+​ 文档问答功能被触发
+​ 检查API配置...
+​ 尝试读取API配置...
+​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
+​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
+​ 使用GetTaskPane方法成功获取任务窗格
+​ 找到现有的文档问答任务窗格，重新激活

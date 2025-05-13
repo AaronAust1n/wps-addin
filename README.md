@@ -50,7 +50,7 @@ wps-addin/
 
 1. 克隆项目：`git clone https://github.com/yourusername/wps-ai-assistant.git`
 2. 安装依赖：`npm install`
-3. 启动开发服务器：`npm run dev`
+3. 启动开发服务器：`npm run dev/wpsjs debug`
 4. 配置WPS支持本地加载项
    - 打开WPS文字
    - 前往"开发工具"选项卡
@@ -69,13 +69,13 @@ wps-addin/
 AI助手加载项支持连接到任何兼容OpenAI API格式的服务。用户可以通过点击功能区中的"API设置"按钮进行以下配置：
 
 - **API地址**：AI服务的基础URL，例如：
+
   - OpenAI: `https://api.openai.com`
   - Azure OpenAI: `https://{your-resource-name}.openai.azure.com`
   - 私有化部署API服务: `http://your-server-address:port`
-
 - **API密钥**：访问API所需的认证密钥（对于某些私有化部署服务可能是可选的）
-
 - **默认模型**：支持多种大型语言模型，包括：
+
   - OpenAI系列：GPT-3.5 Turbo、GPT-4、GPT-4 Turbo
   - Google系列：Gemini Pro、Gemini 1.5 Pro
   - Anthropic系列：Claude 3 Opus、Claude 3 Sonnet
@@ -83,8 +83,8 @@ AI助手加载项支持连接到任何兼容OpenAI API格式的服务。用户�
   - 百度系列：文心一言 ERNIE Bot 4.0、ERNIE Bot
   - 其他开源模型：DeepSeek Chat、Llama 3 70B等
   - 自定义模型：支持输入任何兼容的模型名称
-
 - **高级设置**：
+
   - 最大输出令牌数：控制模型生成文本的最大长度
   - 随机性（Temperature）：控制生成文本的创意程度，0表示最确定性，1表示最创意
   - 针对不同功能选择特定模型：可为文本续写、校对、润色、摘要等功能分别配置不同的模型
@@ -112,7 +112,7 @@ AI助手加载项支持连接到任何兼容OpenAI API格式的服务。用户�
 
 如果插件未显示在WPS中，请检查：
 
-1. manifest.xml是否包含正确的配置，确保`<isToolbar>true</isToolbar>`属性存在
+1. manifest.xml是否包含正确的配置，确保 `<isToolbar>true</isToolbar>`属性存在
 2. ribbon.xml是否放置在ribbon目录下，且在vite.config.js中正确配置
 3. 确保src/components/ribbon.js中的OnAddinLoad函数正确导出
 4. 确保在App.vue中正确初始化了window.ribbon对象
@@ -125,4 +125,4 @@ AI助手加载项支持连接到任何兼容OpenAI API格式的服务。用户�
 
 ## 许可协议
 
-本项目采用MIT许可协议。详细内容请参见LICENSE文件。 
+本项目采用MIT许可协议。详细内容请参见LICENSE文件。
