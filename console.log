@@ -1,129 +1,36 @@
-按钮点击: btnContinueText
-​ 准备处理文本续写功能...
-​ 文本续写功能开始执行
+按钮点击: btnSummarizeDoc
+​ 准备处理全文总结功能...
+​ 全文总结功能被触发
 ​ 检查API配置...
 ​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 通过Selection对象获取选中文本成功，长度: 118
-​ 选中文本检查: 有选中文本
-​ 使用选中文本进行续写，长度: 118
-​ 开始处理选中文本: continue, 文本长度: 118
-​ 加载API配置
-​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ API配置已更新 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct', specificModel: '未指定'}
-​ 调用API: continue, 开始时间: 2025-05-13T03:02:23.675Z
-​ 使用模型"Qwen2.5-14B-Instruct"执行文本续写，输入长度: 118字符
+​ 成功加载配置 
+{apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+​ 配置检查通过 
+{apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+​ 通过Selection对象获取选中文本成功，长度: 241
+​ 对选中部分进行总结，长度: 241
+​ Alert: 正在对选中文本进行摘要总结，请稍候...
+​ 使用模型"Qwen2.5-14B-Instruct"执行文本摘要，输入长度: 241字符
 ​ 正在发送API请求到: http://10.79.16.95:9005/v1/chat/completions
-​ API请求成功，返回436字符的续写结果
-​ 文本续写API调用完成，结果长度: 436
-​ 准备插入文本续写结果...
+​ API请求成功，返回123字符的摘要结果
+​ 选中文本摘要完成，结果长度: 123
 ​ Selection.Collapse方法不可用，尝试替代方法
-console.warn @ src/components/js/util.js:196
-insertTextAtCursor @ ribbon.js:277
-processText @ ribbon.js:570
-await in processText (async)
-handleContinueText @ ribbon.js:998
-OnAction @ ribbon.js:51
-(anonymous) @ VM128:1
+console.warn	@	src/components/js/util.js:196
+insertTextAtCursor	@	ribbon.js:277
+handleSummarizeDoc	@	ribbon.js:1033
+await in handleSummarizeDoc (async)		
+OnAction	@	ribbon.js:67
+(anonymous)	@	VM223:1
 ​ Selection.InsertAfter方法不可用，尝试替代方法
-console.warn @ src/components/js/util.js:196
-insertTextAtCursor @ ribbon.js:284
-processText @ ribbon.js:570
-await in processText (async)
-handleContinueText @ ribbon.js:998
-OnAction @ ribbon.js:51
-(anonymous) @ VM128:1
+console.warn	@	src/components/js/util.js:196
+insertTextAtCursor	@	ribbon.js:284
+handleSummarizeDoc	@	ribbon.js:1033
+await in handleSummarizeDoc (async)		
+OnAction	@	ribbon.js:67
+(anonymous)	@	VM223:1
 ​ 使用TypeText方法插入文本
-​ 插入处理结果: 成功
-​ continue处理完成, 结束时间: 2025-05-13T03:02:29.399Z
-​ 按钮点击: btnProofreadText
-​ 准备处理文本校对功能...
-​ 文本校对功能开始执行
-​ 检查API配置...
-​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 通过Selection对象获取选中文本成功，长度: 590
-​ 选中文本检查: 有选中文本
-​ 使用选中文本进行校对，长度: 590
-​ 开始处理选中文本: proofread, 文本长度: 590
-​ 加载API配置
-​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ API配置已更新 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct', specificModel: '未指定'}
-​ 调用API: proofread, 开始时间: 2025-05-13T03:02:36.666Z
-​ 使用模型"Qwen2.5-14B-Instruct"执行文本校对，输入长度: 590字符
-​ 正在发送API请求到: http://10.79.16.95:9005/v1/chat/completions
-​ API请求成功，返回585字符的校对结果
-​ 文本校对API调用完成，结果长度: 585
-​ 准备插入文本校对结果...
-​ Selection.Collapse方法不可用，尝试替代方法
-console.warn @ src/components/js/util.js:196
-insertTextAtCursor @ ribbon.js:277
-processText @ ribbon.js:573
-await in processText (async)
-handleProofreadText @ ribbon.js:1044
-OnAction @ ribbon.js:55
-(anonymous) @ VM129:1
-​ Selection.InsertAfter方法不可用，尝试替代方法
-console.warn @ src/components/js/util.js:196
-insertTextAtCursor @ ribbon.js:284
-processText @ ribbon.js:573
-await in processText (async)
-handleProofreadText @ ribbon.js:1044
-OnAction @ ribbon.js:55
-(anonymous) @ VM129:1
-​ 使用TypeText方法插入文本
-​ 插入处理结果: 成功
-​ proofread处理完成, 结束时间: 2025-05-13T03:02:44.605Z
 ​ 按钮点击: btnSummarizeText
 ​ 未知按钮ID: btnSummarizeText
-console.warn @ src/components/js/util.js:196
-OnAction @ ribbon.js:78
-(anonymous) @ VM130:1
-​ 按钮点击: btnSummarizeDoc
-​ 准备处理全文总结功能...
-​ 全文总结功能被触发
-​ 检查API配置...
-​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 通过Selection对象获取选中文本成功，长度: 590
-​ 对选中部分进行总结，长度: 590
-​ 侧边栏URL: http://127.0.0.1:3889/#/summary?mode=selection
-​ 创建侧边栏失败: Error: An exception occurred during the jsapi EXECUTE call.
-    at createTaskpane (ribbon.js:343:41)
-    at handleSummarizeDoc (ribbon.js:893:24)
-    at Object.OnAction (ribbon.js:67:7)
-    at <anonymous>:1:22
-console.error @ src/components/js/util.js:191
-createTaskpane @ ribbon.js:350
-handleSummarizeDoc @ ribbon.js:893
-OnAction @ ribbon.js:67
-(anonymous) @ VM131:1
-​ 已使用window.open作为替代方法
-​ 选中文本总结侧边栏已创建成功
-​ 按钮点击: btnSummarizeDoc
-​ 准备处理全文总结功能...
-​ 全文总结功能被触发
-​ 检查API配置...
-​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 通过Selection对象获取选中文本成功，长度: 590
-​ 对选中部分进行总结，长度: 590
-​ 侧边栏URL: http://127.0.0.1:3889/#/summary?mode=selection
-​ 创建侧边栏失败: Error: An exception occurred during the jsapi EXECUTE call.
-    at createTaskpane (ribbon.js:343:41)
-    at handleSummarizeDoc (ribbon.js:893:24)
-    at Object.OnAction (ribbon.js:67:7)
-    at <anonymous>:1:22
-console.error @ src/components/js/util.js:191
-createTaskpane @ ribbon.js:350
-handleSummarizeDoc @ ribbon.js:893
-OnAction @ ribbon.js:67
-(anonymous) @ VM132:1
-​ 已使用window.open作为替代方法
-​ 选中文本总结侧边栏已创建成功
+console.warn	@	src/components/js/util.js:196
+OnAction	@	ribbon.js:78
+(anonymous)	@	VM224:1
