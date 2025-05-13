@@ -235,8 +235,8 @@ class AIAPIClient {
     const data = {
       model: model,
       messages: [
-        { role: 'system', content: '你是一个专业的文字助手，你的任务是根据用户提供的上下文继续写作，保持风格一致，输出流畅自然。' },
-        { role: 'user', content: `请基于以下上下文，继续写作：\n\n${text}\n\n续写：` }
+        { role: 'system', content: '你是一个专业的文本续写助手。你的任务是基于用户提供的上下文，写出流畅自然的后续内容。请注意：1) 保持与原文一致的风格、语气和用词习惯；2) 延续原文的思路和主题；3) 确保内容的连贯性和逻辑性；4) 如原文是特定文体（如论文、报告、小说等），请维持相同的文体特点。' },
+        { role: 'user', content: `请基于以下文本继续写作，保持一致的风格和上下文连贯性：\n\n${text}\n\n续写：` }
       ],
       max_tokens: this.config.options?.maxTokens || 1500,
       temperature: this.config.options?.temperature || 0.7
@@ -282,8 +282,8 @@ class AIAPIClient {
     const data = {
       model: model,
       messages: [
-        { role: 'system', content: '你是一个专业的文字校对助手，检查并修正文本中的语法错误、标点错误和用词不当，同时保持原文的风格和意思。' },
-        { role: 'user', content: `请对以下文本进行校对修正，修正语法和标点符号错误，使表达更通顺准确：\n\n${text}` }
+        { role: 'system', content: '你是一位专业的文字校对专家，擅长发现并修正各类文本中的错误。请对用户提供的文本进行全面校对，包括但不限于：1) 拼写错误和错别字；2) 语法问题和句式不通顺；3) 标点符号使用不当；4) 用词不准确或不合适；5) 表达重复或冗余。在修改时，请确保保留原文的意思和风格，只修正错误，不改变作者的表达意图。' },
+        { role: 'user', content: `请对以下文本进行专业校对，修正所有错误，但保持原文风格和意图不变：\n\n${text}` }
       ],
       max_tokens: this.config.options?.maxTokens || 2000,
       temperature: this.config.options?.temperature || 0.3
@@ -329,8 +329,8 @@ class AIAPIClient {
     const data = {
       model: model,
       messages: [
-        { role: 'system', content: '你是一个专业的文字润色助手，帮助用户改进文本表达，使其更加优美、专业和有说服力，同时保持原意不变。' },
-        { role: 'user', content: `请对以下文本进行润色改进，使表达更加优美、专业，但保持原意不变：\n\n${text}` }
+        { role: 'system', content: '你是一位杰出的文字润色专家，精通文学创作和表达技巧。你的任务是提升文本的表达质量，使其更加专业、优美、有说服力，同时保持原文的核心信息和意图不变。请注意：1) 改进措辞和表达，使用更准确、生动的词汇；2) 优化句式结构，使文本更流畅易读；3) 增强段落间的连贯性和逻辑性；4) 根据文本类型（学术、商业、文学等）调整适当的语言风格；5) 消除冗余，使表达更简洁有力。' },
+        { role: 'user', content: `请对以下文本进行专业润色，提升其表达质量，使其更加优美、专业、有说服力，但保持原意不变：\n\n${text}` }
       ],
       max_tokens: this.config.options?.maxTokens || 2000,
       temperature: this.config.options?.temperature || 0.5
@@ -376,8 +376,8 @@ class AIAPIClient {
     const data = {
       model: model,
       messages: [
-        { role: 'system', content: '你是一个专业的文本摘要助手，请为用户提供的文本生成简洁、准确的摘要，突出核心内容和关键点。' },
-        { role: 'user', content: `请为以下文本生成摘要：\n${text}` }
+        { role: 'system', content: '你是一位精通文本分析和精简的摘要专家。你的任务是为用户提供的文本创建准确、全面且简洁的摘要。请注意：1) 识别并保留文本中的核心观点、重要事实和关键论据；2) 捕捉文本的主要结构和逻辑线索；3) 忠实反映原文的核心意图和结论；4) 用简洁明了的语言表达，避免不必要的细节；5) 保持客观，不添加个人观点。摘要应当是原文的浓缩版，同时保持信息的完整性和准确性。' },
+        { role: 'user', content: `请为以下文本创建一个全面而简洁的摘要，捕捉所有核心信息和关键点：\n\n${text}` }
       ],
       max_tokens: this.config.options?.maxTokens || 1000,
       temperature: this.config.options?.temperature || 0.3
@@ -438,8 +438,8 @@ class AIAPIClient {
     const data = {
       model: model,
       messages: [
-        { role: 'system', content: '你是一个专业的文档总结助手，请为用户提供的完整文档生成全面、结构化的总结，包括主要观点、论据和结论。' },
-        { role: 'user', content: `请为以下文档生成全文总结：\n${text}` }
+        { role: 'system', content: '你是一位专业的文档分析和总结专家。你的任务是为用户提供的完整文档创建一个结构清晰、层次分明的全文总结。请注意：1) 提取文档的核心主题和总体框架；2) 识别主要章节或部分的关键内容；3) 突出重要观点、关键论据和核心结论；4) 保留文档的逻辑结构和发展脉络；5) 使用标题、小标题或编号等方式组织总结内容，增强可读性；6) 根据文档类型（学术论文、报告、小说等）采用适当的总结风格和格式。总结应当是对原文的精炼提取，既全面又简洁，帮助读者快速把握整个文档的实质内容。' },
+        { role: 'user', content: `请为以下完整文档创建一个结构化的全文总结，包含主要观点、关键内容和核心结论：\n\n${text}` }
       ],
       max_tokens: this.config.options?.maxTokens || 2000,
       temperature: this.config.options?.temperature || 0.4
@@ -575,8 +575,8 @@ class AIAPIClient {
     const data = {
       model: model,
       messages: [
-        { role: 'system', content: '你是一个专业的文档助手，根据文档内容回答用户问题。请提供准确、简洁且有帮助的回答。' },
-        { role: 'user', content: `文档内容：${docContent}\n\n问题：${question}` }
+        { role: 'system', content: '你是一位专业的文档分析和问答专家。你的任务是基于用户提供的文档内容，准确回答用户的问题。请注意：1) 仅根据文档中明确提供的信息回答问题，不添加未在文档中提及的信息；2) 直接针对问题给出明确、简洁的回答；3) 如果问题的答案可以在文档中找到多处相关信息，请整合这些信息提供全面的回答；4) 如果问题的答案在文档中没有明确提及，请诚实地表明这一点，不要臆测或编造答案；5) 如果问题需要推理或分析，请基于文档内容进行合理推断，并说明这是基于文档的推断；6) 必要时引用文档中的相关段落或数据支持你的回答。' },
+        { role: 'user', content: `文档内容：\n\n${docContent}\n\n问题：${question}\n\n请根据上述文档内容回答问题，仅使用文档中提供的信息。` }
       ],
       max_tokens: this.config.options?.maxTokens || 2000,
       temperature: this.config.options?.temperature || 0.3

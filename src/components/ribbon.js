@@ -336,32 +336,38 @@ function insertTextAtCursor(text) {
 // 创建侧边栏
 function createTaskpane(url, width = 300) {
   try {
-    // 检查API是否可用
-    if (typeof window.Application.CreateTaskPane !== 'function') {
-      console.error('CreateTaskPane API不可用，尝试替代方法');
-      // 可以使用替代方法，比如打开一个对话框
-      window.open(url, '_blank', `width=${width},height=600`);
-      return { success: true, method: 'window.open' };
-    }
+    // 直接使用window.open作为实现方法
+    const height = 600;
+    const left = window.screen.width - width;
+    const top = 100;
     
-    const taskpane = window.Application.CreateTaskPane();
-    taskpane.DockPosition = window.Application.Enum.msoCTPDockPositionRight;
-    taskpane.Width = width;
-    taskpane.Visible = true;
-    taskpane.Navigate(url);
-    return taskpane;
+    // 使用窗口特性，让其看起来像侧边栏
+    const windowFeatures = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no,location=no,toolbar=no,menubar=no`;
+    
+    const taskWin = window.open(url, '_blank', windowFeatures);
+    console.log('已使用window.open创建侧边栏');
+    
+    // 确保窗口已成功创建
+    if (taskWin) {
+      // 尝试设置窗口样式使其更像侧边栏
+      setTimeout(() => {
+        try {
+          if (taskWin.document) {
+            taskWin.document.title = 'WPS AI助手 - 侧边栏';
+          }
+        } catch (styleErr) {
+          console.warn('设置窗口样式失败，可能是跨域限制:', styleErr);
+        }
+      }, 1000);
+      
+      return { success: true, method: 'window.open', window: taskWin };
+    } else {
+      throw new Error('创建窗口失败，可能被浏览器拦截');
+    }
   } catch (e) {
     console.error('创建侧边栏失败:', e);
-    // 尝试回退到window.open
-    try {
-      window.open(url, '_blank', `width=${width},height=600`);
-      console.log('已使用window.open作为替代方法');
-      return { success: true, method: 'window.open' };
-    } catch (err) {
-      console.error('所有创建侧边栏方法都失败:', err);
-      window.Application.Alert('无法创建侧边栏: ' + e.message);
-      return null;
-    }
+    window.Application.Alert('无法创建侧边栏: ' + e.message);
+    return null;
   }
 }
 
