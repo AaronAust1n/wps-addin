@@ -1011,6 +1011,72 @@ function safeAlert(message) {
   }
 }
 
+// 删除任务窗格
+function deleteTaskPane(id) {
+  try {
+    if (!window.Application) {
+      console.warn('window.Application对象不可用');
+      return false;
+    }
+    
+    let taskpane = null;
+    
+    // 尝试获取任务窗格
+    try {
+      // 先尝试标准方法（小写p版本）
+      if (typeof window.Application.GetTaskpane === 'function') {
+        taskpane = window.Application.GetTaskpane(id);
+      }
+      
+      // 再尝试大写P版本
+      if (!taskpane && typeof window.Application.GetTaskPane === 'function') {
+        taskpane = window.Application.GetTaskPane(id);
+      }
+      
+      if (taskpane) {
+        console.log('找到任务窗格，准备删除:', id);
+        
+        // 尝试删除任务窗格
+        if (typeof taskpane.Delete === 'function') {
+          taskpane.Delete();
+          console.log('成功删除任务窗格:', id);
+          return true;
+        } else {
+          // 如果Delete方法不可用，尝试设置不可见
+          console.warn('Delete方法不可用，尝试设置不可见');
+          taskpane.Visible = false;
+          return true;
+        }
+      }
+      
+      console.log('未找到ID为', id, '的任务窗格，无需删除');
+      return false;
+    } catch (apiError) {
+      console.error('删除任务窗格API调用失败:', apiError);
+      return false;
+    }
+  } catch (e) {
+    console.error('删除任务窗格失败:', e);
+    return false;
+  }
+}
+
+// 关闭所有任务窗格
+function closeAllTaskPanes() {
+  console.log('尝试关闭所有任务窗格');
+  
+  // 关闭已知的任务窗格
+  if (window._qaTaskpaneId) {
+    deleteTaskPane(window._qaTaskpaneId);
+    window._qaTaskpaneId = null;
+  }
+  
+  if (window._summaryTaskpaneId) {
+    deleteTaskPane(window._summaryTaskpaneId);
+    window._summaryTaskpaneId = null;
+  }
+}
+
 // 文档问答功能
 async function handleDocumentQA() {
   console.log('文档问答功能被触发');
@@ -1028,47 +1094,30 @@ async function handleDocumentQA() {
   }
   
   try {
-    // 检查是否已有文档问答任务窗格
-    let taskpane = null;
-    
-    // 尝试获取已存在的任务窗格
-    if (window._qaTaskpaneId) {
-      taskpane = getExistingTaskpane(window._qaTaskpaneId);
-      if (taskpane) {
-        console.log('找到现有的文档问答任务窗格，重新激活');
-        
-        // 刷新URL以更新状态
-        const qaUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/taskpane?function=qa&refresh=' + new Date().getTime();
-        taskpane.Navigate(qaUrl);
-        
-        // 确保任务窗格可见
-        taskpane.Visible = true;
-        
-        return;
-      }
-    }
-    
-    // 没有找到现有任务窗格，创建新的
-    console.log('未找到现有任务窗格，创建新的');
+    // 先关闭所有现有任务窗格
+    closeAllTaskPanes();
     
     // 检查是否有选中文本
-    const selectedText = getSelectedText();
+    let selectedText = getSelectedText();
     console.log('通过Selection对象获取选中文本成功，长度:', selectedText ? selectedText.length : 0);
     
-    // 创建任务窗格 - 添加特殊参数以区分不同功能的任务窗格
-    const qaUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/taskpane?function=qa';
-    taskpane = createTaskpane(qaUrl, 350);
+    // 创建任务窗格 - 添加特殊参数以区分不同功能的任务窗格和传递选中文本状态
+    let hasSelection = selectedText && selectedText.trim().length > 0;
+    const qaUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/taskpane?function=qa&direct=true' + 
+                 (hasSelection ? '&selection=true' : '&selection=false');
+    
+    // 创建文档问答专用任务窗格
+    const taskpane = createTaskpane(qaUrl, 350);
     
     if (taskpane) {
       console.log('文档问答任务窗格已创建');
       
-      // 如果是window.open方式创建的，保存窗口引用
+      // 保存任务窗格ID
       if (taskpane._method === 'window.open') {
         console.log('使用window.open模拟任务窗格');
       } else {
-        // 保存任务窗格ID以便后续使用
         window._qaTaskpaneId = taskpane.ID;
-        console.log('保存任务窗格ID:', taskpane.ID);
+        console.log('保存文档问答任务窗格ID:', taskpane.ID);
       }
     } else {
       throw new Error('任务窗格创建失败');
@@ -1096,47 +1145,30 @@ async function handleSummarizeDoc() {
   }
   
   try {
-    // 检查是否已有文档总结任务窗格
-    let taskpane = null;
-    
-    // 尝试获取已存在的任务窗格
-    if (window._summaryTaskpaneId) {
-      taskpane = getExistingTaskpane(window._summaryTaskpaneId);
-      if (taskpane) {
-        console.log('找到现有的文档摘要任务窗格，重新激活');
-        
-        // 刷新URL以更新状态
-        const summaryUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/taskpane?function=summary&refresh=' + new Date().getTime();
-        taskpane.Navigate(summaryUrl);
-        
-        // 确保任务窗格可见
-        taskpane.Visible = true;
-        
-        return;
-      }
-    }
-    
-    // 没有找到现有任务窗格，创建新的
-    console.log('未找到现有任务窗格，创建新的');
+    // 先关闭所有现有任务窗格
+    closeAllTaskPanes();
     
     // 检查是否有选中文本
-    const selectedText = getSelectedText();
+    let selectedText = getSelectedText();
     console.log('通过Selection对象获取选中文本成功，长度:', selectedText ? selectedText.length : 0);
     
-    // 创建任务窗格 - 添加特殊参数以区分不同功能的任务窗格
-    const summaryUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/taskpane?function=summary';
-    taskpane = createTaskpane(summaryUrl, 350);
+    // 创建任务窗格 - 添加特殊参数以区分不同功能的任务窗格和传递选中文本状态
+    let hasSelection = selectedText && selectedText.trim().length > 0;
+    const summaryUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/taskpane?function=summary&direct=true' + 
+                      (hasSelection ? '&selection=true' : '&selection=false');
+    
+    // 创建文档总结专用任务窗格
+    const taskpane = createTaskpane(summaryUrl, 350);
     
     if (taskpane) {
       console.log('文档摘要任务窗格已创建');
       
-      // 如果是window.open方式创建的，保存窗口引用
+      // 保存任务窗格ID
       if (taskpane._method === 'window.open') {
         console.log('使用window.open模拟任务窗格');
       } else {
-        // 保存任务窗格ID以便后续使用
         window._summaryTaskpaneId = taskpane.ID;
-        console.log('保存任务窗格ID:', taskpane.ID);
+        console.log('保存文档摘要任务窗格ID:', taskpane.ID);
       }
     } else {
       throw new Error('任务窗格创建失败');

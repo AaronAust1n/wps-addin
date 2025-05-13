@@ -1,10 +1,11 @@
 <template>
   <div class="taskpane-container">
     <div class="taskpane-header">
-      <h2>WPS AI助手</h2>
+      <h2>{{ panelTitle }}</h2>
     </div>
     <div class="taskpane-content">
-      <div class="function-panel">
+      <!-- 功能选择面板(只有在非直接模式下显示) -->
+      <div v-if="!isDirect" class="function-panel">
         <div class="function-item" @click="handleContinueText">
           <div class="icon">📝</div>
           <div class="title">文本续写</div>
@@ -95,10 +96,6 @@
       <div class="status-bar">
         <span>{{ statusMessage }}</span>
       </div>
-      <div class="action-bar">
-        <button @click="handleSettings" class="btn-settings">设置</button>
-        <button @click="handleHelp" class="btn-help">帮助</button>
-      </div>
     </div>
   </div>
 </template>
@@ -118,6 +115,30 @@ export default {
     const summaryContent = ref('')
     const isSummarizing = ref(false)
     const summaryError = ref('')
+    const isDirect = ref(false) // 是否是直接打开特定功能
+
+    // 计算标题
+    const panelTitle = computed(() => {
+      if (activePanel.value === 'qa') {
+        return 'WPS AI文档问答'
+      } else if (activePanel.value === 'summary') {
+        return 'WPS AI文档摘要'
+      } else {
+        return 'WPS AI助手'
+      }
+    })
+
+    // 获取URL参数
+    const getUrlParams = () => {
+      const url = new URL(window.location.href)
+      const params = new URLSearchParams(url.search || url.hash.split('?')[1])
+      return {
+        function: params.get('function'),
+        direct: params.get('direct') === 'true',
+        selection: params.get('selection') === 'true',
+        refresh: params.get('refresh')
+      }
+    }
 
     // 获取选中文本
     const getSelectedText = () => {
@@ -483,33 +504,42 @@ export default {
 
     // 关闭面板
     const closePanel = () => {
-      activePanel.value = ''
-      statusMessage.value = '准备就绪'
-    }
-
-    const handleSettings = () => {
-      if (window.Application) {
-        window.Application.ShowDialog(
-          window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/settings',
-          'WPS AI助手 - 设置',
-          550,
-          650,
-          false
-        )
+      if (isDirect.value) {
+        if (window.parent && typeof window.parent.closeTaskPane === 'function') {
+          // 尝试调用父窗口的关闭方法 (如果是嵌入式模式)
+          window.parent.closeTaskPane();
+        } else {
+          // 否则隐藏自己
+          activePanel.value = '';
+          statusMessage.value = '准备就绪';
+        }
+      } else {
+        activePanel.value = '';
+        statusMessage.value = '准备就绪';
       }
     }
 
-    const handleHelp = () => {
-      if (window.Application) {
-        window.Application.ShowDialog(
-          window.Util.GetUrlPath() + window.Util.GetRouterHash() + '/help',
-          'WPS AI助手 - 帮助',
-          500,
-          400,
-          false
-        )
+    // 在组件挂载时处理URL参数
+    onMounted(() => {
+      const params = getUrlParams();
+      isDirect.value = params.direct || false;
+      
+      // 根据URL参数直接显示相应功能
+      if (params.function === 'qa') {
+        activePanel.value = 'qa';
+        statusMessage.value = '文档问答已启动';
+      } else if (params.function === 'summary') {
+        activePanel.value = 'summary';
+        
+        // 设置标题并根据是否有选择内容设置不同标题
+        summaryTitle.value = params.selection ? '选中内容摘要' : '全文总结';
+        
+        // 如果是直接模式，自动开始生成摘要
+        if (isDirect.value) {
+          refreshSummary();
+        }
       }
-    }
+    });
 
     return {
       statusMessage,
@@ -521,6 +551,8 @@ export default {
       summaryContent,
       isSummarizing,
       summaryError,
+      isDirect,
+      panelTitle,
       handleContinueText,
       handleProofread,
       handlePolish,
@@ -528,9 +560,7 @@ export default {
       handleSummarizeDoc,
       askQuestion,
       refreshSummary,
-      closePanel,
-      handleSettings,
-      handleHelp
+      closePanel
     }
   }
 }
@@ -616,53 +646,22 @@ export default {
   margin-bottom: 10px;
 }
 
-.action-bar {
-  display: flex;
-  justify-content: flex-end;
-}
-
-button {
-  padding: 5px 10px;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  cursor: pointer;
-  margin-left: 10px;
-}
-
-button:hover {
-  background-color: #e5e5e5;
-}
-
-.btn-settings, .btn-help {
-  font-size: 0.9rem;
-}
-
 /* 侧边栏样式 */
 .sidebar-panel {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
   height: 100%;
-  background-color: white;
   display: flex;
   flex-direction: column;
-  z-index: 10;
 }
 
 .sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 15px;
-  background-color: #f0f0f0;
-  border-bottom: 1px solid #ddd;
+  margin-bottom: 15px;
 }
 
 .sidebar-header h3 {
   margin: 0;
-  font-size: 1.1rem;
 }
 
 .close-btn {
@@ -670,39 +669,44 @@ button:hover {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  padding: 0 5px;
+  color: #666;
 }
 
-/* 问答面板样式 */
+.close-btn:hover {
+  color: #333;
+}
+
+/* 问答样式 */
 .qa-history {
   flex: 1;
   overflow-y: auto;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #eee;
+  border-radius: 5px;
+  padding: 10px;
+  max-height: calc(100vh - 200px);
 }
 
 .qa-item {
+  margin-bottom: 15px;
   padding: 10px;
   border-radius: 5px;
-  max-width: 90%;
 }
 
 .qa-item.user {
+  background-color: #f0f7ff;
   align-self: flex-end;
-  background-color: #e3f2fd;
 }
 
 .qa-item.assistant {
-  align-self: flex-start;
   background-color: #f5f5f5;
+  align-self: flex-start;
 }
 
 .qa-role {
   font-weight: bold;
-  font-size: 0.8rem;
   margin-bottom: 5px;
+  font-size: 0.9rem;
   color: #666;
 }
 
@@ -713,20 +717,19 @@ button:hover {
 
 .qa-input-area {
   display: flex;
-  padding: 10px;
-  border-top: 1px solid #ddd;
+  margin-bottom: 10px;
 }
 
 .qa-input {
   flex: 1;
-  padding: 8px;
+  padding: 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
+  margin-right: 10px;
 }
 
 .qa-submit {
-  margin-left: 10px;
-  padding: 8px 15px;
+  padding: 10px 15px;
   background-color: #2b579a;
   color: white;
   border: none;
@@ -739,11 +742,15 @@ button:hover {
   cursor: not-allowed;
 }
 
-/* 摘要面板样式 */
+/* 摘要样式 */
 .summary-content {
   flex: 1;
-  padding: 15px;
   overflow-y: auto;
+  margin-bottom: 15px;
+  border: 1px solid #eee;
+  border-radius: 5px;
+  padding: 15px;
+  max-height: calc(100vh - 200px);
 }
 
 .summary-text {
@@ -757,15 +764,16 @@ button:hover {
   align-items: center;
   justify-content: center;
   height: 100%;
+  min-height: 200px;
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #2b579a;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
   border-radius: 50%;
-  animation: spin 2s linear infinite;
+  animation: spin 1s linear infinite;
   margin-bottom: 15px;
 }
 
@@ -775,16 +783,14 @@ button:hover {
 }
 
 .loading-text {
-  text-align: center;
   color: #666;
 }
 
 .error-message {
-  color: #f44336;
+  color: #d32f2f;
   padding: 15px;
-  border: 1px solid #f44336;
-  border-radius: 4px;
   background-color: #ffebee;
+  border-radius: 4px;
 }
 
 .empty-message {
@@ -794,14 +800,13 @@ button:hover {
 }
 
 .sidebar-footer {
-  padding: 10px;
-  border-top: 1px solid #ddd;
   display: flex;
   justify-content: center;
+  margin-top: 10px;
 }
 
 .refresh-btn {
-  padding: 8px 15px;
+  padding: 10px 20px;
   background-color: #2b579a;
   color: white;
   border: none;
