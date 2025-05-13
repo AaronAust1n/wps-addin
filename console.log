@@ -1,41 +1,23 @@
-按钮点击: btnHelp
-ribbon.js? [sm]:78 准备打开帮助对话框...
-ribbon.js? [sm]:1081 打开帮助对话框
-ribbon.js? [sm]:1091 帮助对话框已创建
-ribbon.js? [sm]:46 按钮点击: btnSummarizeDoc
-ribbon.js? [sm]:66 准备处理全文总结功能...
-ribbon.js? [sm]:927 全文总结功能被触发
-ribbon.js? [sm]:118 检查API配置...
-ribbon.js? [sm]:90 尝试读取API配置...
-ribbon.js? [sm]:105 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-ribbon.js? [sm]:136 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-ribbon.js? [sm]:155 通过Selection对象获取选中文本成功，长度: 590
-ribbon.js? [sm]:947 对选中部分进行总结，长度: 590
-ribbon.js? [sm]:1055 全文总结功能出错: TypeError: window.Application.Alert is not a function
-    at handleSummarizeDoc (ribbon.js? [sm]:950:26)
-    at Object.OnAction (ribbon.js? [sm]:67:7)
-    at <anonymous>:1:22
-handleSummarizeDoc @ ribbon.js? [sm]:1055
-OnAction @ ribbon.js? [sm]:67
-(anonymous) @ VM352:1
-ribbon.js? [sm]:1056 Uncaught (in promise) TypeError: window.Application.Alert is not a function
-    at handleSummarizeDoc (ribbon.js? [sm]:1056:24)
-    at Object.OnAction (ribbon.js? [sm]:67:7)
-    at <anonymous>:1:22
-handleSummarizeDoc @ ribbon.js? [sm]:1056
-OnAction @ ribbon.js? [sm]:67
-(anonymous) @ VM352:1
-ribbon.js? [sm]:46 按钮点击: btnSummarizeText
-ribbon.js? [sm]:82 未知按钮ID: btnSummarizeText
-OnAction @ ribbon.js? [sm]:82
-(anonymous) @ VM353:1
-ribbon.js? [sm]:46 按钮点击: btnSummarizeText
-ribbon.js? [sm]:82 未知按钮ID: btnSummarizeText
-OnAction @ ribbon.js? [sm]:82
-(anonymous) @ VM354:1
-ribbon.js? [sm]:46 按钮点击: btnSummarizeText
-ribbon.js? [sm]:82 未知按钮ID: btnSummarizeText
-OnAction @ ribbon.js? [sm]:82
-(anonymous) @ VM355:1
-ribbon.js? [sm]:46 按钮点击: btnSummarizeText
-ribbon.js? [sm]:82 未知按钮ID: btnSummarizeText
+按钮点击: btnHistory
+​ 准备打开历史记录...
+​ 打开历史记录
+​ 历史记录对话框已创建
+​ 按钮点击: btnSummarizeDoc
+​ 准备处理全文总结功能...
+​ 全文总结功能被触发
+​ 检查API配置...
+​ 尝试读取API配置...
+​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+​ 通过Selection对象获取选中文本成功，长度: 1
+​ 对选中部分进行总结，长度: 1
+​ 文档摘要对话框已创建，ID: true
+​ 按钮点击: btnDocumentQA
+​ 准备处理文档问答功能...
+​ 文档问答功能被触发
+​ 检查API配置...
+​ 尝试读取API配置...
+​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
+​ 通过Selection对象获取选中文本成功，长度: 590
+​ 文档问答对话框已创建，ID: true
