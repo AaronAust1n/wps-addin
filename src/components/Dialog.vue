@@ -5,7 +5,7 @@
     </div>
     
     <!-- 设置内容 -->
-    <div v-if="!isHelp" class="dialog-content">
+    <div v-if="!isHelp" class="dialog-content settings-content">
       <div class="form-group">
         <label for="apiUrl">API 地址 <span class="required">*</span></label>
         <input type="text" id="apiUrl" v-model="config.apiUrl" class="full-border-input" placeholder="请输入AI服务API地址，例如: https://api.openai.com">
@@ -45,14 +45,14 @@
             <option value="deepseek-v3-0324">DeepSeek-V3-0324</option>
           </optgroup>
           <optgroup label="阿里云">
-            <option value="qwen3-235b-a22b">Qwen3-235b-a22b</option>
-            <option value="qwen3-30b-a3b">Qwen3-30b-a3b</option>
-            <option value="qwen3-32b">Qwen3-32b</option>
-            <option value="qwen3-14b">Qwen3-14b</option>
+            <option value="qwen3-235b-a22b">Qwen3-235B-A22B</option>
+            <option value="qwen3-30b-a3b">Qwen3-30B-A3B</option>
+            <option value="qwen3-32b">Qwen3-32B</option>
+            <option value="qwen3-14b">Qwen3-14B</option>
             <option value="qwq-32b">QWQ-32b</option>
-            <option value="qwen2.5-72b-instruct">Qwen2.5-72b-instruct</option>
-            <option value="qwen2.5-32b-instruct">Qwen2.5-32b-instruct</option>
-            <option value="qwen2.5-14b-instruct">Qwen2.5-14b-instruct</option>
+            <option value="qwen2.5-72b-instruct">Qwen2.5-72B-Instruct</option>
+            <option value="qwen2.5-32b-instruct">Qwen2.5-32B-Instruct</option>
+            <option value="qwen2.5-14b-instruct">Qwen2.5-14B-Instruct</option>
           </optgroup>
           <optgroup label="其他">
             <option value="custom">自定义...</option>
@@ -143,7 +143,7 @@
     </div>
     
     <!-- 帮助内容 -->
-    <div v-if="isHelp" class="dialog-content">
+    <div v-if="isHelp" class="dialog-content help-content">
       <div class="help-section">
         <h3>主要功能</h3>
         <ul>
@@ -438,8 +438,18 @@ export default {
 
 .dialog-content {
   margin-bottom: 20px;
+}
+
+/* 设置对话框需要自己的滚动条 */
+.settings-content {
   max-height: 450px;
   overflow-y: auto;
+}
+
+/* 帮助对话框依赖父容器的滚动条 */
+.help-content {
+  overflow-y: visible;
+  max-height: none;
 }
 
 .form-group {

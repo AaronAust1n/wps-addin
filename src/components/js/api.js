@@ -23,12 +23,156 @@ class AIAPIClient {
    */
   updateConfig(config) {
     this.config = config
-    this.axios.defaults.baseURL = config.apiUrl || ''
-    if (config.apiKey) {
-      this.axios.defaults.headers['Authorization'] = `Bearer ${config.apiKey}`
+    
+    // 确保API地址格式正确
+    if (config.apiUrl) {
+      // 规范化API URL，确保以http://或https://开头
+      let apiUrl = config.apiUrl.trim();
+      if (!apiUrl.startsWith('http://') && !apiUrl.startsWith('https://')) {
+        apiUrl = 'http://' + apiUrl;
+        console.log('API地址已添加http://前缀:', apiUrl);
+      }
+      
+      // 如果用户输入了带有/v1/chat/completions的完整路径，截取基础URL
+      if (apiUrl.includes('/v1/chat/completions')) {
+        apiUrl = apiUrl.substring(0, apiUrl.indexOf('/v1/chat/completions'));
+        console.log('API地址已规范化，移除了/v1/chat/completions后缀:', apiUrl);
+      }
+      
+      // 如果URL结尾有斜杠，移除它
+      if (apiUrl.endsWith('/')) {
+        apiUrl = apiUrl.substring(0, apiUrl.length - 1);
+        console.log('API地址已规范化，移除了结尾的斜杠:', apiUrl);
+      }
+      
+      this.axios.defaults.baseURL = apiUrl;
+      console.log('已设置API基础URL:', apiUrl);
+      
+      // 检测API类型
+      this.detectApiType(apiUrl);
     } else {
-      delete this.axios.defaults.headers['Authorization']
+      delete this.axios.defaults.baseURL;
+      console.warn('未设置API地址');
     }
+    
+    // 设置授权头
+    if (config.apiKey) {
+      this.axios.defaults.headers['Authorization'] = `Bearer ${config.apiKey}`;
+      console.log('已设置API授权头');
+    } else {
+      delete this.axios.defaults.headers['Authorization'];
+      console.log('未设置API密钥，已移除授权头');
+    }
+    
+    // 更新请求超时时间
+    if (config.timeout) {
+      this.axios.defaults.timeout = parseInt(config.timeout) * 1000 || 60000;
+      console.log('已设置请求超时时间:', this.axios.defaults.timeout / 1000, '秒');
+    }
+  }
+
+  /**
+   * 检测API类型，并设置相应的请求参数
+   * @param {string} apiUrl - API地址
+   */
+  detectApiType(apiUrl) {
+    // 设置默认类型
+    this.apiType = 'openai';
+    
+    // 根据URL特征判断API类型
+    if (apiUrl.includes('ollama')) {
+      this.apiType = 'ollama';
+      console.log('检测到Ollama API');
+    } else if (apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1')) {
+      if (apiUrl.includes(':8000')) {
+        this.apiType = 'vllm';
+        console.log('检测到vLLM API');
+      } else if (apiUrl.includes(':8080')) {
+        this.apiType = 'llama-cpp';
+        console.log('检测到llama.cpp服务API');
+      }
+    }
+    
+    // 调整请求格式
+    switch (this.apiType) {
+      case 'ollama':
+        // Ollama特定的请求参数调整
+        this.ollamaEndpoint = '/api/generate';
+        console.log('已设置Ollama端点:', this.ollamaEndpoint);
+        break;
+      case 'vllm':
+      case 'llama-cpp':
+      case 'openai':
+      default:
+        // 默认使用OpenAI格式
+        console.log('使用标准OpenAI格式');
+        break;
+    }
+  }
+
+  /**
+   * 根据API类型格式化请求数据
+   * @param {Object} data - 原始请求数据
+   * @returns {Object} - 格式化后的请求数据
+   */
+  formatRequestByApiType(data) {
+    switch (this.apiType) {
+      case 'ollama':
+        // Ollama API格式转换
+        return {
+          model: data.model,
+          prompt: data.messages.map(m => m.content).join('\n'),
+          stream: false,
+          options: {
+            temperature: data.temperature || 0.7,
+            num_predict: data.max_tokens || 2000
+          }
+        };
+      case 'vllm':
+      case 'llama-cpp':
+      case 'openai':
+      default:
+        // 返回原始OpenAI格式
+        return data;
+    }
+  }
+
+  /**
+   * 执行实际API请求
+   * @param {Object} data - 请求数据
+   * @param {Object} options - 请求选项
+   * @returns {Promise<Object>} - API响应
+   */
+  async callApi(data, options = {}) {
+    // 准备请求路径和数据
+    let endpoint = '/v1/chat/completions';
+    let requestData = this.formatRequestByApiType(data);
+    
+    // 根据API类型调整端点
+    if (this.apiType === 'ollama') {
+      endpoint = this.ollamaEndpoint || '/api/generate';
+    }
+    
+    console.log(`使用端点 ${endpoint} 调用 ${this.apiType} API`);
+    
+    // 发送请求
+    const response = await this.axios.post(endpoint, requestData, options);
+    
+    // 处理不同API类型的响应
+    if (this.apiType === 'ollama') {
+      // 将Ollama响应转换为OpenAI格式
+      return {
+        data: {
+          choices: [{
+            message: {
+              content: response.data.response || ''
+            }
+          }]
+        }
+      };
+    }
+    
+    return response;
   }
 
   /**
@@ -58,14 +202,14 @@ class AIAPIClient {
     }
 
     try {
-      console.log(`正在发送API请求到: ${this.axios.defaults.baseURL}/v1/chat/completions`);
+      console.log(`准备调用API续写文本`);
       
-      // 设置更长的超时时间，处理大型输入可能需要更多时间
-      const response = await this.axios.post('/v1/chat/completions', data, {
+      // 使用通用API调用方法
+      const response = await this.callApi(data, {
         timeout: 120000 // 增加到120秒
       });
       
-      // 记录响应信息
+      // 处理响应
       if (response.data && response.data.choices && response.data.choices.length > 0) {
         const result = response.data.choices[0].message.content;
         console.log(`API请求成功，返回${result.length}字符的续写结果`);

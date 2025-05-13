@@ -806,7 +806,7 @@ function getActionName(action) {
 }
 
 // 文档问答功能
-function handleDocumentQA() {
+async function handleDocumentQA() {
   console.log('文档问答功能被触发');
   
   const doc = window.Application.ActiveDocument
@@ -826,34 +826,168 @@ function handleDocumentQA() {
     const selectedText = getSelectedText();
     
     if (selectedText && selectedText.trim() !== '') {
-      // 如果有选中文本，创建侧边栏处理选中部分
+      // 如果有选中文本，直接在文档中进行问答
       console.log('对选中部分进行问答，长度:', selectedText.length);
       
-      // 创建侧边栏并导航到选中文本问答页面
-      const taskpaneUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/qa?mode=selection';
-      console.log('侧边栏URL:', taskpaneUrl);
+      // 显示输入对话框，获取用户问题
+      let question = '';
+      try {
+        question = window.prompt('请输入您对选中文本的问题:', '');
+      } catch (promptError) {
+        // 如果原生prompt不可用，则使用alert提示
+        console.warn('Prompt方法不可用，尝试替代方法:', promptError);
+        window.Application.Alert('请准备您的问题，点击确定后会弹出对话框');
+        
+        // 创建一个简单的DOM对话框
+        const questionDialog = document.createElement('div');
+        questionDialog.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: white;
+          padding: 20px;
+          border: 1px solid #ccc;
+          box-shadow: 0 0 10px rgba(0,0,0,0.2);
+          z-index: 9999;
+          width: 400px;
+        `;
+        
+        const label = document.createElement('div');
+        label.textContent = '请输入您对选中文本的问题:';
+        label.style.marginBottom = '10px';
+        
+        const input = document.createElement('textarea');
+        input.style.width = '100%';
+        input.style.height = '80px';
+        input.style.marginBottom = '10px';
+        
+        const buttonDiv = document.createElement('div');
+        buttonDiv.style.textAlign = 'right';
+        
+        const okButton = document.createElement('button');
+        okButton.textContent = '确定';
+        okButton.style.marginRight = '10px';
+        okButton.onclick = () => {
+          question = input.value;
+          document.body.removeChild(questionDialog);
+        };
+        
+        const cancelButton = document.createElement('button');
+        cancelButton.textContent = '取消';
+        cancelButton.onclick = () => {
+          document.body.removeChild(questionDialog);
+        };
+        
+        buttonDiv.appendChild(okButton);
+        buttonDiv.appendChild(cancelButton);
+        
+        questionDialog.appendChild(label);
+        questionDialog.appendChild(input);
+        questionDialog.appendChild(buttonDiv);
+        
+        document.body.appendChild(questionDialog);
+        
+        // 等待用户输入
+        setTimeout(() => {
+          if (questionDialog.parentNode) {
+            input.focus();
+          }
+        }, 100);
+      }
       
-      const taskpane = createTaskpane(taskpaneUrl);
+      if (!question || question.trim() === '') {
+        console.log('用户取消了问答或未输入问题');
+        return;
+      }
       
-      if (taskpane) {
-        console.log('选中文本问答侧边栏已创建成功');
-      } else {
-        console.error('创建选中文本问答侧边栏失败');
+      // 显示加载状态
+      console.log('处理问题:', question);
+      
+      // 使用API进行问答
+      try {
+        const result = await apiClient.documentQA(selectedText, question);
+        console.log('文档问答完成，结果长度:', result.length);
+        
+        // 插入问答结果
+        const questionAndAnswer = `\n问题: ${question}\n答案: ${result}\n`;
+        await insertTextAtCursor(questionAndAnswer);
+      } catch (apiError) {
+        console.error('文档问答API调用失败:', apiError);
+        window.Application.Alert('文档问答失败: ' + apiError.message);
       }
     } else {
-      // 无选中文本，进行全文问答
+      // 无选中文本，询问用户是否要获取整个文档进行问答
+      let useWholeDocument = false;
+      try {
+        useWholeDocument = window.confirm('未选中任何文本，是否要对整个文档进行问答？这可能需要较长时间处理。');
+      } catch (confirmError) {
+        console.warn('Confirm方法不可用，默认使用整个文档');
+        useWholeDocument = true;
+      }
+      
+      if (!useWholeDocument) {
+        console.log('用户取消了全文问答');
+        return;
+      }
+      
       console.log('进行全文问答');
       
-      // 创建侧边栏并导航到全文问答页面
-      const taskpaneUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/qa?mode=document';
-      console.log('侧边栏URL:', taskpaneUrl);
+      // 获取全文
+      const docText = getDocumentText();
+      if (!docText || docText.trim() === '') {
+        console.warn('文档内容为空');
+        window.Application.Alert('文档内容为空，无法进行问答');
+        return;
+      }
       
-      const taskpane = createTaskpane(taskpaneUrl);
+      // 显示输入对话框，获取用户问题
+      let question = '';
+      try {
+        question = window.prompt('请输入您对整个文档的问题:', '');
+      } catch (promptError) {
+        // 如果原生prompt不可用，采用DOM对话框或其他替代方案
+        console.warn('Prompt方法不可用，尝试替代方法:', promptError);
+        window.Application.Alert('请准备您的问题，点击确定后将进行处理');
+        
+        // 简化处理：使用默认问题
+        question = '请总结这篇文档的主要内容。';
+      }
       
-      if (taskpane) {
-        console.log('全文问答侧边栏已创建成功');
-      } else {
-        console.error('创建全文问答侧边栏失败');
+      if (!question || question.trim() === '') {
+        console.log('用户取消了问答或未输入问题');
+        return;
+      }
+      
+      // 显示加载状态
+      console.log('处理整个文档的问题:', question);
+      
+      // 使用API进行问答
+      try {
+        // 长文本处理：如果文档过长，进行智能截断
+        const maxLength = 8000; // 根据模型容量调整
+        let processedText = docText;
+        
+        if (docText.length > maxLength) {
+          console.warn(`文档内容过长(${docText.length}字符)，将进行智能截断`);
+          
+          // 简单截断策略：保留前后部分
+          const frontPart = docText.substring(0, maxLength / 2);
+          const backPart = docText.substring(docText.length - maxLength / 2);
+          processedText = `${frontPart}\n...(中间内容已省略)...\n${backPart}`;
+          
+          console.log('截断后文本长度:', processedText.length);
+        }
+        
+        const result = await apiClient.documentQA(processedText, question);
+        console.log('全文问答完成，结果长度:', result.length);
+        
+        // 插入问答结果
+        const questionAndAnswer = `\n问题: ${question}\n答案: ${result}\n`;
+        await insertTextAtCursor(questionAndAnswer);
+      } catch (apiError) {
+        console.error('全文问答API调用失败:', apiError);
+        window.Application.Alert('全文问答失败: ' + apiError.message);
       }
     }
   } catch (e) {
@@ -863,7 +997,7 @@ function handleDocumentQA() {
 }
 
 // 全文总结功能
-function handleSummarizeDoc() {
+async function handleSummarizeDoc() {
   console.log('全文总结功能被触发');
   
   const doc = window.Application.ActiveDocument
@@ -883,34 +1017,112 @@ function handleSummarizeDoc() {
     const selectedText = getSelectedText();
     
     if (selectedText && selectedText.trim() !== '') {
-      // 如果有选中文本，创建侧边栏处理选中部分
+      // 如果有选中文本，直接对选中文本进行摘要总结
       console.log('对选中部分进行总结，长度:', selectedText.length);
       
-      // 创建侧边栏并导航到选中文本总结页面
-      const taskpaneUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/summary?mode=selection';
-      console.log('侧边栏URL:', taskpaneUrl);
+      // 显示加载状态
+      window.Application.Alert('正在对选中文本进行摘要总结，请稍候...');
       
-      const taskpane = createTaskpane(taskpaneUrl);
-      
-      if (taskpane) {
-        console.log('选中文本总结侧边栏已创建成功');
-      } else {
-        console.error('创建选中文本总结侧边栏失败');
+      // 使用API进行摘要总结
+      try {
+        const result = await apiClient.summarizeText(selectedText);
+        console.log('选中文本摘要完成，结果长度:', result.length);
+        
+        // 插入摘要结果
+        const summary = `\n【摘要】\n${result}\n`;
+        await insertTextAtCursor(summary);
+      } catch (apiError) {
+        console.error('选中文本摘要API调用失败:', apiError);
+        window.Application.Alert('选中文本摘要失败: ' + apiError.message);
       }
     } else {
-      // 无选中文本，进行全文总结
+      // 无选中文本，询问用户是否要获取整个文档进行总结
+      let useWholeDocument = false;
+      try {
+        useWholeDocument = window.confirm('未选中任何文本，是否要对整个文档进行总结？这可能需要较长时间处理。');
+      } catch (confirmError) {
+        console.warn('Confirm方法不可用，默认使用整个文档');
+        useWholeDocument = true;
+      }
+      
+      if (!useWholeDocument) {
+        console.log('用户取消了全文总结');
+        return;
+      }
+      
       console.log('进行全文总结');
       
-      // 创建侧边栏并导航到全文总结页面
-      const taskpaneUrl = Util.GetUrlPath() + Util.GetRouterHash() + '/summary?mode=document';
-      console.log('侧边栏URL:', taskpaneUrl);
+      // 获取全文
+      const docText = getDocumentText();
+      if (!docText || docText.trim() === '') {
+        console.warn('文档内容为空');
+        window.Application.Alert('文档内容为空，无法进行总结');
+        return;
+      }
       
-      const taskpane = createTaskpane(taskpaneUrl);
+      // 显示加载状态
+      window.Application.Alert('正在对整个文档进行总结，请稍候...');
       
-      if (taskpane) {
-        console.log('全文总结侧边栏已创建成功');
-      } else {
-        console.error('创建全文总结侧边栏失败');
+      // 使用API进行全文总结
+      try {
+        // 长文本处理：如果文档过长，进行智能切分处理
+        let result = '';
+        
+        if (docText.length > 10000) {
+          console.warn(`文档内容过长(${docText.length}字符)，将进行分段处理`);
+          
+          // 基于段落的分段策略
+          const paragraphs = docText.split(/\n\s*\n/);
+          console.log(`文档分为${paragraphs.length}个段落`);
+          
+          // 分批处理段落
+          const batchSize = 3; // 每批处理的段落数
+          const batches = [];
+          
+          for (let i = 0; i < paragraphs.length; i += batchSize) {
+            batches.push(paragraphs.slice(i, i + batchSize).join('\n\n'));
+          }
+          
+          console.log(`分为${batches.length}批进行处理`);
+          
+          // 依次处理每批段落并生成摘要
+          const batchSummaries = [];
+          for (let i = 0; i < batches.length; i++) {
+            console.log(`处理第${i+1}/${batches.length}批段落`);
+            const batchText = batches[i];
+            
+            try {
+              const batchSummary = await apiClient.summarizeText(batchText);
+              batchSummaries.push(batchSummary);
+            } catch (batchError) {
+              console.error(`第${i+1}批段落处理失败:`, batchError);
+              batchSummaries.push(`[第${i+1}部分处理失败]`);
+            }
+          }
+          
+          // 合并所有批次的摘要
+          const combinedSummary = batchSummaries.join('\n\n');
+          
+          // 如果合并后的摘要仍然很长，进行二次摘要
+          if (combinedSummary.length > 2000) {
+            console.log('生成的摘要仍然较长，进行二次摘要');
+            result = await apiClient.summarizeText(combinedSummary);
+          } else {
+            result = combinedSummary;
+          }
+        } else {
+          // 文档不太长，直接处理
+          result = await apiClient.summarizeDocument(docText);
+        }
+        
+        console.log('全文总结完成，结果长度:', result.length);
+        
+        // 插入总结结果
+        const summary = `\n【全文总结】\n${result}\n`;
+        await insertTextAtCursor(summary);
+      } catch (apiError) {
+        console.error('全文总结API调用失败:', apiError);
+        window.Application.Alert('全文总结失败: ' + apiError.message);
       }
     }
   } catch (e) {

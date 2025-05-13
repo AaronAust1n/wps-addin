@@ -92,9 +92,8 @@ export default {
 
 <style scoped>
 .help-container {
-  padding: 20px;
+  padding: 0;
   font-family: 'Microsoft YaHei', sans-serif;
-  max-height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -112,7 +111,7 @@ export default {
 
 .help-content {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: visible;
   padding-right: 10px;
 }
 
