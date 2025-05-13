@@ -1,23 +1,53 @@
-按钮点击: btnHistory
-​ 准备打开历史记录...
-​ 打开历史记录
-​ 历史记录对话框已创建
+按钮点击: btnDocumentQA
+​ 准备处理文档问答功能...
+​ 文档问答功能被触发
+​ 检查API配置...
+​ 尝试读取API配置...
+​ 成功加载配置 Object
+​ 配置检查通过 Object
+2​ 通过Selection对象获取选中文本成功，长度: 123
+​ 创建侧边栏失败: Error: An exception occurred during the jsapi EXECUTE call.
+    at createTaskpane (src/components/ribbon.js:347:41)
+    at handleDocumentQA (src/components/ribbon.js:898:22)
+    at Object.OnAction (src/components/ribbon.js:63:7)
+    at <anonymous>:1:22
+console.error @ src/components/js/util.js:191
+​ 已使用window.open作为替代方法
+​ 文档问答侧边栏已创建
 ​ 按钮点击: btnSummarizeDoc
 ​ 准备处理全文总结功能...
 ​ 全文总结功能被触发
 ​ 检查API配置...
 ​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 通过Selection对象获取选中文本成功，长度: 1
-​ 对选中部分进行总结，长度: 1
-​ 文档摘要对话框已创建，ID: true
+​ 成功加载配置 Object
+​ 配置检查通过 Object
+2​ 通过Selection对象获取选中文本成功，长度: 123
+​ 创建侧边栏失败: Error: An exception occurred during the jsapi EXECUTE call.
+    at createTaskpane (src/components/ribbon.js:347:41)
+    at handleSummarizeDoc (src/components/ribbon.js:936:22)
+    at Object.OnAction (src/components/ribbon.js:67:7)
+    at <anonymous>:1:22
+console.error @ src/components/js/util.js:191
+​ 已使用window.open作为替代方法
+​ 文档摘要侧边栏已创建
 ​ 按钮点击: btnDocumentQA
 ​ 准备处理文档问答功能...
 ​ 文档问答功能被触发
 ​ 检查API配置...
 ​ 尝试读取API配置...
-​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005', model: 'Qwen2.5-14B-Instruct'}
-​ 通过Selection对象获取选中文本成功，长度: 590
-​ 文档问答对话框已创建，ID: true
+​ 成功加载配置 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
+​ 配置检查通过 {apiUrl: 'http://10.79.16.95:9005/v1/chat/completions', model: 'Qwen2.5-14B-Instruct'}
+​ 通过Selection对象获取选中文本成功，长度: 123
+​ 通过Selection对象获取选中文本成功，长度: 123
+​ 创建侧边栏失败: Error: An exception occurred during the jsapi EXECUTE call.
+    at createTaskpane (src/components/ribbon.js:347:41)
+    at handleDocumentQA (src/components/ribbon.js:898:22)
+    at Object.OnAction (src/components/ribbon.js:63:7)
+    at <anonymous>:1:22
+console.error @ src/components/js/util.js:191
+createTaskpane @ src/components/ribbon.js:354
+handleDocumentQA @ src/components/ribbon.js:898
+OnAction @ src/components/ribbon.js:63
+(anonymous) @ VM78:1
+​ 已使用window.open作为替代方法
+​ 文档问答侧边栏已创建
