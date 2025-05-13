@@ -853,6 +853,26 @@ function saveHistory(type, input, output) {
   }
 }
 
+// 安全的警告显示函数
+function safeAlert(message) {
+  console.log('安全警告:', message);
+  try {
+    if (typeof window.Application.Alert === 'function') {
+      window.Application.Alert(message);
+    } else {
+      // 如果内置Alert不可用，使用原生alert
+      alert(message);
+    }
+  } catch (e) {
+    console.error('所有警告方法都失败:', e);
+    try {
+      alert(message);
+    } catch (alertError) {
+      console.error('原生alert也失败:', alertError);
+    }
+  }
+}
+
 // 文档问答功能
 async function handleDocumentQA() {
   console.log('文档问答功能被触发');
@@ -860,7 +880,7 @@ async function handleDocumentQA() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     console.error('没有打开文档');
-    window.Application.Alert('当前没有打开任何文档')
+    safeAlert('当前没有打开任何文档')
     return
   }
   
@@ -887,7 +907,7 @@ async function handleDocumentQA() {
     console.log('文档问答对话框已创建，ID:', dialogId);
   } catch (e) {
     console.error('创建文档问答对话框失败:', e);
-    window.Application.Alert('启动文档问答功能失败: ' + e.message);
+    safeAlert('启动文档问答功能失败: ' + e.message);
     
     // 尝试使用备用方法 - 直接在文档中问答
     try {
@@ -897,7 +917,7 @@ async function handleDocumentQA() {
         const question = window.prompt('请输入您对选中文本的问题:', '');
         if (question && question.trim() !== '') {
           // 显示加载中提示
-          window.Application.Alert('正在处理您的问题，请稍候...');
+          safeAlert('正在处理您的问题，请稍候...');
           
           try {
             // 调用API获取答案
@@ -910,11 +930,11 @@ async function handleDocumentQA() {
             // 保存历史记录
             saveHistory('qa', question, result);
           } catch (apiError) {
-            window.Application.Alert('文档问答失败: ' + apiError.message);
+            safeAlert('文档问答失败: ' + apiError.message);
           }
         }
       } else {
-        window.Application.Alert('请先选择要询问的文本内容');
+        safeAlert('请先选择要询问的文本内容');
       }
     } catch (backupError) {
       console.error('备用文档问答方法也失败:', backupError);
@@ -929,7 +949,7 @@ async function handleSummarizeDoc() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     console.error('没有打开文档');
-    window.Application.Alert('当前没有打开任何文档')
+    safeAlert('当前没有打开任何文档');
     return
   }
   
@@ -942,118 +962,81 @@ async function handleSummarizeDoc() {
     // 检查是否有选中文本
     const selectedText = getSelectedText();
     
+    let mode = 'document';
     if (selectedText && selectedText.trim() !== '') {
-      // 如果有选中文本，直接对选中文本进行摘要总结
       console.log('对选中部分进行总结，长度:', selectedText.length);
-      
-      // 显示加载状态
-      window.Application.Alert('正在对选中文本进行摘要总结，请稍候...');
-      
-      // 使用API进行摘要总结
-      try {
-        const result = await apiClient.summarizeText(selectedText);
-        console.log('选中文本摘要完成，结果长度:', result.length);
-        
-        // 插入摘要结果
-        const summary = `\n【摘要】\n${result}\n`;
-        await insertTextAtCursor(summary);
-      } catch (apiError) {
-        console.error('选中文本摘要API调用失败:', apiError);
-        window.Application.Alert('选中文本摘要失败: ' + apiError.message);
-      }
+      mode = 'selection';
     } else {
-      // 无选中文本，询问用户是否要获取整个文档进行总结
-      let useWholeDocument = false;
-      try {
-        useWholeDocument = window.confirm('未选中任何文本，是否要对整个文档进行总结？这可能需要较长时间处理。');
-      } catch (confirmError) {
-        console.warn('Confirm方法不可用，默认使用整个文档');
-        useWholeDocument = true;
-      }
-      
-      if (!useWholeDocument) {
-        console.log('用户取消了全文总结');
-        return;
-      }
-      
       console.log('进行全文总结');
+    }
+    
+    // 创建一个自定义对话框
+    try {
+      const dialogId = window.Application.ShowDialog(
+        Util.GetUrlPath() + Util.GetRouterHash() + `/summary?mode=${mode}`,
+        `文档摘要 - ${mode === 'selection' ? '选中内容' : '全文'}`,
+        600,
+        500,
+        false
+      );
       
-      // 获取全文
-      const docText = getDocumentText();
-      if (!docText || docText.trim() === '') {
-        console.warn('文档内容为空');
-        window.Application.Alert('文档内容为空，无法进行总结');
-        return;
-      }
+      console.log('文档摘要对话框已创建，ID:', dialogId);
+    } catch (dialogError) {
+      console.error('创建摘要对话框失败:', dialogError);
+      safeAlert('无法创建摘要对话框，请尝试直接在文档中生成摘要');
       
-      // 显示加载状态
-      window.Application.Alert('正在对整个文档进行总结，请稍候...');
-      
-      // 使用API进行全文总结
-      try {
-        // 长文本处理：如果文档过长，进行智能切分处理
-        let result = '';
+      // 回退到直接处理方式
+      if (mode === 'selection') {
+        // 显示加载状态
+        safeAlert('正在对选中文本进行摘要总结，请稍候...');
         
-        if (docText.length > 10000) {
-          console.warn(`文档内容过长(${docText.length}字符)，将进行分段处理`);
+        // 使用API进行摘要总结
+        try {
+          const result = await apiClient.summarizeText(selectedText);
+          console.log('选中文本摘要完成，结果长度:', result.length);
           
-          // 基于段落的分段策略
-          const paragraphs = docText.split(/\n\s*\n/);
-          console.log(`文档分为${paragraphs.length}个段落`);
+          // 保存到历史记录
+          saveHistory('summarize', selectedText, result);
           
-          // 分批处理段落
-          const batchSize = 3; // 每批处理的段落数
-          const batches = [];
-          
-          for (let i = 0; i < paragraphs.length; i += batchSize) {
-            batches.push(paragraphs.slice(i, i + batchSize).join('\n\n'));
-          }
-          
-          console.log(`分为${batches.length}批进行处理`);
-          
-          // 依次处理每批段落并生成摘要
-          const batchSummaries = [];
-          for (let i = 0; i < batches.length; i++) {
-            console.log(`处理第${i+1}/${batches.length}批段落`);
-            const batchText = batches[i];
-            
-            try {
-              const batchSummary = await apiClient.summarizeText(batchText);
-              batchSummaries.push(batchSummary);
-            } catch (batchError) {
-              console.error(`第${i+1}批段落处理失败:`, batchError);
-              batchSummaries.push(`[第${i+1}部分处理失败]`);
-            }
-          }
-          
-          // 合并所有批次的摘要
-          const combinedSummary = batchSummaries.join('\n\n');
-          
-          // 如果合并后的摘要仍然很长，进行二次摘要
-          if (combinedSummary.length > 2000) {
-            console.log('生成的摘要仍然较长，进行二次摘要');
-            result = await apiClient.summarizeText(combinedSummary);
-          } else {
-            result = combinedSummary;
-          }
-        } else {
-          // 文档不太长，直接处理
-          result = await apiClient.summarizeDocument(docText);
+          // 插入摘要结果
+          const summary = `\n【摘要】\n${result}\n`;
+          await insertTextAtCursor(summary);
+        } catch (apiError) {
+          console.error('选中文本摘要API调用失败:', apiError);
+          safeAlert('选中文本摘要失败: ' + apiError.message);
+        }
+      } else {
+        // 获取全文
+        const docText = getDocumentText();
+        if (!docText || docText.trim() === '') {
+          console.warn('文档内容为空');
+          safeAlert('文档内容为空，无法进行总结');
+          return;
         }
         
-        console.log('全文总结完成，结果长度:', result.length);
+        // 显示加载状态
+        safeAlert('正在对整个文档进行总结，请稍候...');
         
-        // 插入总结结果
-        const summary = `\n【全文总结】\n${result}\n`;
-        await insertTextAtCursor(summary);
-      } catch (apiError) {
-        console.error('全文总结API调用失败:', apiError);
-        window.Application.Alert('全文总结失败: ' + apiError.message);
+        // 使用API进行全文总结
+        try {
+          const result = await apiClient.summarizeDocument(docText);
+          console.log('全文总结完成，结果长度:', result.length);
+          
+          // 保存到历史记录
+          saveHistory('summarize', '全文摘要', result);
+          
+          // 插入总结结果
+          const summary = `\n【全文总结】\n${result}\n`;
+          await insertTextAtCursor(summary);
+        } catch (apiError) {
+          console.error('全文总结API调用失败:', apiError);
+          safeAlert('全文总结失败: ' + apiError.message);
+        }
       }
     }
   } catch (e) {
     console.error('全文总结功能出错:', e);
-    window.Application.Alert('启动总结功能失败: ' + e.message);
+    safeAlert('启动总结功能失败: ' + e.message);
   }
 }
 
@@ -1072,7 +1055,7 @@ function handleSettings() {
     console.log('设置对话框已创建');
   } catch (e) {
     console.error('创建设置对话框失败:', e);
-    window.Application.Alert('无法打开设置: ' + e.message);
+    safeAlert('无法打开设置: ' + e.message);
   }
 }
 
@@ -1091,7 +1074,7 @@ function handleHelp() {
     console.log('帮助对话框已创建');
   } catch (e) {
     console.error('创建帮助对话框失败:', e);
-    window.Application.Alert('无法打开帮助: ' + e.message);
+    safeAlert('无法打开帮助: ' + e.message);
   }
 }
 
@@ -1102,7 +1085,7 @@ async function handleContinueText() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     console.error('没有打开的文档');
-    window.Application.Alert('当前没有打开任何文档')
+    safeAlert('当前没有打开任何文档')
     return
   }
   
@@ -1123,7 +1106,7 @@ async function handleContinueText() {
       
       if (!paragraph || paragraph.trim() === '') {
         console.warn('没有选中文本也没有段落内容');
-        window.Application.Alert('请先选择文本或将光标放置在段落中')
+        safeAlert('请先选择文本或将光标放置在段落中')
         return
       }
       
@@ -1137,7 +1120,7 @@ async function handleContinueText() {
     }
   } catch (e) {
     console.error('文本续写功能异常:', e);
-    window.Application.Alert(`执行文本续写时出错: ${e.message}`);
+    safeAlert(`执行文本续写时出错: ${e.message}`);
   }
 }
 
@@ -1148,7 +1131,7 @@ async function handleProofreadText() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     console.error('没有打开的文档');
-    window.Application.Alert('当前没有打开任何文档')
+    safeAlert('当前没有打开任何文档')
     return
   }
   
@@ -1169,7 +1152,7 @@ async function handleProofreadText() {
       
       if (!paragraph || paragraph.trim() === '') {
         console.warn('没有选中文本也没有段落内容');
-        window.Application.Alert('请先选择文本或将光标放置在段落中')
+        safeAlert('请先选择文本或将光标放置在段落中')
         return
       }
       
@@ -1183,7 +1166,7 @@ async function handleProofreadText() {
     }
   } catch (e) {
     console.error('文本校对功能异常:', e);
-    window.Application.Alert(`执行文本校对时出错: ${e.message}`);
+    safeAlert(`执行文本校对时出错: ${e.message}`);
   }
 }
 
@@ -1194,7 +1177,7 @@ async function handlePolishText() {
   const doc = window.Application.ActiveDocument
   if (!doc) {
     console.error('没有打开的文档');
-    window.Application.Alert('当前没有打开任何文档')
+    safeAlert('当前没有打开任何文档')
     return
   }
   
@@ -1215,7 +1198,7 @@ async function handlePolishText() {
       
       if (!paragraph || paragraph.trim() === '') {
         console.warn('没有选中文本也没有段落内容');
-        window.Application.Alert('请先选择文本或将光标放置在段落中')
+        safeAlert('请先选择文本或将光标放置在段落中')
         return
       }
       
@@ -1229,7 +1212,7 @@ async function handlePolishText() {
     }
   } catch (e) {
     console.error('文本润色功能异常:', e);
-    window.Application.Alert(`执行文本润色时出错: ${e.message}`);
+    safeAlert(`执行文本润色时出错: ${e.message}`);
   }
 }
 
@@ -1248,7 +1231,7 @@ function handleHistory() {
     console.log('历史记录对话框已创建');
   } catch (e) {
     console.error('创建历史记录对话框失败:', e);
-    window.Application.Alert('无法打开历史记录: ' + e.message);
+    safeAlert('无法打开历史记录: ' + e.message);
   }
 }
 

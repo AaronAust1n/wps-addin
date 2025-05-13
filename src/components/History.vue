@@ -42,6 +42,26 @@ export default {
   setup() {
     const history = ref([]);
     
+    // 安全的警告显示函数
+    const safeAlert = (message) => {
+      console.log('安全警告:', message);
+      try {
+        if (typeof window.Application.Alert === 'function') {
+          window.Application.Alert(message);
+        } else {
+          // 如果内置Alert不可用，使用原生alert
+          alert(message);
+        }
+      } catch (e) {
+        console.error('所有警告方法都失败:', e);
+        try {
+          alert(message);
+        } catch (alertError) {
+          console.error('原生alert也失败:', alertError);
+        }
+      }
+    };
+    
     // 在组件挂载时加载历史记录
     onMounted(() => {
       loadHistory();
@@ -113,7 +133,7 @@ export default {
       try {
         // 使用现代clipboard API
         navigator.clipboard.writeText(text).then(() => {
-          window.Application.Alert('已复制到剪贴板');
+          safeAlert('已复制到剪贴板');
         }).catch(err => {
           console.error('复制失败:', err);
           fallbackCopy(text);
@@ -139,20 +159,20 @@ export default {
         document.body.removeChild(textarea);
         
         if (successful) {
-          window.Application.Alert('已复制到剪贴板');
+          safeAlert('已复制到剪贴板');
         } else {
-          window.Application.Alert('复制失败，请手动复制');
+          safeAlert('复制失败，请手动复制');
         }
       } catch (e) {
         console.error('后备复制方法失败:', e);
-        window.Application.Alert('复制功能不可用');
+        safeAlert('复制功能不可用');
       }
     };
     
     // 重新使用历史记录
     const reuse = (item) => {
       // 这里可以调用对应功能的API
-      window.Application.Alert(`即将重新${getOperationName(item.type)}，请在文档中选择位置`);
+      safeAlert(`即将重新${getOperationName(item.type)}，请在文档中选择位置`);
       closeHistory();
     };
     

@@ -31,7 +31,7 @@ const router = createRouter({
     {
       path: '/summary',
       name: '全文总结',
-      component: () => import('../components/TaskPane.vue')
+      component: () => import('../components/Summary.vue')
     },
     {
       path: '/help',

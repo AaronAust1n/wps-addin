@@ -58,6 +58,26 @@ export default {
     const selectedText = ref('')
     const fullDocument = ref('')
     
+    // 安全的警告显示函数
+    const safeAlert = (message) => {
+      console.log('安全警告:', message);
+      try {
+        if (typeof window.Application.Alert === 'function') {
+          window.Application.Alert(message);
+        } else {
+          // 如果内置Alert不可用，使用原生alert
+          alert(message);
+        }
+      } catch (e) {
+        console.error('所有警告方法都失败:', e);
+        try {
+          alert(message);
+        } catch (alertError) {
+          console.error('原生alert也失败:', alertError);
+        }
+      }
+    };
+    
     // 在组件挂载时获取文档内容
     onMounted(async () => {
       if (window.Application && window.Application.ActiveDocument) {
@@ -98,7 +118,7 @@ export default {
         const textToProcess = selectedText.value || fullDocument.value;
         
         if (!textToProcess) {
-          window.Application.Alert('无法获取文档内容，请确保文档已打开并且文本可访问');
+          safeAlert('无法获取文档内容，请确保文档已打开并且文本可访问');
           isProcessing.value = false;
           return;
         }
@@ -127,7 +147,7 @@ export default {
         console.log('问答完成，回答长度:', answer.value.length);
       } catch (e) {
         console.error('处理问答时出错:', e);
-        window.Application.Alert('问答失败: ' + e.message);
+        safeAlert('问答失败: ' + e.message);
       } finally {
         isProcessing.value = false;
       }
@@ -186,17 +206,17 @@ export default {
               window.Application.ActiveDocument.Application.Selection) {
             // 插入文本
             window.Application.ActiveDocument.Application.Selection.TypeText(formattedAnswer);
-            window.Application.Alert('已将问答结果插入到文档');
+            safeAlert('已将问答结果插入到文档');
             
             // 关闭对话框
             closeDialog();
           } else {
-            window.Application.Alert('无法将文本插入到文档');
+            safeAlert('无法将文本插入到文档');
           }
         }
       } catch (e) {
         console.error('插入文本到文档失败:', e);
-        window.Application.Alert('插入失败: ' + e.message);
+        safeAlert('插入失败: ' + e.message);
       }
     }
     
