@@ -123,6 +123,85 @@ AI助手加载项支持连接到任何兼容OpenAI API格式的服务。用户�
 2. 确保在vite.config.js中设置了正确的端口
 3. 开发时确保WPS可以访问到开发服务器
 
+## Microsoft Office Add-in Integration
+
+### 1. Overview
+
+This project now supports a Microsoft Office Add-in version, allowing the AI Assistant to be used within Microsoft Word (and potentially other Office applications like Excel, PowerPoint with future enhancements). This is alongside the existing WPS Office Add-in.
+
+### 2. Development Setup for Office Add-in
+
+To develop and test the Office Add-in:
+
+1.  **Install Dependencies:**
+    ```bash
+    npm install
+    ```
+2.  **Run the Vite Development Server:**
+    ```bash
+    npm run dev
+    ```
+    This command starts the development server, which by default runs on `https://localhost:3889`. It uses HTTPS, which is required for Office Add-ins. The server will automatically use a self-signed SSL certificate (via `vite-plugin-mkcert`). You may need to trust this certificate in your browser or system the first time you access it.
+
+3.  **Manifest File:**
+    *   The Office Add-in uses `manifest-office.xml`. This file defines the add-in's properties, ribbon UI, and where Office should load its resources from (e.g., `https://localhost:3889/index.html` for the task pane, `https://localhost:3889/functionfile.html` for ribbon commands during development).
+
+### 3. Sideloading the Office Add-in (for Development)
+
+To test your add-in in Office, you need to "sideload" the `manifest-office.xml` file. This tells Office to load your add-in from your local development server.
+
+*   **Office on Windows:**
+    1.  Create a network share for your project directory (e.g., `\\MyPC\wps-ai-assistant`).
+    2.  In Word, go to `File > Options > Trust Center > Trust Center Settings... > Trusted Add-in Catalogs`.
+    3.  Enter the network share path (e.g., `\\MyPC\wps-ai-assistant`) as the `Catalog Url`, and click `Add catalog`.
+    4.  Check the `Show in Menu` box and click `OK`.
+    5.  Close and reopen Word.
+    6.  On the `Insert` tab, click `My Add-ins`. Under `Shared Folder`, you should see your add-in.
+
+*   **Office on Mac:**
+    1.  Open Finder, and press `Command+Shift+G`.
+    2.  Enter `~/Library/Containers/com.microsoft.Word/Data/Documents/wef/` (for Word). If the `wef` folder doesn't exist, create it.
+        *   For Excel: `~/Library/Containers/com.microsoft.Excel/Data/Documents/wef/`
+        *   For PowerPoint: `~/Library/Containers/com.microsoft.Powerpoint/Data/Documents/wef/`
+    3.  Copy your `manifest-office.xml` file into this `wef` folder.
+    4.  Close and reopen Word.
+    5.  On the `Insert` tab, click `My Add-ins`. You should see your add-in.
+
+*   **Office on the Web (e.g., Word Online):**
+    1.  Open Word Online (or Excel Online, etc.).
+    2.  On the `Insert` tab, click `Add-ins` (or `Office Add-ins`).
+    3.  In the Office Add-ins dialog, select `MY ADD-INS`, then click `Manage My Add-ins`, and choose `Upload My Add-in`.
+    4.  Browse to your `manifest-office.xml` file and upload it.
+    5.  Your add-in should now appear in the ribbon.
+
+### 4. Building for Production
+
+1.  **Build Command:**
+    ```bash
+    npm run build
+    ```
+    This command bundles the application and outputs the static files to the `dist/` directory.
+
+2.  **Deployment:**
+    *   For production, all files in the `dist/` folder (which includes `index.html`, `functionfile.html`, JavaScript assets like `assets/office-integration.js`, CSS files, and `manifest-office.xml`) must be deployed to an HTTPS-enabled web server.
+    *   **Crucially**, you must update the URLs within the `manifest-office.xml` file that you deploy to production. All instances of `https://localhost:3889/...` must be changed to point to your actual production hosting URLs (e.g., `https://your-domain.com/office-addin/...`).
+
+### 5. Key Files for Office Integration
+
+*   **`manifest-office.xml`**: The manifest file for the Office Add-in. Configures how the add-in appears and operates within Office applications.
+*   **`public/functionfile.html`**: A simple HTML page that loads the Office.js library and the JavaScript file (`assets/office-integration.js` after build) responsible for handling ribbon commands.
+*   **`src/components/js/office-integration.js`**: This file contains:
+    *   The JavaScript logic for functions executed by ribbon buttons.
+    *   An abstraction layer (`OfficeAppApi`) to interact with the Office.js API, providing similar functionalities to those used by the WPS add-in (e.g., getting selected text, inserting text).
+
+### 6. Known Issues / Current Status
+
+*   **Build Command Timeout:** During automated testing, the `npm run build` command sometimes timed out. Local verification of the build process completion is recommended.
+*   **Feature Parity & Refinement:**
+    *   The integration is new, and some features or UI elements might require further refinement or thorough testing specifically for the Office environment.
+    *   Full implementation of `getCurrentParagraph` and `getDocumentText` within `src/components/js/office-integration.js` (the `OfficeAppApi` module) is still pending and currently uses placeholders. These are more complex to implement robustly across different Office hosts.
+    *   The primary host tested is Word. Behavior in Excel or PowerPoint might require additional manifest configurations and testing.
+
 ## 许可协议
 
 本项目采用MIT许可协议。详细内容请参见LICENSE文件。

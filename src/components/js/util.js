@@ -41,61 +41,87 @@ function FormatAIResponse(text) {
 }
 
 // 获取选中文本
-function GetSelectedText() {
-  if (!window.Application || !window.Application.ActiveDocument) {
-    return ''
+async function GetSelectedText() {
+  if (window.OfficeAppApi && window.OfficeAppApi.isOfficeEnvironment()) {
+    try {
+      return await window.OfficeAppApi.getSelectedText();
+    } catch (e) {
+      console.error('Office API 获取选中文本失败:', e);
+      return '';
+    }
+  } else if (window.Application && window.Application.ActiveDocument) {
+    try {
+      return window.Application.ActiveDocument.Application.Selection.Text;
+    } catch (e) {
+      console.error('WPS API 获取选中文本失败:', e);
+      return '';
+    }
   }
-  
-  try {
-    return window.Application.ActiveDocument.Application.Selection.Text
-  } catch (e) {
-    console.error('获取选中文本失败:', e)
-    return ''
-  }
+  return '';
 }
 
 // 获取文档全文
-function GetDocumentText() {
-  if (!window.Application || !window.Application.ActiveDocument) {
-    return ''
+async function GetDocumentText() {
+  if (window.OfficeAppApi && window.OfficeAppApi.isOfficeEnvironment()) {
+    try {
+      // Note: OfficeAppApi.getDocumentText is a placeholder and needs full implementation
+      // For now, it might return a placeholder or throw an error if not fully implemented.
+      return await window.OfficeAppApi.getDocumentText();
+    } catch (e) {
+      console.error('Office API 获取文档全文失败:', e);
+      return '';
+    }
+  } else if (window.Application && window.Application.ActiveDocument) {
+    try {
+      return window.Application.ActiveDocument.Content.Text;
+    } catch (e) {
+      console.error('WPS API 获取文档全文失败:', e);
+      return '';
+    }
   }
-  
-  try {
-    return window.Application.ActiveDocument.Content.Text
-  } catch (e) {
-    console.error('获取文档全文失败:', e)
-    return ''
-  }
+  return '';
 }
 
 // 向文档插入文本
-function InsertTextToDocument(text) {
-  if (!window.Application || !window.Application.ActiveDocument) {
-    return false
+async function InsertTextToDocument(text) {
+  if (window.OfficeAppApi && window.OfficeAppApi.isOfficeEnvironment()) {
+    try {
+      return await window.OfficeAppApi.insertTextAtCursor(text);
+    } catch (e) {
+      console.error('Office API 插入文本失败:', e);
+      return false;
+    }
+  } else if (window.Application && window.Application.ActiveDocument) {
+    try {
+      window.Application.ActiveDocument.Application.Selection.TypeText(text);
+      return true;
+    } catch (e) {
+      console.error('WPS API 插入文本失败:', e);
+      return false;
+    }
   }
-  
-  try {
-    window.Application.ActiveDocument.Application.Selection.TypeText(text)
-    return true
-  } catch (e) {
-    console.error('插入文本失败:', e)
-    return false
-  }
+  return false;
 }
 
 // 替换选中文本
-function ReplaceSelectedText(text) {
-  if (!window.Application || !window.Application.ActiveDocument) {
-    return false
+async function ReplaceSelectedText(text) {
+  if (window.OfficeAppApi && window.OfficeAppApi.isOfficeEnvironment()) {
+    try {
+      return await window.OfficeAppApi.replaceSelectedText(text);
+    } catch (e) {
+      console.error('Office API 替换文本失败:', e);
+      return false;
+    }
+  } else if (window.Application && window.Application.ActiveDocument) {
+    try {
+      window.Application.ActiveDocument.Application.Selection.Text = text;
+      return true;
+    } catch (e) {
+      console.error('WPS API 替换文本失败:', e);
+      return false;
+    }
   }
-  
-  try {
-    window.Application.ActiveDocument.Application.Selection.Text = text
-    return true
-  } catch (e) {
-    console.error('替换文本失败:', e)
-    return false
-  }
+  return false;
 }
 
 // 显示调试控制台
