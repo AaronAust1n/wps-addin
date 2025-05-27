@@ -66,6 +66,100 @@ function OnAction(control) {
       console.log('准备处理全文总结功能...');
       handleSummarizeDoc()
       break
+    case "btnAdvancedRewrite":
+      // Assuming 'router' is your Vue router instance, accessible here
+      // And 'wps' is the WPS application object
+      // This is a placeholder for actual WPS API calls and router usage
+      if (window.vueRouter) {
+          window.vueRouter.push({ name: 'AdvancedRewritePane' }); // Ensure this route name is defined later
+      }
+      if (typeof wps !== 'undefined' && wps.TaskPane) {
+           wps.TaskPane.setVisible(true); // Or specific API to show a certain taskpane
+      } else if (typeof WPS !== 'undefined' && WPS.TaskPane) {
+           WPS.TaskPane.setVisible(true);
+      }
+      console.log("Advanced Rewrite button clicked. Task pane should open.");
+      break;
+    case "btnDescribeCell":
+            if (typeof window.et !== 'undefined' && window.et && typeof window.et.Application !== 'undefined') {
+                try {
+                    // Speculative: Attempt to get active cell's value. This might need refinement.
+                    // For robust implementation, we'd need to know the exact API for selected cell/range.
+                    // Let's assume 'et.Application.ActiveCell.Text' or 'et.Application.Selection.Text' might work.
+                    let cellValue = "N/A";
+                    let cellAddress = "N/A";
+                    if (window.et.Application.Selection) { // Check if Selection object exists
+                        cellValue = window.et.Application.Selection.Text || "Empty"; // .Text is common
+                        cellAddress = window.et.Application.Selection.Address || "Unknown"; // .Address is also common
+                         // If Selection is a range with multiple cells, .Text might be just the first one or undefined.
+                         // A more robust way for a single cell might be ActiveCell if it exists.
+                         if (window.et.Application.ActiveCell) {
+                            cellValue = window.et.Application.ActiveCell.Text || "Empty";
+                            cellAddress = window.et.Application.ActiveCell.Address || "Unknown";
+                         }
+                    }
+                    
+                    console.log(`Describe Cell button clicked. Cell: ${cellAddress}, Value: ${cellValue}`);
+                    if (window.vueRouter) {
+                        // Pass data to the route, though the component will also try to fetch it.
+                        window.vueRouter.push({ name: 'DescribeCellPane', params: { initialValue: cellValue, initialAddress: cellAddress } });
+                    }
+                    if (typeof wps !== 'undefined' && wps.TaskPane) {
+                        wps.TaskPane.setVisible(true); 
+                    } else if (typeof WPS !== 'undefined' && WPS.TaskPane) {
+                        WPS.TaskPane.setVisible(true);
+                    }
+                } catch (e) {
+                    console.error("Error accessing ET API:", e);
+                    alert("Error accessing Spreadsheet API. Make sure a cell is selected.");
+                }
+            } else {
+                console.log("Describe Cell: ET (Spreadsheet) context not available.");
+                // Optionally, inform the user this is an ET-only feature
+                // alert("此功能仅适用于WPS表格。"); 
+            }
+            break;
+    case "btnSummarizeShapeText":
+            if (typeof window.wpp !== 'undefined' && window.wpp && typeof window.wpp.Application !== 'undefined') {
+                try {
+                    let shapeText = "N/A";
+                    let shapeName = "N/A";
+                    // Speculative API usage for WPP
+                    if (window.wpp.Application.ActiveWindow && window.wpp.Application.ActiveWindow.Selection && window.wpp.Application.ActiveWindow.Selection.ShapeRange) {
+                        const shapeRange = window.wpp.Application.ActiveWindow.Selection.ShapeRange;
+                        if (shapeRange.Count > 0) {
+                            const shape = shapeRange.Item(1); // Assuming first selected shape
+                            shapeName = shape.Name || "Unnamed Shape";
+                            if (shape.HasTextFrame && shape.TextFrame.HasText) {
+                                shapeText = shape.TextFrame.TextRange.Text || "Shape has no text.";
+                            } else {
+                                shapeText = "Selected shape does not contain text.";
+                            }
+                        } else {
+                            shapeText = "No shape selected.";
+                        }
+                    } else {
+                         shapeText = "No selection or ShapeRange not available.";
+                    }
+                    
+                    console.log(`Summarize Shape Text button clicked. Shape: ${shapeName}, Text: ${shapeText.substring(0, 50)}...`);
+                    if (window.vueRouter) {
+                        window.vueRouter.push({ name: 'SummarizeShapePane', params: { initialText: shapeText, initialShapeName: shapeName } });
+                    }
+                    if (typeof wps !== 'undefined' && wps.TaskPane) {
+                        wps.TaskPane.setVisible(true); 
+                    } else if (typeof WPS !== 'undefined' && WPS.TaskPane) {
+                        WPS.TaskPane.setVisible(true);
+                    }
+                } catch (e) {
+                    console.error("Error accessing WPP API:", e);
+                    alert("Error accessing Presentation API: " + e.message);
+                }
+            } else {
+                console.log("Summarize Shape Text: WPP (Presentation) context not available.");
+                // alert("此功能仅适用于WPS演示文稿。");
+            }
+            break;
     case 'btnSettings':
       console.log('准备打开设置对话框...');
       handleSettings()
@@ -1393,6 +1487,12 @@ function GetImage(control) {
       return 'images/settings.svg'
     case 'btnHelp':
       return 'images/help.svg'
+    case "btnAdvancedRewrite":
+      return "images/advanced_rewrite.svg"; // Path relative to public folder
+    case "btnDescribeCell":
+            return "images/describe_cell.svg"; 
+    case "btnSummarizeShapeText":
+            return "images/summarize_shape.svg"; 
     default:
       return 'images/icon.svg'
   }

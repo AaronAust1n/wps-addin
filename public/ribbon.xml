@@ -7,6 +7,9 @@
                     <button id="btnContinueText" label="文本续写" onAction="ribbon.OnAction" getImage="ribbon.GetImage" size="large"/>
                     <button id="btnProofreadText" label="文本校对" onAction="ribbon.OnAction" getImage="ribbon.GetImage" size="large"/>
                     <button id="btnPolishText" label="文本润色" onAction="ribbon.OnAction" getImage="ribbon.GetImage" size="large"/>
+                    <button id="btnAdvancedRewrite" label="高级改写" onAction="ribbon.OnAction" getImage="ribbon.GetImage" size="large"/>
+                    <button id="btnDescribeCell" label="单元格描述" onAction="ribbon.OnAction" getImage="ribbon.GetImage" size="large"/>
+                    <button id="btnSummarizeShapeText" label="概述形状文本" onAction="ribbon.OnAction" getImage="ribbon.GetImage" size="large"/>
                     <button id="btnDocumentQA" label="文档问答" onAction="ribbon.OnAction" getImage="ribbon.GetImage" size="large"/>
                     <button id="btnSummarizeDoc" label="全文总结" onAction="ribbon.OnAction" getImage="ribbon.GetImage" size="large"/>
                 </group>

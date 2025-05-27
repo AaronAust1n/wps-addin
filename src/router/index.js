@@ -42,6 +42,23 @@ const router = createRouter({
       path: '/history',
       name: '历史记录',
       component: () => import('../components/History.vue')
+    },
+    {
+      path: '/advanced-rewrite',
+      name: 'AdvancedRewritePane',
+      component: () => import('../components/AdvancedRewritePane.vue')
+    },
+    {
+      path: '/describe-cell', // Or '/describe-cell/:initialAddress/:initialValue' if passing as params
+      name: 'DescribeCellPane',
+      component: () => import('../components/DescribeCellPane.vue'), // This component will be created in the next step
+      props: true // Allows route params to be passed as props if using path params
+    },
+    {
+      path: '/summarize-shape',
+      name: 'SummarizeShapePane',
+      component: () => import('../components/SummarizeShapePane.vue'),
+      props: true
     }
   ]
 })

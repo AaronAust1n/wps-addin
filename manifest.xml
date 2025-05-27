@@ -5,4 +5,5 @@
   <Description>一款集成多种AI功能的WPS加载项</Description>
   <Version>1.0.0</Version>
   <isToolbar>true</isToolbar>
+  <Url>index.html</Url>
 </JsPlugin>

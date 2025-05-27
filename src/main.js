@@ -8,4 +8,6 @@ const app = createApp(App)
 
 app.use(router)
 
+window.vueRouter = router; // Assign router to window object
+
 app.mount('#app') 

@@ -71,6 +71,80 @@ class AIAPIClient {
     }
   }
 
+  async paraphraseText(text, mode, customPrompt) {
+    const model = this.config.models?.paraphraseModel || this.config.models?.defaultModel || 'gpt-3.5-turbo';
+    
+    console.log(`使用模型"${model}"执行文本改写 (模式: ${mode}, 自定义指令: "${customPrompt || '无'}"), 输入长度: ${text.length}字符`);
+
+    if (text.length > 6000) {
+      console.warn(`输入文本超过6000字符(${text.length})，可能导致模型输入截断`);
+    }
+
+    let userPrompt = "";
+    const systemPrompt = "你是一位专业的文本改写专家。请根据用户的具体指令，对提供的文本进行改写，同时确保不改变原文的核心意义。";
+
+    if (customPrompt && customPrompt.trim() !== "") {
+      userPrompt = `请根据以下指令改写文本内容： "${customPrompt.trim()}"
+
+原始文本：
+${text}`;
+    } else {
+      switch (mode) {
+        case 'simplify':
+          userPrompt = `请简化以下文本，使其更易于普通读者理解，同时保留核心含义：
+
+${text}`;
+          break;
+        case 'formalize':
+          userPrompt = `请将以下文本改写得更加正式和专业：
+
+${text}`;
+          break;
+        case 'shorten':
+          userPrompt = `请缩短以下文本，使其更加简洁明了，同时保留主要信息：
+
+${text}`;
+          break;
+        case 'expand':
+          userPrompt = `请扩展以下文本，提供更多细节、解释或示例，但保持原有中心思想：
+
+${text}`;
+          break;
+        default:
+          console.error('未知的改写模式:', mode);
+          throw new Error('未知的改写模式');
+      }
+    }
+
+    const data = {
+      model: model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      max_tokens: this.config.options?.maxTokens || 2000,
+      temperature: this.config.options?.temperature || 0.5 // Default temperature for creative tasks
+    };
+
+    try {
+      const response = await this.sendRequest('/v1/chat/completions', data, {
+        timeout: 90000 // 90秒超时
+      });
+      
+      if (response.data && response.data.choices && response.data.choices.length > 0) {
+        const result = response.data.choices[0].message.content;
+        console.log(`API请求成功，返回${result.length}字符的改写结果`);
+        return result.trim();
+      } else {
+        console.error('API响应格式不正确:', response.data);
+        throw new Error('API返回了不正确的响应格式');
+      }
+    } catch (error) {
+      console.error('文本改写请求失败:', error);
+      throw new Error(`文本改写失败: ${this.formatErrorMessage(error)}`);
+    }
+  }
+
   /**
    * 检测API类型，并设置相应的请求参数
    * @param {string} apiUrl - API地址
